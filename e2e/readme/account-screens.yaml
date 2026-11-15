@@ -4,9 +4,11 @@ appId: com.ryushin01.newworld
 ---
 - launchApp:
     clearState: true
+# 설치된 앱이 데모 모드인지 먼저 확인합니다. 둘러보기 버튼은 데모 모드(Supabase 설정이 없는 빌드)에서만 보이므로,
+# 서버에 연결한 빌드라면 여기서 멈춰 실제 서버에 가입하지 않습니다.
 - extendedWaitUntil:
     visible:
-      id: go-sign-up
+      id: demo-browse
     timeout: 60000
 - tapOn:
     id: go-sign-up
