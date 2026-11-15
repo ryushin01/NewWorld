@@ -111,5 +111,13 @@ appId: com.ryushin01.newworld
     centerElement: true
 - tapOn:
     id: my-stats
+# 데모 기록이 있는 2026년 월별 그래프를 고릅니다.
+- runFlow:
+    when:
+      visible:
+        id: stats-year-2026
+    commands:
+      - tapOn:
+          id: stats-year-2026
 - waitForAnimationToEnd
 - takeScreenshot: stats
