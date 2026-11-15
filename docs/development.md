@@ -146,15 +146,16 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 
 ## 글꼴
 
-| 역할        | 글꼴                                                | 적용                                |
-| ----------- | --------------------------------------------------- | ----------------------------------- |
-| 제목        | 고운바탕 굵은 체(`@expo-google-fonts/gowun-batang`) | `AppText`의 `title`·`headline` 크기 |
-| 영문 원어명 | Marcellus(`@expo-google-fonts/marcellus`)           | `AppText`의 `latin`                 |
-| 본문        | 고운돋움(`@expo-google-fonts/gowun-dodum`)          | `AppText`의 나머지 크기             |
-| 굵은 본문   | 운영체제 글꼴의 굵은 체                             | `AppText`의 `bold`                  |
+| 역할        | 글꼴                                                                                         | 적용                                |
+| ----------- | -------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 제목        | NewWorld Title: 한글재민체 3.0, 빠진 한글은 유앤피플 고딕 UNI(`assets/fonts/newworld-title`) | `AppText`의 `title`·`headline` 크기 |
+| 본문        | 유앤피플 고딕 UNI(`assets/fonts/unpeople-gothic`)                                            | `AppText`의 나머지 크기             |
+| 굵은 본문   | NewWorld Title                                                                               | `AppText`의 `bold`                  |
+| 영문 원어명 | Sorts Mill Goudy(`@expo-google-fonts/sorts-mill-goudy`)                                      | `AppText`의 `latin`                 |
 
-- 고운돋움은 굵기가 400 하나뿐이고 iOS는 없는 굵기를 만들어 내지 않으므로, 굵은 본문(`bold`)은 운영체제 글꼴의 굵은 체로 바꿔 씁니다.
-- 제목 글꼴은 파일 자체가 굵어 `fontWeight`를 더하지 않습니다(Android에서 이중으로 굵어지는 것을 막음).
+- 한글재민체 3.0(공유마당, OFL)은 한글 11,172자에 번호를 매겼지만 실제로 그린 한글은 2,350자이고 나머지는 빈칸입니다. React Native에는 글꼴 대체 목록이 없어 빈칸이 그대로 보이므로, 그린 글자만 남기고 빠진 한글은 유앤피플 고딕 UNI로 채워 한 파일로 합쳤습니다. 한자는 앱에 쓰지 않아 뺐습니다. 다시 만들 때는 공유마당 원본 두 개로 `python3 scripts/fonts/build-title-font.py`를 실행합니다(fontTools 필요).
+- 유앤피플 고딕 UNI(공유마당, OFL)는 한글 11,172자를 모두 그린 공식 배포 TTF를 이름만 바꿔 그대로 넣었습니다. 사용자가 쓰는 닉네임·여행기 글자도 빈칸 없이 그립니다.
+- 두 글꼴 모두 굵기가 하나라 `fontWeight`를 더하지 않습니다(iOS는 없는 굵기를 만들지 않고, Android는 가짜로 굵게 그림). 굵은 본문은 제목 글꼴로 구분합니다.
 - `useAppFonts`(`src/shared/ui/fonts.ts`)로 불러오고, 끝날 때까지 스플래시를 유지합니다. 실패하면 시스템 글꼴로 계속합니다.
 - 웹 빌드(Expo Web)는 시도했으나 Tamagui 3의 가로 배치·고정 위치 스타일이 적용되지 않아 보류했습니다.
 

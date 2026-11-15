@@ -1,8 +1,0 @@
-경기천년바탕 (Gyeonggi Batang)
-Copyright (C) 2017 Gyeonggi and PYJ&TYPOLAB Inc. All rights reserved.
-원본: https://noonnu.cc/font_page/13 (경기도 경기천년체)
-
-라이선스 요지 (원문: 위 주소)
-- 누구나 무료로 쓸 수 있고, 앱·웹사이트 탑재가 허용됩니다.
-- 글꼴을 수정·변형할 수 없고, 글꼴 자체를 판매할 수 없습니다.
-이 폴더의 OTF는 배포된 woff의 압축만 풀어 원래 형식으로 되돌린 것으로, 글꼴 내용은 바꾸지 않았습니다(앱은 woff를 읽지 못함).
