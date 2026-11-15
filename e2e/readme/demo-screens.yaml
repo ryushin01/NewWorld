@@ -1,0 +1,123 @@
+# README 화면(데모 모드): 실존·환상 탭, 여행지 상세, 전승 위치, 상상 여행기, 체크리스트, 통계
+# scripts/screenshots.sh가 실행합니다. 기록은 모두 데모 데이터입니다.
+appId: com.ryushin01.newworld
+---
+- launchApp:
+    clearState: true
+- runFlow: ../_sign-in.yaml
+- extendedWaitUntil:
+    visible:
+      id: world-search-real
+    timeout: 20000
+- waitForAnimationToEnd
+- takeScreenshot: real
+- tapOn:
+    id: tab-fantasy
+- extendedWaitUntil:
+    visible:
+      id: world-search-fantasy
+    timeout: 8000
+- waitForAnimationToEnd
+- takeScreenshot: fantasy
+
+# 실존 유적: 카르타고 상세
+- tapOn:
+    id: tab-real
+- tapOn:
+    id: world-search-real
+- inputText: 카르타고
+- tapOn: 여행지 검색
+- tapOn:
+    id: destination-carthage
+- extendedWaitUntil:
+    visible:
+      id: destination-title
+    timeout: 8000
+- waitForAnimationToEnd
+- takeScreenshot: destination
+- tapOn: 뒤로 가기
+
+# 환상 세계: 아발론의 전승 위치, 상상 여행기 쓰기
+- tapOn:
+    id: tab-fantasy
+- tapOn:
+    id: world-search-fantasy
+- inputText: 아발론
+- tapOn: 여행지 검색
+- tapOn:
+    id: destination-avalon
+- extendedWaitUntil:
+    visible:
+      id: destination-title
+    timeout: 8000
+- scrollUntilVisible:
+    element:
+      id: destination-location-note
+    direction: DOWN
+    centerElement: true
+- waitForAnimationToEnd
+- takeScreenshot: lore
+- tapOn:
+    id: destination-add-record
+- extendedWaitUntil:
+    visible:
+      id: record-title
+    timeout: 8000
+- scrollUntilVisible:
+    element:
+      id: record-gateway
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: record-gateway
+- inputText: 비 오는 밤 안개 속 배
+# 키보드를 내리고 찍습니다.
+- tapOn: 감동
+- waitForAnimationToEnd
+- takeScreenshot: record-form
+- tapOn: 뒤로 가기
+- runFlow:
+    when:
+      visible: 나가기
+    commands:
+      - tapOn: 나가기
+- tapOn: 뒤로 가기
+
+# 체크리스트, 통계
+- tapOn:
+    id: tab-my
+- scrollUntilVisible:
+    element:
+      id: my-checklist
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: my-checklist
+- extendedWaitUntil:
+    visible:
+      id: checklist-defaults
+    timeout: 8000
+- tapOn:
+    id: checklist-defaults
+- tapOn:
+    id: checklist-item-여권·비자
+- waitForAnimationToEnd
+- takeScreenshot: checklist
+- tapOn: 뒤로 가기
+- scrollUntilVisible:
+    element:
+      id: my-stats
+    direction: DOWN
+    centerElement: true
+- tapOn:
+    id: my-stats
+# 데모 기록이 있는 2026년 월별 그래프를 고릅니다.
+- runFlow:
+    when:
+      visible:
+        id: stats-year-2026
+    commands:
+      - tapOn:
+          id: stats-year-2026
+- waitForAnimationToEnd
+- takeScreenshot: stats

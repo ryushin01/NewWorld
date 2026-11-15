@@ -1,0 +1,15 @@
+# README 화면: 현장 인증(checkin-flow) 뒤 여행 여권 첫 화면
+# scripts/screenshots.sh가 checkin-flow 다음에 실행합니다(앱 상태를 지우지 않음).
+appId: com.ryushin01.newworld
+---
+- launchApp
+- extendedWaitUntil:
+    visible:
+      id: tab-my
+    timeout: 30000
+- tapOn:
+    id: tab-my
+- tapOn:
+    id: my-passport
+- waitForAnimationToEnd
+- takeScreenshot: badges

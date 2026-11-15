@@ -61,15 +61,15 @@
 
 ![React, TypeScript, Supabase, PostgreSQL, Jest, pnpm, GitHub Actions](https://skillicons.dev/icons?i=react,ts,supabase,postgres,jest,pnpm,githubactions)
 
-| 구분        | 사용 기술                                                                                                                                                                  |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 프레임워크  | Expo SDK 58, React Native 0.88, React 19, TypeScript, Expo Router                                                                                                          |
+| 구분        | 사용 기술                                                                                                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 프레임워크  | Expo SDK 58, React Native 0.88, React 19, TypeScript, Expo Router                                                                                                                          |
 | UI          | Tamagui 3, Reanimated 4, Gesture Handler, Bottom Sheet, FlashList, Keyboard Controller, sonner-native, Lucide, view-shot, 글꼴 경기천년바탕(앱에 넣음)·Sorts Mill Goudy(Expo Google Fonts) |
-| 지도·위치   | react-native-maps, supercluster, expo-location, expo-task-manager(지역 감시), expo-notifications                                                                           |
-| 상태·데이터 | TanStack Query, zustand, MMKV, React Hook Form, Zod, dayjs                                                                                                                 |
-| 서버        | Supabase(Postgres, RLS, Auth, Storage, Edge Functions), OpenStreetMap Photon, Open-Meteo                                                                                   |
-| 품질        | ESLint, Prettier, husky, lint-staged, Jest, React Native Testing Library, PGlite, Maestro, Storybook                                                                       |
-| 배포        | EAS Build, GitHub Actions                                                                                                                                                  |
+| 지도·위치   | react-native-maps, supercluster, expo-location, expo-task-manager(지역 감시), expo-notifications                                                                                           |
+| 상태·데이터 | TanStack Query, zustand, MMKV, React Hook Form, Zod, dayjs                                                                                                                                 |
+| 서버        | Supabase(Postgres, RLS, Auth, Storage, Edge Functions), OpenStreetMap Photon, Open-Meteo                                                                                                   |
+| 품질        | ESLint, Prettier, husky, lint-staged, Jest, React Native Testing Library, PGlite, Maestro, Storybook                                                                                       |
+| 배포        | EAS Build, GitHub Actions                                                                                                                                                                  |
 
 ## 시작하기
 
@@ -82,15 +82,16 @@ pnpm run ios       # 또는 pnpm run android
 
 로그인 화면의 **둘러보기**를 누르면 바로 시작할 수 있습니다.
 
-| 명령                          | 설명                              |
-| ----------------------------- | --------------------------------- |
-| `pnpm start`                  | 개발 서버                         |
-| `pnpm run lint` / `typecheck` | ESLint / 타입 검사                |
-| `pnpm test`                   | 단위·컴포넌트 테스트              |
-| `pnpm run test:db`            | DB 권한(RLS)과 제약 조건 테스트   |
-| `pnpm run test:e2e`           | Release 빌드의 E2E 테스트         |
-| `pnpm run test:e2e:server`    | 로컬 Supabase에 연결한 E2E 테스트 |
-| `pnpm run assets`             | 앱 아이콘과 지도 핀 생성          |
+| 명령                          | 설명                                             |
+| ----------------------------- | ------------------------------------------------ |
+| `pnpm start`                  | 개발 서버                                        |
+| `pnpm run lint` / `typecheck` | ESLint / 타입 검사                               |
+| `pnpm test`                   | 단위·컴포넌트 테스트                             |
+| `pnpm run test:db`            | DB 권한(RLS)과 제약 조건 테스트                  |
+| `pnpm run test:e2e`           | Release 빌드의 E2E 테스트                        |
+| `pnpm run test:e2e:server`    | 로컬 Supabase에 연결한 E2E 테스트                |
+| `pnpm run assets`             | 앱 아이콘과 지도 핀 생성                         |
+| `pnpm run screenshots`        | README 화면 다시 찍기(iOS 시뮬레이터, 데모 모드) |
 
 서버 연결과 배포 방법은 [개발 가이드](docs/development.md)를 참고하세요.
 
@@ -122,23 +123,23 @@ src/
 
 ## 글꼴
 
-| 글꼴 | 쓰는 곳 | 굵기 |
-|---|---|---|
-| 경기천년바탕 | 한글 제목·본문 | Regular·Bold |
-| Sorts Mill Goudy | 여행지 영문 원어명 | 400 |
+| 글꼴             | 쓰는 곳            | 굵기         |
+| ---------------- | ------------------ | ------------ |
+| 경기천년바탕     | 한글 제목·본문     | Regular·Bold |
+| Sorts Mill Goudy | 여행지 영문 원어명 | 400          |
 
 저작자·라이선스·원본은 아래 출처 표에 있습니다. 경기천년바탕은 수정할 수 없는 글꼴이라 배포된 파일을 압축만 풀어(OTF, 굵기마다 약 3.8MB) 그대로 앱에 넣었습니다(`assets/fonts/gyeonggi-batang`).
 
 ## 출처
 
-| 자료                                                         | 저작자                                               | 사용 허락                             | 원본                                                                                                                                        |
-| ------------------------------------------------------------ | ---------------------------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| 여행지 사진                                                  | Wikimedia Commons의 각 저작자                        | 사진마다 CC BY·CC BY-SA·퍼블릭 도메인 | [여행지별 목록](docs/credits.md)                                                                                                            |
-| 소개 글 참고 자료                                            | 위키백과·나무위키                                    | 각 사이트의 사용 허락                 | [여행지별 목록](docs/credits.md)                                                                                                            |
-| 장소 검색                                                    | OpenStreetMap 기여자 (Photon)                        | ODbL                                  | [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)                                                                      |
-| 날씨                                                         | Open-Meteo                                           | CC BY 4.0                             | [open-meteo.com](https://open-meteo.com)                                                                                                    |
-| 보물 지도 아이콘 (앱 아이콘·스플래시·파비콘, #b8862b로 칠함) | Lorc (game-icons.net)                                | CC BY 3.0                             | [game-icons.net](https://game-icons.net/1x1/lorc/treasure-map.html) · [라이선스](https://creativecommons.org/licenses/by/3.0/)              |
-| 경기천년바탕 글꼴 (한글 제목·본문) | 경기도, PYJ&TYPOLAB | 무료(앱·웹 탑재 가능, 수정·판매 금지) | [눈누](https://noonnu.cc/font_page/13) |
-| Sorts Mill Goudy 글꼴 (영문 원어명) | Barry Schwartz | SIL OFL 1.1 | [Google Fonts](https://fonts.google.com/specimen/Sorts+Mill+Goudy) |
+| 자료                                                         | 저작자                        | 사용 허락                             | 원본                                                                                                                           |
+| ------------------------------------------------------------ | ----------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 여행지 사진                                                  | Wikimedia Commons의 각 저작자 | 사진마다 CC BY·CC BY-SA·퍼블릭 도메인 | [여행지별 목록](docs/credits.md)                                                                                               |
+| 소개 글 참고 자료                                            | 위키백과·나무위키             | 각 사이트의 사용 허락                 | [여행지별 목록](docs/credits.md)                                                                                               |
+| 장소 검색                                                    | OpenStreetMap 기여자 (Photon) | ODbL                                  | [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)                                                         |
+| 날씨                                                         | Open-Meteo                    | CC BY 4.0                             | [open-meteo.com](https://open-meteo.com)                                                                                       |
+| 보물 지도 아이콘 (앱 아이콘·스플래시·파비콘, #b8862b로 칠함) | Lorc (game-icons.net)         | CC BY 3.0                             | [game-icons.net](https://game-icons.net/1x1/lorc/treasure-map.html) · [라이선스](https://creativecommons.org/licenses/by/3.0/) |
+| 경기천년바탕 글꼴 (한글 제목·본문)                           | 경기도, PYJ&TYPOLAB           | 무료(앱·웹 탑재 가능, 수정·판매 금지) | [눈누](https://noonnu.cc/font_page/13)                                                                                         |
+| Sorts Mill Goudy 글꼴 (영문 원어명)                          | Barry Schwartz                | SIL OFL 1.1                           | [Google Fonts](https://fonts.google.com/specimen/Sorts+Mill+Goudy)                                                             |
 
 여행지 상세의 '자료·사진 출처' 링크가 이 표로 옵니다. 약관상 화면에 있어야 하는 장소 검색의 OpenStreetMap 표기와, 좌표가 Open-Meteo로 간다는 기록 화면의 안내는 화면에 그대로 둡니다. 여행지별 목록은 `pnpm credits`로 데이터에서 다시 만듭니다.
