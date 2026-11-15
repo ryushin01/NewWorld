@@ -21,11 +21,11 @@ export const AppText = styled(Text, {
       caption: { fontSize: 13, lineHeight: '18px' },
       body: { fontSize: 15, lineHeight: '22px' },
       row: { fontSize: 17, lineHeight: '24px' },
-      // 제목은 경기천년바탕 굵은 체입니다. 글꼴 파일 자체가 굵어 fontWeight를 더하지 않습니다(Android 이중 굵기 방지).
+      // 제목은 한글재민체(NewWorld Title)입니다. 굵기가 하나뿐이라 fontWeight를 더하지 않습니다(Android는 가짜로 굵게 그림).
       title: { fontSize: 19, lineHeight: '28px', fontFamily: FONT.heading, color: 'ink' },
       headline: { fontSize: 24, lineHeight: '34px', fontFamily: FONT.heading, color: 'ink' },
     },
-    // 굵은 본문도 경기천년바탕 굵은 체 파일을 씁니다(fontWeight를 더하면 Android에서 이중으로 굵어짐)
+    // 유앤피플 고딕은 굵기가 하나뿐이라 굵은 본문은 제목 글꼴로 구분합니다(fontWeight를 더하면 Android에서 가짜로 굵어짐)
     bold: { true: { fontFamily: FONT.heading } },
     /** 여행지 영문 원어명처럼 라틴 문자로만 된 짧은 이름 */
     latin: { true: { fontFamily: FONT.latin, letterSpacing: 0.5 } },
