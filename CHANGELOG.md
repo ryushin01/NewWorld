@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.9.0 - 미출시
+
+- 글꼴 교체: 제목 고운바탕·본문 고운돋움 → 제목·본문 모두 경기천년바탕(Regular·Bold, 굵은 본문도 이 파일), 영문 원어명 Marcellus → Sorts Mill Goudy
+- 경기천년바탕은 수정할 수 없는 글꼴이라 배포된 woff의 압축만 풀어 원래 OTF로 앱에 넣음(앱은 woff를 읽지 못함)
+- README에 글꼴 표와 출처
+
 ## 2.8.4 - 미출시
 
 - 앱 아이콘·스플래시·파비콘을 보물 지도로: game-icons.net의 Lorc “Treasure map”(CC BY 3.0, 금색 #b8862b로 칠함). 원본 SVG를 `assets/brand/treasure-map.svg`에 두고 `pnpm run assets`(`scripts/generate-assets.mjs`)가 계단 피라미드 대신 이 그림으로 iOS 아이콘, 안드로이드 적응형 전경·단색, 알림 아이콘, 스플래시, 웹 파비콘을 만듦. 바탕색(#2a2233)과 지도 핀은 그대로. 로그인 화면의 아이콘도 같은 그림
