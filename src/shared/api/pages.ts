@@ -5,20 +5,25 @@ type Page<T> = PromiseLike<{ data: T[] | null; error: unknown }>;
 
 /**
  * 1,000행씩 끝까지 읽습니다. 한 번만 조회하면 많이 쓰는 회원의 목록이 말없이 잘립니다.
- * fetchPage는 `.order(...)`로 순서를 고정한 뒤 `.range(from, to)`로 한 쪽을 읽어야 합니다.
+ * 몇 번째 행부터(offset)가 아니라 마지막으로 받은 키 다음부터 읽어, 그사이 다른 기기가 행을 지워도
+ * 뒤 행이 앞으로 당겨져 빠지지 않습니다. fetchPage는 키 순서로 정렬(`.order(key)`)하고 PAGE_SIZE개만
+ * 읽되(`.limit`), after가 있으면 그 다음부터(`.gt(key, after)`) 읽어야 합니다.
  * Edge Function에도 같은 도우미가 있습니다(supabase/functions/delete-account/pages.ts).
  */
 export const fetchAllPages = async <T>(
-  fetchPage: (from: number, to: number) => Page<T>,
+  fetchPage: (after: string | null) => Page<T>,
+  keyOf: (row: T) => string,
   pageSize = PAGE_SIZE,
 ): Promise<T[]> => {
   const rows: T[] = [];
-  for (let from = 0; ; from += pageSize) {
-    const { data, error } = await fetchPage(from, from + pageSize - 1);
+  let after: string | null = null;
+  for (;;) {
+    const { data, error } = await fetchPage(after);
     if (error) throw error;
     const page = data ?? [];
     rows.push(...page);
     if (page.length < pageSize) return rows;
+    after = keyOf(page[page.length - 1]);
   }
 };
 

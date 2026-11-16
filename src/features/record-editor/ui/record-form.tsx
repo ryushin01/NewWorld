@@ -18,6 +18,7 @@ import { LIMITS } from '@/shared/config';
 import {
   CURRENCIES,
   CURRENCY_LABELS,
+  fieldErrorMessage,
   openLink,
   toErrorMessage,
   useUnsavedGuard,
@@ -221,7 +222,7 @@ export const RecordForm = ({
           <Controller
             control={control}
             name="members"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <TagInput
                 testID="record-member"
                 label="동행"
@@ -231,6 +232,7 @@ export const RecordForm = ({
                 suggestions={memberSuggestions}
                 maxItems={LIMITS.members}
                 maxLength={LIMITS.tagLength}
+                error={fieldErrorMessage(fieldState.error)}
               />
             )}
           />

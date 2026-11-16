@@ -9,7 +9,7 @@ import { createRecoveryCode, hashRecoveryCode } from '../lib/recovery-code';
 import { storageAdapter } from '../lib/storage';
 import { isRecord, parseStoredJson } from '../lib/stored-json';
 import { withTimeout } from '../lib/timeout';
-import { chunk, fetchAllPages } from './pages';
+import { chunk, fetchAllPages, PAGE_SIZE } from './pages';
 import type {
   Backend,
   ChecklistItem,
@@ -93,6 +93,18 @@ type PlaceRow = {
   record_count?: number;
   last_visited_at?: string | null;
 };
+
+/** 키 순서로 받은 행을 화면 순서로 맞춥니다(최근 것부터, 오래된 것부터 등). */
+const byText =
+  <T>(read: (row: T) => string | null, direction: 1 | -1 = 1) =>
+  (a: T, b: T) => {
+    const left = read(a);
+    const right = read(b);
+    // 값이 없으면(시작일 없는 여정) 뒤로 보냅니다.
+    if (left === null || right === null) return left === right ? 0 : left === null ? 1 : -1;
+    // ISO 날짜·시각 문자열이라 글자 순서가 시간 순서입니다(언어별 정렬 규칙은 쓰지 않음).
+    return (left < right ? -1 : left > right ? 1 : 0) * direction;
+  };
 
 const toPlace = (row: PlaceRow): Place => ({
   id: row.id,
@@ -496,13 +508,12 @@ export const supabaseBackend: Backend = {
       throw new Error('둘러보기는 데모 모드에서만 쓸 수 있습니다.');
     },
     async signOut() {
-      // 토큰이 만료된 채 끊겨 있으면 갱신 재시도가 길어지므로 오래 기다리지 않습니다.
-      const { error } = await withTimeout(client.auth.signOut(), SIGN_OUT_TIMEOUT, {
-        error: new TypeError('Network request failed'),
-      });
-      if (!error) return;
-      if (!isTransientError(error)) throw error;
-      // 끊긴 상태에서도 이 기기에서는 로그아웃되어야 합니다. 서버 토큰은 만료되면 사라집니다.
+      // 이 기기만 로그아웃합니다. 기본값(global)은 같은 계정의 다른 기기까지 모두 로그아웃시킵니다.
+      // local은 요청 전에 이 기기의 세션부터 지우므로 끊겨 있어도 로그아웃되고, 서버 쪽 토큰은 요청이 닿으면 지웁니다.
+      // 토큰이 만료된 채 끊겨 있으면 갱신 재시도가 길어지므로 오래 기다리지 않고 기기에서 직접 정리합니다.
+      await withTimeout(client.auth.signOut({ scope: 'local' }), SIGN_OUT_TIMEOUT, null).catch(
+        () => undefined,
+      );
       storageAdapter.removeItem(AUTH_STORAGE_KEY);
       storageAdapter.removeItem(LAST_SESSION_KEY);
       localSignOutListeners.forEach((listener) => listener(null));
@@ -570,15 +581,14 @@ export const supabaseBackend: Backend = {
   },
   places: {
     async list() {
-      const rows = await fetchAllPages<PlaceRow>((from, to) =>
-        client
-          .from('place_summaries')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .order('id')
-          .range(from, to),
+      const rows = await fetchAllPages<PlaceRow>(
+        (after) => {
+          const query = client.from('place_summaries').select('*').order('id').limit(PAGE_SIZE);
+          return after ? query.gt('id', after) : query;
+        },
+        (row) => row.id,
       );
-      return rows.map(toPlace);
+      return rows.sort(byText((row) => row.created_at, -1)).map(toPlace);
     },
     get: getPlace,
     async create(input, id) {
@@ -597,14 +607,20 @@ export const supabaseBackend: Backend = {
     },
     async remove(id) {
       // 행이 먼저 지워지면 경로를 알 수 없으므로 사진 경로부터 조회합니다.
-      const records = await fetchAllPages<{ record_photos: { storage_path: string }[] }>(
-        (from, to) =>
-          client
+      const records = await fetchAllPages<{
+        id: string;
+        record_photos: { storage_path: string }[];
+      }>(
+        (after) => {
+          const query = client
             .from('records')
-            .select('record_photos(storage_path)')
+            .select('id, record_photos(storage_path)')
             .eq('place_id', id)
             .order('id')
-            .range(from, to),
+            .limit(PAGE_SIZE);
+          return after ? query.gt('id', after) : query;
+        },
+        (row) => row.id,
       );
       const paths = records.flatMap((record) =>
         record.record_photos.map((photo) => photo.storage_path),
@@ -616,16 +632,15 @@ export const supabaseBackend: Backend = {
   },
   records: {
     async list(filter) {
-      const rows = await fetchAllPages<RecordRow>((from, to) => {
-        let query = client
-          .from('records')
-          .select(RECORD_SELECT)
-          .order('visited_at', { ascending: false })
-          .order('id');
-        if (filter?.placeId) query = query.eq('place_id', filter.placeId);
-        return query.range(from, to);
-      });
-      return toRecords(rows);
+      const rows = await fetchAllPages<RecordRow>(
+        (after) => {
+          let query = client.from('records').select(RECORD_SELECT).order('id').limit(PAGE_SIZE);
+          if (filter?.placeId) query = query.eq('place_id', filter.placeId);
+          return after ? query.gt('id', after) : query;
+        },
+        (row) => row.id,
+      );
+      return toRecords(rows.sort(byText((row) => row.visited_at, -1)));
     },
     get: getRecord,
     async create(input, id) {
@@ -663,18 +678,23 @@ export const supabaseBackend: Backend = {
   },
   checklist: {
     async list() {
-      const rows = await fetchAllPages<ChecklistRow>((from, to) =>
-        client
-          .from('checklist_items')
-          .select('id, title, category, checked, position, list_name')
-          .order('position')
-          .order('id')
-          .range(from, to),
+      const rows = await fetchAllPages<ChecklistRow>(
+        (after) => {
+          const query = client
+            .from('checklist_items')
+            .select('id, title, category, checked, position, list_name')
+            .order('id')
+            .limit(PAGE_SIZE);
+          return after ? query.gt('id', after) : query;
+        },
+        (row) => row.id,
       );
-      return rows.map(({ list_name, ...item }) => ({
-        ...item,
-        listName: list_name,
-      }));
+      return rows
+        .sort((a, b) => a.position - b.position)
+        .map(({ list_name, ...item }) => ({
+          ...item,
+          listName: list_name,
+        }));
     },
     async upsert(items) {
       const { error } = await client
@@ -689,15 +709,18 @@ export const supabaseBackend: Backend = {
   },
   trips: {
     async list() {
-      const rows = await fetchAllPages<TripRow>((from, to) =>
-        client
-          .from('trips')
-          .select('id, title, start_date, end_date, stops, memo')
-          .order('start_date', { ascending: true, nullsFirst: false })
-          .order('id')
-          .range(from, to),
+      const rows = await fetchAllPages<TripRow>(
+        (after) => {
+          const query = client
+            .from('trips')
+            .select('id, title, start_date, end_date, stops, memo')
+            .order('id')
+            .limit(PAGE_SIZE);
+          return after ? query.gt('id', after) : query;
+        },
+        (row) => row.id,
       );
-      return rows.map(toTrip);
+      return rows.sort(byText((row) => row.start_date)).map(toTrip);
     },
     async save({ id, title, startDate, endDate, stops, memo }) {
       const { data, error } = await client
@@ -715,15 +738,14 @@ export const supabaseBackend: Backend = {
   },
   checkins: {
     async list() {
-      const rows = await fetchAllPages<CheckInRow>((from, to) =>
-        client
-          .from('checkins')
-          .select(CHECKIN_SELECT)
-          .order('checked_at', { ascending: true })
-          .order('id')
-          .range(from, to),
+      const rows = await fetchAllPages<CheckInRow>(
+        (after) => {
+          const query = client.from('checkins').select(CHECKIN_SELECT).order('id').limit(PAGE_SIZE);
+          return after ? query.gt('id', after) : query;
+        },
+        (row) => row.id,
       );
-      return rows.map(toCheckIn);
+      return rows.sort(byText((row) => row.checked_at)).map(toCheckIn);
     },
     async create(checkIn) {
       // 여행지마다 하나만 남기므로 이미 있으면 새로 쓰지 않고 기존 행을 돌려줍니다.

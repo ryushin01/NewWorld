@@ -8,7 +8,7 @@ import { View, XStack, YStack } from 'tamagui';
 import { KIND_META, PLACE_KINDS, useSavePlace } from '@/entities/place';
 import { savedMessage, type Place, type PlaceInput } from '@/shared/api';
 import { LIMITS } from '@/shared/config';
-import { formatCoordinate, toErrorMessage, useUnsavedGuard } from '@/shared/lib';
+import { fieldErrorMessage, formatCoordinate, toErrorMessage, useUnsavedGuard } from '@/shared/lib';
 import { AppIcon, AppText, StickyBottomCta, Chip, Field, TagInput, MapPin } from '@/shared/ui';
 import { placeSchema } from '../model/schema';
 
@@ -112,7 +112,7 @@ export const PlaceForm = ({ placeId, initial, onSaved }: PlaceFormProps) => {
         <Controller
           control={control}
           name="tags"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <TagInput
               label="태그"
               placeholder="예: 신전, 잉카"
@@ -121,6 +121,7 @@ export const PlaceForm = ({ placeId, initial, onSaved }: PlaceFormProps) => {
               testID="place-tag"
               maxItems={LIMITS.tags}
               maxLength={LIMITS.tagLength}
+              error={fieldErrorMessage(fieldState.error)}
             />
           )}
         />

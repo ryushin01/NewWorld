@@ -78,3 +78,23 @@ it('TagInput은 정한 개수가 차면 입력을 막고 더 넣지 않습니다
   await fireEvent(input, 'submitEditing');
   expect(onChange).not.toHaveBeenCalled();
 });
+
+it('TagInput은 글자 수 상한을 넘는 추천은 숨기고, 저장 검사 오류를 보여 줍니다', async () => {
+  await render(
+    wrap(
+      <TagInput
+        testID="member"
+        label="동행"
+        placeholder="이름 입력"
+        value={[]}
+        onChange={jest.fn()}
+        suggestions={['민수', '가'.repeat(31)]}
+        maxLength={30}
+        error="동행은 30자 이내로 입력해 주세요."
+      />,
+    ),
+  );
+  expect(screen.getByTestId('suggestion-민수')).toBeTruthy();
+  expect(screen.queryByTestId(`suggestion-${'가'.repeat(31)}`)).toBeNull();
+  expect(screen.getByText('동행은 30자 이내로 입력해 주세요.')).toBeTruthy();
+});

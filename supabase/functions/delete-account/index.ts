@@ -1,6 +1,6 @@
 // 계정 삭제: 기록 사진과 프로필 사진 파일을 지운 뒤 사용자를 삭제합니다. 데이터는 외래 키로 함께 삭제됩니다.
 import { createClient } from 'npm:@supabase/supabase-js@2';
-import { chunk, fetchAllPages } from './pages.ts';
+import { chunk, fetchAllPages, PAGE_SIZE } from './pages.ts';
 
 const REMOVE_BATCH = 100;
 
@@ -19,13 +19,17 @@ Deno.serve(async (request) => {
   const userId = data.user.id;
   try {
     // 한 번에 1,000행까지만 오므로 끝까지 나눠 읽어, 사진이 많은 회원도 파일이 남지 않게 합니다.
-    const photos = await fetchAllPages<{ storage_path: string }>((from, to) =>
-      admin
-        .from('record_photos')
-        .select('storage_path')
-        .eq('user_id', userId)
-        .order('storage_path')
-        .range(from, to),
+    const photos = await fetchAllPages<{ storage_path: string }>(
+      (after) => {
+        const query = admin
+          .from('record_photos')
+          .select('storage_path')
+          .eq('user_id', userId)
+          .order('storage_path')
+          .limit(PAGE_SIZE);
+        return after ? query.gt('storage_path', after) : query;
+      },
+      (row) => row.storage_path,
     );
     for (const paths of chunk(
       photos.map((photo) => photo.storage_path),
