@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Linking, Switch } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
@@ -10,6 +10,7 @@ import {
   type EnableResult,
 } from '../model/settings';
 import { MAX_REGIONS } from '../model/regions';
+import { useSubmitLock } from '@/shared/lib';
 
 /** 한 칸은 위치 갱신 지역으로 씁니다. */
 const NEARBY_COUNT = MAX_REGIONS - 1;
@@ -39,11 +40,10 @@ export const ArrivalAlertSwitch = ({ checkedIds }: { checkedIds: ReadonlySet<str
   const [enabled, setEnabled] = useState(isArrivalAlertEnabled);
   const [busy, setBusy] = useState(false);
   // 권한 창이 뜨는 동안 다시 누르면 요청이 겹치므로 막습니다.
-  const lock = useRef(false);
+  const lock = useSubmitLock();
 
   const toggle = async () => {
-    if (lock.current) return;
-    lock.current = true;
+    if (!lock.take()) return;
     setBusy(true);
     try {
       if (enabled) {
@@ -72,7 +72,7 @@ export const ArrivalAlertSwitch = ({ checkedIds }: { checkedIds: ReadonlySet<str
     } catch {
       toast.error('알림 설정을 바꾸지 못했습니다.');
     } finally {
-      lock.current = false;
+      lock.release();
       setBusy(false);
     }
   };

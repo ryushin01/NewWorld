@@ -32,7 +32,8 @@ export const ProfileAvatar = ({ nickname, uri, size = 64, onReady }: ProfileAvat
       {uri ? (
         <Image
           testID="profile-avatar-image"
-          source={{ uri }}
+          // 서버의 사진 주소는 불러올 때마다 서명(쿼리)이 바뀌므로 경로만으로 캐시해 다시 받지 않습니다.
+          source={{ uri, cacheKey: uri.split('?')[0] }}
           style={{ width: size, height: size }}
           contentFit="cover"
           accessibilityIgnoresInvertColors

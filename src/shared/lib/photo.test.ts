@@ -10,10 +10,12 @@ jest.mock('expo-file-system', () => ({
 
 const mockSaveAsync = jest.fn();
 const mockRenderAsync = jest.fn();
+const mockReleaseContext = jest.fn();
+const mockReleaseImage = jest.fn();
 jest.mock('expo-image-manipulator', () => ({
   SaveFormat: { JPEG: 'jpeg' },
   ImageManipulator: {
-    manipulate: jest.fn(() => ({ renderAsync: mockRenderAsync })),
+    manipulate: jest.fn(() => ({ renderAsync: mockRenderAsync, release: mockReleaseContext })),
   },
 }));
 
@@ -22,7 +24,17 @@ const photo = { uri: 'file:///p.jpg', width: 4288, height: 2848 };
 beforeEach(() => {
   jest.clearAllMocks();
   mockSaveAsync.mockResolvedValue({ uri: 'file:///out.jpg', width: 1920, height: 1275 });
-  mockRenderAsync.mockResolvedValue({ saveAsync: mockSaveAsync });
+  mockRenderAsync.mockResolvedValue({ saveAsync: mockSaveAsync, release: mockReleaseImage });
+});
+
+it('저장하거나 실패한 뒤 네이티브 이미지를 바로 놓습니다', async () => {
+  await compressPhoto(photo);
+  expect(mockReleaseImage).toHaveBeenCalledTimes(1);
+  expect(mockReleaseContext).toHaveBeenCalledTimes(1);
+  mockSaveAsync.mockRejectedValueOnce(new Error('disk full'));
+  await expect(compressPhoto(photo)).rejects.toThrow('disk full');
+  expect(mockReleaseImage).toHaveBeenCalledTimes(2);
+  expect(mockReleaseContext).toHaveBeenCalledTimes(2);
 });
 
 it('긴 변을 넘지 않게 불러온 뒤 JPEG로 저장합니다', async () => {
