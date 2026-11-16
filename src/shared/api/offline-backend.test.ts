@@ -414,6 +414,37 @@ describe('계정 분리', () => {
     expect(JSON.parse(store.get('newworld.outbox.a') as string)).toHaveLength(1);
   });
 
+  it('서버처럼 로그아웃을 마치기 전에 구독자에게 먼저 알려도 서버 사본을 지웁니다', async () => {
+    const { backend, store, server, signInAs, authOut, base } = setup();
+    // Supabase와 데모 백엔드는 signOut이 끝나기 전에 구독자에게 로그아웃을 알립니다.
+    base.auth.signOut = async () => authOut();
+    signInAs('a');
+    await backend.places.create(placeInput);
+    server.down = true;
+    await backend.places.create({ ...placeInput, name: '둘째' });
+    expect(store.has('newworld.snapshot.a')).toBe(true);
+    await backend.auth.signOut();
+    expect(store.has('newworld.snapshot.a')).toBe(false);
+    expect(JSON.parse(store.get('newworld.outbox.a') as string)).toHaveLength(1);
+  });
+
+  it('계정을 지우면 먼저 로그아웃 알림이 와도 그 계정의 보낼함·사본·대기 사진을 지웁니다', async () => {
+    const { backend, store, server, signInAs, authOut, base, removedPhotos } = setup();
+    base.auth.deleteAccount = async () => authOut();
+    signInAs('a');
+    const place = await backend.places.create(placeInput);
+    server.down = true;
+    await backend.records.create({
+      record: recordInput(place.id, '못 올린 기록'),
+      keptPhotos: [],
+      newPhotos: [{ uri: 'tmp/b.jpg', width: 10, height: 10 }],
+    });
+    await backend.auth.deleteAccount();
+    expect(store.has('newworld.snapshot.a')).toBe(false);
+    expect(store.has('newworld.outbox.a')).toBe(false);
+    expect(removedPhotos).toEqual(['saved-tmp/b.jpg']);
+  });
+
   it('저장된 보낼함·스냅숏이 깨졌어도 로그인이 막히지 않고, 읽을 수 있는 작업만 남깁니다', () => {
     const { store, sync, signInAs, server } = setup();
     server.down = true;

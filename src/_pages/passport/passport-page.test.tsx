@@ -11,6 +11,16 @@ jest.mock('react-native-view-shot', () => ({ captureRef: jest.fn() }));
 jest.mock('sonner-native', () => ({ toast: { error: jest.fn() } }));
 jest.mock('@/shared/ui/header', () => ({ Header: () => null }));
 jest.mock('@/entities/checkin', () => ({ useCheckins: () => ({ data: [] }) }));
+// 공유 잠금과 상관없는 스탬프 55개·뱃지 그림은 그리지 않아 병렬 실행에서도 빠르게 끝냅니다.
+jest.mock('@/entities/destination', () => ({
+  ...jest.requireActual('@/entities/destination'),
+  Stamp: () => null,
+}));
+jest.mock('@/features/badges', () => ({
+  ...jest.requireActual('@/features/badges'),
+  BadgeMedal: () => null,
+  BadgeShare: () => null,
+}));
 jest.mock('@/entities/place', () => ({ usePlaces: () => ({ data: [] }) }));
 jest.mock('@/entities/profile', () => ({
   ProfileAvatar: () => null,

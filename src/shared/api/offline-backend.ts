@@ -303,8 +303,10 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
   const stateListeners = new Set<() => void>();
   const syncedListeners = new Set<() => void>();
 
-  const outboxKey = () => `newworld.outbox.${userId}`;
-  const snapshotKey = () => `newworld.snapshot.${userId}`;
+  const outboxKeyOf = (id: string | null) => `newworld.outbox.${id}`;
+  const snapshotKeyOf = (id: string | null) => `newworld.snapshot.${id}`;
+  const outboxKey = () => outboxKeyOf(userId);
+  const snapshotKey = () => snapshotKeyOf(userId);
 
   const publish = () => {
     state = { online, ops };
@@ -552,17 +554,21 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
           listener(session);
         }),
       async signOut() {
+        // 서버·데모 백엔드는 로그아웃을 마치기 전에 구독자에게 알려 userId가 먼저 비므로, 떠나는 계정을 잡아 둡니다.
+        const departing = userId;
         await base.auth.signOut();
         // 올리지 못한 변경은 다시 로그인할 때 이어서 보내도록 남기고, 서버 사본만 지웁니다.
-        if (userId) deps.storage.removeItem(snapshotKey());
+        if (departing) deps.storage.removeItem(snapshotKeyOf(departing));
         setUser(null);
       },
       async deleteAccount() {
-        await base.auth.deleteAccount();
+        // 삭제를 마치기 전에 로그아웃 알림으로 userId와 보낼함이 비므로, 지울 키와 사진을 먼저 잡아 둡니다.
+        const departing = userId;
         const names = ops.flatMap(opPhotos);
-        if (userId) {
-          deps.storage.removeItem(outboxKey());
-          deps.storage.removeItem(snapshotKey());
+        await base.auth.deleteAccount();
+        if (departing) {
+          deps.storage.removeItem(outboxKeyOf(departing));
+          deps.storage.removeItem(snapshotKeyOf(departing));
         }
         ops = [];
         removeUnusedPhotos(names);

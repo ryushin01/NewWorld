@@ -39,10 +39,12 @@ export const SearchPage = () => {
   );
   const customPlaces = myPlaces.filter((place) => !place.catalogId);
   // 도감과 내 장소는 기기에서 바로 찾으므로, 서버 검색을 기다리는 동안에도 가리지 않습니다.
-  // 입력을 멈추기 전(디바운스)에도 서버 검색은 아직 시작 전이라 찾는 중으로 봅니다.
-  const searching = !!keyword && (search.isFetching || (search.isPending && !search.isError));
+  // 입력을 멈추기 전(디바운스)에는 서버 결과가 지난 검색어 것이므로 찾는 중으로 봅니다.
+  const searching =
+    !!keyword &&
+    (search.term !== keyword || search.isFetching || (search.isPending && !search.isError));
   const remoteResults = keyword && !searching ? (search.data ?? []) : [];
-  const remoteFailed = !!keyword && search.isError;
+  const remoteFailed = !!keyword && !searching && search.isError;
   const hasLocal = customPlaces.length > 0 || catalog.length > 0;
 
   const select = (result: SearchResult) => {
@@ -111,7 +113,7 @@ export const SearchPage = () => {
             keyExtractor={(item) => item.id}
             ItemSeparatorComponent={() => <Divider inset={58} />}
             ListHeaderComponent={
-              hasLocal || searching ? (
+              hasLocal || searching || remoteFailed || remoteResults.length > 0 ? (
                 <YStack paddingBottom={8}>
                   {catalog.length > 0 ? (
                     <AppText
