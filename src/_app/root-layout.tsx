@@ -1,3 +1,5 @@
+// 오류 모니터링은 다른 모듈보다 먼저 시작해 앱을 여는 중의 오류도 잡습니다.
+import { withMonitoring } from './monitoring';
 import { useQueryClient } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -85,8 +87,10 @@ const Navigator = () => {
   );
 };
 
-export const RootLayout = () => (
+const RootLayoutBase = () => (
   <Providers>
     <Navigator />
   </Providers>
 );
+
+export const RootLayout = withMonitoring(RootLayoutBase);

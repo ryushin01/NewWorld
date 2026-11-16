@@ -19,10 +19,18 @@ pnpm run ios       # 또는 pnpm run android
 
 `.env.example`을 `.env`로 복사해 채웁니다.
 
-| 변수                                                        | 용도                                                 |
-| ----------------------------------------------------------- | ---------------------------------------------------- |
-| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | 서버 연결. 없으면 데모 모드입니다.                   |
-| `GOOGLE_MAPS_ANDROID_API_KEY`                               | Android 지도. iOS는 Apple 지도를 써서 필요 없습니다. |
+| 변수                                                        | 용도                                                  |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | 서버 연결. 없으면 데모 모드입니다.                    |
+| `GOOGLE_MAPS_ANDROID_API_KEY`                               | Android 지도. iOS는 Apple 지도를 써서 필요 없습니다.  |
+| `EXPO_PUBLIC_SENTRY_DSN`                                    | 오류 모니터링(Sentry). 없으면 오류를 보내지 않습니다. |
+
+### 오류 모니터링 (Sentry)
+
+- `src/_app/monitoring.ts`가 앱을 열 때 가장 먼저 Sentry를 시작합니다. DSN이 없으면 아무것도 하지 않습니다.
+- 화면 오류(루트 `ErrorBoundary`)와 처리하지 않은 오류를 보냅니다. 아이디·IP(`sendDefaultPii`), 화면 캡처, 뷰 구조, 실패한 요청은 보내지 않고, 콘솔 기록은 버리며 요청 주소의 쿼리(서명 토큰)는 지웁니다. 성능 추적은 끕니다.
+- 켜려면 Sentry 무료 플랜에서 React Native 프로젝트를 만들고 DSN을 EAS 환경 변수 `EXPO_PUBLIC_SENTRY_DSN`에 넣은 뒤 다시 빌드합니다.
+- 지금은 소스 맵을 올리지 않아 Release 오류의 위치가 번들 기준으로 보입니다. 원래 코드 위치로 보려면 config plugin(`@sentry/react-native/expo`)과 `getSentryExpoConfig`(Metro)를 더하고, EAS에 `SENTRY_AUTH_TOKEN`을 넣고, `pnpm-workspace.yaml`의 `@sentry/cli`를 `true`로 바꿉니다.
 
 장소 검색은 Edge Function에서 OpenStreetMap 기반 [Photon](https://photon.komoot.io/) 공개 서버를 호출하므로 별도 키가 필요 없습니다. 공개 서버는 사용량 보장이 없고 한국어 지명은 잘 찾지 못하므로, 공개 배포 전에 자체 서버나 유료 지오코더로 바꿉니다. 공용 Nominatim은 Supabase Edge의 접속을 403으로 차단합니다.
 
