@@ -1,6 +1,6 @@
-import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { createMMKV } from 'react-native-mmkv';
+import { secureRandomBytes } from './random';
 
 const KEY_NAME = 'newworld.mmkv.key';
 /** 한 글자가 6비트가 되도록 64자를 씁니다(256의 약수라 고르게 나옴). MMKV 키는 16바이트까지 씁니다. */
@@ -10,7 +10,7 @@ const KEY_LENGTH = 16;
 /** 새 암호 키(96비트). 예전 판이 만든 16진수 키(64비트)는 그대로 읽어 씁니다. */
 export const createEncryptionKey = () =>
   Array.from(
-    Crypto.getRandomBytes(KEY_LENGTH),
+    secureRandomBytes(KEY_LENGTH),
     (byte) => KEY_ALPHABET[byte % KEY_ALPHABET.length],
   ).join('');
 
