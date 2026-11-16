@@ -1,10 +1,10 @@
-import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import { XStack, YStack } from 'tamagui';
 import { Field } from './field';
 import { Touchable } from './pressable';
 import { AppText } from './typography';
 import { AppIcon } from './icon';
+import { X } from './icons';
 
 type ChipProps = {
   label: string;

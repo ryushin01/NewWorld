@@ -1,6 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Map, MapPin, XCircle } from 'lucide-react-native';
 import { useMemo, useState } from 'react';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +9,18 @@ import { KindIcon, usePlaces } from '@/entities/place';
 import { usePlaceSearch } from '@/features/place-search';
 import { backend, type SearchResult } from '@/shared/api';
 import { toErrorMessage } from '@/shared/lib';
-import { AppIcon, AppText, Divider, ListRow, MessageView, Touchable } from '@/shared/ui';
+import {
+  AppIcon,
+  AppText,
+  Divider,
+  ListRow,
+  MessageView,
+  Touchable,
+  ArrowLeft,
+  Map,
+  MapPin,
+  XCircle,
+} from '@/shared/ui';
 
 export const SearchPage = () => {
   const router = useRouter();

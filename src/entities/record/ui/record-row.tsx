@@ -1,9 +1,8 @@
 import { Image } from 'expo-image';
-import { ChevronRight, Landmark, Sparkles } from 'lucide-react-native';
 import { View, XStack, YStack } from 'tamagui';
 import type { TripRecord } from '@/shared/api';
 import { formatDate } from '@/shared/lib';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, ChevronRight, Landmark, Sparkles } from '@/shared/ui';
 
 const summarize = (record: TripRecord) =>
   record.placeKind === 'real'

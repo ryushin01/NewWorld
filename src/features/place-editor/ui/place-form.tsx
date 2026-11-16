@@ -1,5 +1,4 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { MapPin } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -9,7 +8,7 @@ import { View, XStack, YStack } from 'tamagui';
 import { KIND_META, PLACE_KINDS, useSavePlace } from '@/entities/place';
 import { savedMessage, type Place, type PlaceInput } from '@/shared/api';
 import { formatCoordinate, toErrorMessage, useUnsavedGuard } from '@/shared/lib';
-import { AppIcon, AppText, StickyBottomCta, Chip, Field, TagInput } from '@/shared/ui';
+import { AppIcon, AppText, StickyBottomCta, Chip, Field, TagInput, MapPin } from '@/shared/ui';
 import { placeSchema } from '../model/schema';
 
 type PlaceFormProps = {

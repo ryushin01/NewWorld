@@ -1,7 +1,7 @@
 # NewWorld - 신세계
 
 [![CI](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml/badge.svg)](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml)
-![version](https://img.shields.io/badge/version-2.11.0-c2792b)
+![version](https://img.shields.io/badge/version-2.12.0-c2792b)
 
 피라미드와 잉카 유적부터 아발론과 에덴 동산까지, 역사와 신화·전설 속 여행지를 탐험하고 기록하는 모바일 앱입니다.
 
@@ -129,7 +129,7 @@ src/
 | 유앤피플 고딕 UNI | 한글 본문, 제목에서 한글재민체에 없는 한글 | 400  |
 | Sorts Mill Goudy  | 여행지 영문 원어명                         | 400  |
 
-저작자·라이선스·원본은 아래 출처 표에 있습니다. 한글재민체는 한글 2,350자만 그리고 나머지는 빈칸이라, 그린 글자만 남기고 빠진 한글은 유앤피플 고딕으로 채워 한 파일로 합쳤습니다(`assets/fonts/newworld-title`). 사용자가 쓴 닉네임·여행기 제목에 드문 글자가 있어도 빈칸 없이 본문 글꼴로 보입니다. 유앤피플 고딕 UNI는 한글 11,172자를 모두 그린 공식 배포 파일 그대로입니다(`assets/fonts/unpeople-gothic`).
+저작자·라이선스·원본은 아래 출처 표에 있습니다. 한글재민체는 한글 2,350자만 그리고 나머지는 빈칸이라, 그린 글자만 남기고 빠진 한글은 유앤피플 고딕으로 채워 한 파일로 합쳤습니다(`assets/fonts/newworld-title`). 사용자가 쓴 닉네임·여행기 제목에 드문 글자가 있어도 빈칸 없이 본문 글꼴로 보입니다. 유앤피플 고딕 UNI는 한글 11,172자를 모두 그린 공식 배포 파일에서 화면에 쓰지 않는 힌팅만 빼 2.5MB를 1.2MB로 줄였습니다(`assets/fonts/unpeople-gothic`, 글자 모양·간격은 그대로).
 
 ## 출처
 

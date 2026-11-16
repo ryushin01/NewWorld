@@ -1,6 +1,5 @@
 import * as Clipboard from 'expo-clipboard';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
-import { Copy, ExternalLink, MapPin, Share2 } from 'lucide-react-native';
 import { Alert, ScrollView, Share } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
@@ -20,6 +19,10 @@ import {
   MessageView,
   Tag,
   Touchable,
+  Copy,
+  ExternalLink,
+  MapPin,
+  Share2,
 } from '@/shared/ui';
 import { PlaceMarker } from '@/widgets/place-map';
 

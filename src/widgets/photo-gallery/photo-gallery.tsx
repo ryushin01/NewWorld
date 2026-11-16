@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import { X } from 'lucide-react-native';
 import { useState } from 'react';
 import { FlatList, Modal, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -7,7 +6,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'tamagui';
 import type { Photo } from '@/shared/api';
-import { AppText, Touchable } from '@/shared/ui';
+import { AppText, Touchable, X } from '@/shared/ui';
 
 const ZoomableImage = ({
   photo,

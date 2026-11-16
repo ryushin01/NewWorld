@@ -11,3 +11,4 @@ export { AppText } from './typography';
 export { useAppFonts } from './fonts';
 export { useColors } from './colors';
 export { AppIcon } from './icon';
+export * from './icons';

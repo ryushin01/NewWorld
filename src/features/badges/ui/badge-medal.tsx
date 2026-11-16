@@ -1,4 +1,8 @@
+import { View, YStack } from 'tamagui';
+import { formatDay } from '@/shared/lib';
 import {
+  AppIcon,
+  AppText,
   Compass,
   Crown,
   DoorOpen,
@@ -11,10 +15,7 @@ import {
   Sparkles,
   TreePalm,
   type LucideIcon,
-} from 'lucide-react-native';
-import { View, YStack } from 'tamagui';
-import { formatDay } from '@/shared/lib';
-import { AppIcon, AppText } from '@/shared/ui';
+} from '@/shared/ui';
 import type { BadgeIcon, BadgeStatus } from '../model/badges';
 
 const ICONS: Record<BadgeIcon, LucideIcon> = {

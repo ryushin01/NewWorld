@@ -1,5 +1,5 @@
-import type { LucideIcon } from 'lucide-react-native';
 import { useColors, type ColorName } from './colors';
+import { type LucideIcon } from './icons';
 
 type AppIconProps = {
   icon: LucideIcon;
