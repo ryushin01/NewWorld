@@ -38,12 +38,12 @@ pnpm run ios       # 또는 pnpm run android
 
 ## 서버 준비 (Supabase)
 
-> **주의:** `20261108000000_ruins_travel.sql`은 이전 낚시·맛집 기록의 전용 칸을 삭제하며 되돌릴 수 없습니다. 기존 데이터가 있는 서버는 `npx supabase db dump --data-only`로 백업한 뒤 `db push`를 실행합니다.
+> **주의:** `20261108000000_ruins_travel.sql`은 이전 낚시·맛집 기록의 전용 칸을 삭제하며 되돌릴 수 없습니다. 기존 데이터가 있는 서버는 [백업과 복원](#백업과-복원)대로 받은 뒤 `db push`를 실행합니다.
 
 ```bash
 npx supabase login
 npx supabase link --project-ref <프로젝트 ID>
-npx supabase db push
+npx supabase db push --remote   # CLI 3부터 --remote가 없으면 로컬 DB에 적용합니다.
 npx supabase config push   # 메일 인증 끄기(아이디 가입) 등 인증 설정을 올립니다.
 npx supabase functions deploy place-search
 npx supabase functions deploy delete-account
@@ -232,7 +232,7 @@ Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링�
 
 ## 서버 적용 현황
 
-Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
+Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push --remote`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
 
 ## 백업과 복원
 
@@ -248,14 +248,15 @@ npx supabase storage cp -r --remote --experimental ss:///avatars backup/avatars
 
 - `data.sql`에는 앱 데이터(장소·기록·체크리스트·여정·현장 인증·프로필)와 계정(`auth`)이 들어갑니다. 버킷 행은 마이그레이션이 만들고 사진 목록 행(`storage.objects`)은 사진을 다시 올릴 때 새로 생기므로 뺍니다. 넣어 두면 되돌릴 때 같은 행이 겹쳐 멈춥니다.
 - 사진 경로(`{user_id}/{record_id}/{파일}`)가 그대로여야 기록과 맞고 접근 정책(첫 폴더가 본인 ID)도 통합니다. `cp -r`은 경로를 그대로 둡니다.
+- 데이터 덤프와 사진 복사 사이에 바뀐 사진은 서로 맞지 않습니다. 앱에는 점검 화면이 없으므로 이용이 적은 시간에 받고, 덤프 바로 뒤에 사진을 받습니다. 그사이 지운 사진은 되돌린 뒤 기록에는 남지만 파일이 없어 서명 주소가 비고(화면에 나오지 않음), 새로 올린 사진은 기록 없이 파일만 남습니다.
 - 받은 날짜와 보관 위치를 적어 둡니다.
 
 ### 되돌리기 (새 프로젝트)
 
 1. `npx supabase link --project-ref <새 프로젝트>`: 이후 명령이 모두 새 프로젝트로 갑니다.
-2. `npx supabase db push`: 스키마, RLS·저장소 정책, 버킷, 마이그레이션 기록
+2. `npx supabase db push --remote`: 스키마, RLS·저장소 정책, 버킷, 마이그레이션 기록(`--remote`가 없으면 로컬 DB에 적용)
 3. `npx supabase config push`: 메일 인증 끄기, 비밀번호 8자 이상. 새 프로젝트는 메일 인증이 켜져 있어 아이디 가입이 막힙니다.
-4. `npx supabase functions deploy delete-account recover-account`(기본 환경 변수만 써서 따로 넣을 비밀 값은 없음)
+4. `npx supabase functions deploy`: 이름 없이 실행해 `place-search`·`delete-account`·`recover-account`를 모두 올립니다(기본 환경 변수만 써서 따로 넣을 비밀 값은 없음).
 5. `psql --single-transaction --variable ON_ERROR_STOP=1 --command 'SET session_replication_role = replica' --file data.sql --dbname <새 DB 연결 문자열>`
 6. `npx supabase storage cp -r --remote --experimental backup/record-photos ss:///record-photos`(`avatars`도 같음)
 7. 앱의 `EXPO_PUBLIC_SUPABASE_URL`·`EXPO_PUBLIC_SUPABASE_ANON_KEY`(EAS 환경 변수)를 새 프로젝트 값으로 바꿔 다시 빌드합니다.
