@@ -8,7 +8,7 @@ import { searchDestinations } from '@/entities/destination';
 import { KindIcon, usePlaces } from '@/entities/place';
 import { usePlaceSearch } from '@/features/place-search';
 import { backend, type SearchResult } from '@/shared/api';
-import { toErrorMessage } from '@/shared/lib';
+import { matchesSearch, toErrorMessage } from '@/shared/lib';
 import {
   AppIcon,
   AppText,
@@ -35,7 +35,7 @@ export const SearchPage = () => {
       keyword
         ? (places.data ?? []).filter(
             (place) =>
-              place.name.includes(keyword) ||
+              matchesSearch(place.name, keyword) ||
               place.address.includes(keyword) ||
               place.tags.some((tag) => tag.includes(keyword)),
           )

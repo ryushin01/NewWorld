@@ -11,6 +11,7 @@ export { useSubmitLock } from './use-submit-lock';
 export { withTimeout } from './timeout';
 export { fieldErrorMessage } from './field-error';
 export { openInMaps, openLink } from './open-link';
+export { matchesSearch } from './hangul';
 export {
   createRecoveryCode,
   formatRecoveryCode,

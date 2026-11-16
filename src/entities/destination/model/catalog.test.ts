@@ -31,3 +31,10 @@ it('이름, 원어, 지역으로 찾고 실존·환상을 가릅니다', () => {
   expect(searchDestinations('마추픽추', 'fantasy')).toEqual([]);
   expect(findDestination('없는곳')).toBeUndefined();
 });
+
+it('이름과 지역은 초성이나 치는 중인 마지막 글자로도 찾습니다', () => {
+  expect(searchDestinations('ㅍㄹㅁㄷ').map((item) => item.id)).toContain('giza');
+  expect(searchDestinations('ㅇㅂㄹ', 'fantasy').map((item) => item.id)).toContain('avalon');
+  expect(searchDestinations('아발로').map((item) => item.id)).toEqual(['avalon']);
+  expect(searchDestinations('ㅁㅊㅍㅊ').map((item) => item.id)).toEqual(['machu-picchu']);
+});
