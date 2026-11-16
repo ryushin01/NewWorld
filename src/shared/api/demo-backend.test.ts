@@ -99,6 +99,39 @@ it('사진을 한 장씩 줄여 큰 사진 여러 장을 한꺼번에 풀지 않
   await api.places.remove(place.id);
 });
 
+it('뒤 사진을 줄이지 못하면 앞에서 저장한 사진 파일도 지우고 오류를 그대로 알립니다', async () => {
+  const { compressPhoto, photoStore } = jest.requireMock('../lib/photo') as {
+    compressPhoto: jest.Mock;
+    photoStore: { write: jest.Mock; remove: jest.Mock };
+  };
+  compressPhoto
+    .mockResolvedValueOnce({ bytes: new ArrayBuffer(1), width: 10, height: 10 })
+    .mockRejectedValueOnce(new Error('Unsupported photo format'));
+  photoStore.write.mockResolvedValueOnce('first.jpg');
+  photoStore.remove.mockClear();
+  const place = await api.places.create({
+    name: '실패 유적',
+    kind: 'real',
+    address: '',
+    latitude: 36,
+    longitude: 129,
+    memo: '',
+    tags: [],
+    catalogId: null,
+    wishlisted: false,
+  });
+  await expect(
+    api.records.create({
+      record: baseRecord(place.id),
+      keptPhotos: [],
+      newPhotos: [1, 2].map((n) => ({ uri: `file:///${n}.jpg`, width: 10, height: 10 })),
+    }),
+  ).rejects.toThrow('Unsupported photo format');
+  expect(photoStore.remove).toHaveBeenCalledWith('first.jpg');
+  expect((await api.places.get(place.id)).recordCount).toBe(0);
+  await api.places.remove(place.id);
+});
+
 const signUpInput = {
   username: 'ryushin0',
   password: 'password1',

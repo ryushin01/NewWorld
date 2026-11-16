@@ -8,8 +8,8 @@
 - 버그: 기기가 바쁠 때 사진 저장이 몇 분씩 끝나지 않던 문제. expo-image-manipulator가 iOS에서 사진 줄이기를 가장 낮은 우선순위(`.background`)로 돌려, 부하가 높은 시뮬레이터에서 HEIC 사진 한 장에 7분이 걸렸음. 사용자가 기다리는 작업의 우선순위(`.userInitiated`)로 바꾸는 패치를 넣음(`patches/`, 같은 사진 29초 → 0.35초). SDK 58은 Expo 모듈을 미리 컴파일해 링크하므로 이 모듈만 소스로 빌드(`expo.autolinking.ios.buildFromSource`)
 - 용량: 줄인 사진을 올리거나 보관한 뒤 캐시 폴더(`ImageManipulator`)에 남던 임시 JPEG를 바로 지움. 저장한 사진 수만큼 앱 용량이 늘어나던 문제
 - 버그: 기록에 같은 사진을 다시 고르면 두 번 붙던 문제. 선택기가 고를 때마다 사진을 새 파일로 복사해 주소로는 같은 사진을 알아보지 못했음(iOS). 보관함 ID(`assetId`)가 있으면 그것으로 비교. 사진 선택 칸에 테스트와 스토리 추가
-- 메모리: 데모 모드도 서버 모드처럼 사진을 한 장씩 줄임(여러 장을 한꺼번에 풀지 않음)
-- 로컬 Release 빌드(E2E, README 화면 촬영) 전에 `expo prebuild --no-clean`으로 app.config의 아이콘·스플래시·권한을 네이티브 폴더에 반영. 출시 체크리스트(`docs/release-checklist.md`)
+- 메모리: 데모 모드도 서버 모드처럼 사진을 한 장씩 줄임(여러 장을 한꺼번에 풀지 않음). 중간 사진이 실패하면 앞에서 저장한 파일을 지워 기록 없이 남는 파일이 없음
+- 로컬 Release 빌드(E2E, README 화면 촬영) 전에 `expo prebuild --no-clean`으로 app.config의 아이콘·스플래시·권한을 네이티브 폴더에 반영. 출시 체크리스트(`docs/release-checklist.md`, DB 역할·스키마·데이터 덤프와 사진 버킷 백업·되돌리기 포함)
 
 ## 2.15.0 - 미출시
 
