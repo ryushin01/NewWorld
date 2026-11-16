@@ -1,6 +1,6 @@
 {
   "name": "newworld",
-  "version": "2.14.0",
+  "version": "2.15.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/sorts-mill-goudy": "^0.4.1",
