@@ -44,4 +44,14 @@ describe('recordFormSchema', () => {
   it('선택 항목은 비워 둘 수 있습니다', () => {
     expect(recordFormSchema.safeParse(toFormValues()).success).toBe(true);
   });
+  it('DB 제약과 같은 길이 상한을 넘으면 거부합니다', () => {
+    const long = (length: number) => 'ㄱ'.repeat(length);
+    expect(recordFormSchema.safeParse({ ...values(), memo: long(2000) }).success).toBe(true);
+    expect(recordFormSchema.safeParse({ ...values(), memo: long(2001) }).success).toBe(false);
+    expect(recordFormSchema.safeParse({ ...values(), lodging: long(201) }).success).toBe(false);
+    expect(recordFormSchema.safeParse({ ...values(), encounters: long(2001) }).success).toBe(false);
+    expect(recordFormSchema.safeParse({ ...values(), members: [long(31)] }).success).toBe(false);
+    const crowd = Array.from({ length: 51 }, (_, index) => `동행${index}`);
+    expect(recordFormSchema.safeParse({ ...values(), members: crowd }).success).toBe(false);
+  });
 });

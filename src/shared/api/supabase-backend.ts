@@ -9,6 +9,7 @@ import { createRecoveryCode, hashRecoveryCode } from '../lib/recovery-code';
 import { storageAdapter } from '../lib/storage';
 import { isRecord, parseStoredJson } from '../lib/stored-json';
 import { withTimeout } from '../lib/timeout';
+import { chunk, fetchAllPages } from './pages';
 import type {
   Backend,
   ChecklistItem,
@@ -27,6 +28,8 @@ import type {
 const AUTH_STORAGE_KEY = 'newworld.supabase-auth';
 const SIGN_OUT_TIMEOUT = 5000;
 const SIGNED_URL_TTL = 60 * 60 * 24 * 7;
+/** 서명 주소 만들기와 파일 삭제는 한 번에 보내는 경로 수를 나눕니다. */
+const STORAGE_BATCH = 100;
 
 const client = createClient(env.supabaseUrl, env.supabaseAnonKey, {
   auth: {
@@ -189,15 +192,20 @@ const RECORD_SELECT =
   '*, places(name, kind), record_photos(id, storage_path, width, height, position)';
 
 const signPhotos = async (rows: PhotoRow[]): Promise<Map<string, string>> => {
-  if (rows.length === 0) return new Map();
-  const { data, error } = await client.storage.from(PHOTO_BUCKET).createSignedUrls(
+  const urls = new Map<string, string>();
+  for (const paths of chunk(
     rows.map((row) => row.storage_path),
-    SIGNED_URL_TTL,
-  );
-  if (error) throw error;
-  return new Map(
-    data.flatMap((item) => (item.path && item.signedUrl ? [[item.path, item.signedUrl]] : [])),
-  );
+    STORAGE_BATCH,
+  )) {
+    const { data, error } = await client.storage
+      .from(PHOTO_BUCKET)
+      .createSignedUrls(paths, SIGNED_URL_TTL);
+    if (error) throw error;
+    for (const item of data) {
+      if (item.path && item.signedUrl) urls.set(item.path, item.signedUrl);
+    }
+  }
+  return urls;
 };
 
 const toRecords = async (rows: RecordRow[]): Promise<TripRecord[]> => {
@@ -302,9 +310,10 @@ const currentUserId = async () => {
 };
 
 const removeFiles = async (paths: string[]) => {
-  if (paths.length === 0) return;
-  const { error } = await client.storage.from(PHOTO_BUCKET).remove(paths);
-  if (error) throw error;
+  for (const batch of chunk(paths, STORAGE_BATCH)) {
+    const { error } = await client.storage.from(PHOTO_BUCKET).remove(batch);
+    if (error) throw error;
+  }
 };
 
 /** 업로드 직후 끊겨 행 없이 남은 파일을 지웁니다. 실패해도 저장 결과에는 영향이 없습니다. */
@@ -502,6 +511,8 @@ export const supabaseBackend: Backend = {
       await verifyPassword(current);
       const { error } = await client.auth.updateUser({ password: next });
       if (error) throw error;
+      // 비밀번호를 바꾸면 다른 기기에 남은 로그인을 끊습니다. 실패해도 비밀번호는 이미 바뀌었습니다.
+      await client.auth.signOut({ scope: 'others' }).catch(() => undefined);
     },
     async deleteAccount() {
       const { error } = await client.functions.invoke('delete-account', { method: 'POST' });
@@ -559,12 +570,15 @@ export const supabaseBackend: Backend = {
   },
   places: {
     async list() {
-      const { data, error } = await client
-        .from('place_summaries')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return (data as PlaceRow[]).map(toPlace);
+      const rows = await fetchAllPages<PlaceRow>((from, to) =>
+        client
+          .from('place_summaries')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to),
+      );
+      return rows.map(toPlace);
     },
     get: getPlace,
     async create(input, id) {
@@ -583,12 +597,16 @@ export const supabaseBackend: Backend = {
     },
     async remove(id) {
       // 행이 먼저 지워지면 경로를 알 수 없으므로 사진 경로부터 조회합니다.
-      const { data: records, error: recordError } = await client
-        .from('records')
-        .select('record_photos(storage_path)')
-        .eq('place_id', id);
-      if (recordError) throw recordError;
-      const paths = (records as { record_photos: { storage_path: string }[] }[]).flatMap((record) =>
+      const records = await fetchAllPages<{ record_photos: { storage_path: string }[] }>(
+        (from, to) =>
+          client
+            .from('records')
+            .select('record_photos(storage_path)')
+            .eq('place_id', id)
+            .order('id')
+            .range(from, to),
+      );
+      const paths = records.flatMap((record) =>
         record.record_photos.map((photo) => photo.storage_path),
       );
       const { error } = await client.from('places').delete().eq('id', id);
@@ -598,14 +616,16 @@ export const supabaseBackend: Backend = {
   },
   records: {
     async list(filter) {
-      let query = client
-        .from('records')
-        .select(RECORD_SELECT)
-        .order('visited_at', { ascending: false });
-      if (filter?.placeId) query = query.eq('place_id', filter.placeId);
-      const { data, error } = await query;
-      if (error) throw error;
-      return toRecords(data as RecordRow[]);
+      const rows = await fetchAllPages<RecordRow>((from, to) => {
+        let query = client
+          .from('records')
+          .select(RECORD_SELECT)
+          .order('visited_at', { ascending: false })
+          .order('id');
+        if (filter?.placeId) query = query.eq('place_id', filter.placeId);
+        return query.range(from, to);
+      });
+      return toRecords(rows);
     },
     get: getRecord,
     async create(input, id) {
@@ -643,12 +663,15 @@ export const supabaseBackend: Backend = {
   },
   checklist: {
     async list() {
-      const { data, error } = await client
-        .from('checklist_items')
-        .select('id, title, category, checked, position, list_name')
-        .order('position');
-      if (error) throw error;
-      return (data as ChecklistRow[]).map(({ list_name, ...item }) => ({
+      const rows = await fetchAllPages<ChecklistRow>((from, to) =>
+        client
+          .from('checklist_items')
+          .select('id, title, category, checked, position, list_name')
+          .order('position')
+          .order('id')
+          .range(from, to),
+      );
+      return rows.map(({ list_name, ...item }) => ({
         ...item,
         listName: list_name,
       }));
@@ -666,12 +689,15 @@ export const supabaseBackend: Backend = {
   },
   trips: {
     async list() {
-      const { data, error } = await client
-        .from('trips')
-        .select('id, title, start_date, end_date, stops, memo')
-        .order('start_date', { ascending: true, nullsFirst: false });
-      if (error) throw error;
-      return (data as TripRow[]).map(toTrip);
+      const rows = await fetchAllPages<TripRow>((from, to) =>
+        client
+          .from('trips')
+          .select('id, title, start_date, end_date, stops, memo')
+          .order('start_date', { ascending: true, nullsFirst: false })
+          .order('id')
+          .range(from, to),
+      );
+      return rows.map(toTrip);
     },
     async save({ id, title, startDate, endDate, stops, memo }) {
       const { data, error } = await client
@@ -689,12 +715,15 @@ export const supabaseBackend: Backend = {
   },
   checkins: {
     async list() {
-      const { data, error } = await client
-        .from('checkins')
-        .select(CHECKIN_SELECT)
-        .order('checked_at', { ascending: true });
-      if (error) throw error;
-      return (data as CheckInRow[]).map(toCheckIn);
+      const rows = await fetchAllPages<CheckInRow>((from, to) =>
+        client
+          .from('checkins')
+          .select(CHECKIN_SELECT)
+          .order('checked_at', { ascending: true })
+          .order('id')
+          .range(from, to),
+      );
+      return rows.map(toCheckIn);
     },
     async create(checkIn) {
       // 여행지마다 하나만 남기므로 이미 있으면 새로 쓰지 않고 기존 행을 돌려줍니다.

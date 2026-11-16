@@ -7,6 +7,7 @@ import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
 import { KIND_META, PLACE_KINDS, useSavePlace } from '@/entities/place';
 import { savedMessage, type Place, type PlaceInput } from '@/shared/api';
+import { LIMITS } from '@/shared/config';
 import { formatCoordinate, toErrorMessage, useUnsavedGuard } from '@/shared/lib';
 import { AppIcon, AppText, StickyBottomCta, Chip, Field, TagInput, MapPin } from '@/shared/ui';
 import { placeSchema } from '../model/schema';
@@ -100,6 +101,7 @@ export const PlaceForm = ({ placeId, initial, onSaved }: PlaceFormProps) => {
               label="장소 이름"
               required
               placeholder="예: 이름 모를 고분군"
+              maxLength={LIMITS.title}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -117,21 +119,25 @@ export const PlaceForm = ({ placeId, initial, onSaved }: PlaceFormProps) => {
               value={field.value}
               onChange={field.onChange}
               testID="place-tag"
+              maxItems={LIMITS.tags}
+              maxLength={LIMITS.tagLength}
             />
           )}
         />
         <Controller
           control={control}
           name="memo"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field
               testID="place-memo"
               label="메모"
               multiline
               placeholder="찾아가는 길, 입장 방법, 주의할 점 등"
+              maxLength={LIMITS.longText}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
+              error={fieldState.error?.message}
             />
           )}
         />
