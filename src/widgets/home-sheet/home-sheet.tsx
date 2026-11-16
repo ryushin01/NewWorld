@@ -1,7 +1,6 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import { ArrowRight, ChevronRight, ListChecks, MapPin, Square, X } from 'lucide-react-native';
 import { ScrollView } from 'react-native';
 import { View, XStack, YStack } from 'tamagui';
 import { summarizeChecklist, useChecklist } from '@/entities/checklist';
@@ -10,7 +9,21 @@ import { findDestination } from '@/entities/destination';
 import { RecordRow, useRecords } from '@/entities/record';
 import type { Place, PlaceKind } from '@/shared/api';
 import { formatDate } from '@/shared/lib';
-import { AppIcon, AppText, Button, Chip, Divider, Tag, Touchable } from '@/shared/ui';
+import {
+  AppIcon,
+  AppText,
+  Button,
+  Chip,
+  Divider,
+  Tag,
+  Touchable,
+  ArrowRight,
+  ChevronRight,
+  ListChecks,
+  MapPin,
+  Square,
+  X,
+} from '@/shared/ui';
 
 /** verified는 현장 인증한 여행지만 보여 줍니다. */
 export type KindFilter = PlaceKind | 'all' | 'verified';

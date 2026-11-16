@@ -1,7 +1,6 @@
-import { Check, Trash2 } from 'lucide-react-native';
 import { View, XStack } from 'tamagui';
 import type { ChecklistItem } from '@/shared/api';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, Check, Trash2 } from '@/shared/ui';
 
 type ChecklistRowProps = {
   item: ChecklistItem;

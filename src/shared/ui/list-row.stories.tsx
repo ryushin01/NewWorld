@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-native';
-import { MapPin } from 'lucide-react-native';
 import { ListRow } from './list-row';
 import { AppIcon } from './icon';
+import { MapPin } from './icons';
 
 const meta: Meta<typeof ListRow> = {
   title: 'shared/ListRow',

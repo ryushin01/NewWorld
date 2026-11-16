@@ -1,6 +1,6 @@
 {
   "name": "newworld",
-  "version": "2.11.0",
+  "version": "2.12.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/sorts-mill-goudy": "^0.4.1",
@@ -105,7 +105,8 @@
       "^@/(.*)$": "<rootDir>/src/$1",
       "^~/(.*)$": "<rootDir>/$1",
       "^@tamagui/style-grammar/token-categories$": "<rootDir>/node_modules/@tamagui/style-grammar/dist/cjs/tokenCategories.cjs",
-      "^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js"
+      "^lucide-react-native$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/lucide-react-native.js",
+      "^lucide-react-native/icons/(.*)$": "<rootDir>/node_modules/lucide-react-native/dist/cjs/icons/$1.js"
     },
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|expo(nent)?|@expo(nent)?/.*|react-navigation|@react-navigation/.*|tamagui|@tamagui/.*|sonner-native|supercluster|kdbush|standard-navigation|@expo-google-fonts/.*))"

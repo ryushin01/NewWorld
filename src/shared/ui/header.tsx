@@ -1,11 +1,11 @@
 import { useRouter } from 'expo-router';
-import { ArrowLeft, X } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View, XStack } from 'tamagui';
 import { Touchable } from './pressable';
 import { AppText } from './typography';
 import { AppIcon } from './icon';
+import { ArrowLeft, X } from './icons';
 
 type HeaderProps = {
   title: string;

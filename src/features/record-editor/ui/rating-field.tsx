@@ -1,6 +1,5 @@
-import { Star } from 'lucide-react-native';
 import { XStack, YStack } from 'tamagui';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, Star } from '@/shared/ui';
 
 type RatingFieldProps = { value: number | null; onChange: (next: number | null) => void };
 
