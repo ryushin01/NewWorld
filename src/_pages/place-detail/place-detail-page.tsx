@@ -1,14 +1,12 @@
 import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { Copy, ExternalLink, MapPin, Share2 } from 'lucide-react-native';
-import { Alert, Platform, ScrollView, Share } from 'react-native';
+import { Alert, ScrollView, Share } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
 import { KIND_META, KindBadge, useDeletePlace, usePlace } from '@/entities/place';
 import { RecordRow, useRecords } from '@/entities/record';
-import type { Place } from '@/shared/api';
-import { formatCoordinate, toErrorMessage } from '@/shared/lib';
+import { formatCoordinate, openInMaps, toErrorMessage } from '@/shared/lib';
 import {
   AppIcon,
   AppMapView,
@@ -24,15 +22,6 @@ import {
   Touchable,
 } from '@/shared/ui';
 import { PlaceMarker } from '@/widgets/place-map';
-
-const openInMaps = ({ latitude, longitude, name }: Place) => {
-  const label = encodeURIComponent(name);
-  const url =
-    Platform.OS === 'ios'
-      ? `https://maps.apple.com/?ll=${latitude},${longitude}&q=${label}`
-      : `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`;
-  Linking.openURL(url).catch(() => toast.error('지도 앱을 열지 못했습니다.'));
-};
 
 const ActionButton = ({
   label,
@@ -158,7 +147,9 @@ export const PlaceDetailPage = () => {
           <ActionButton
             label="지도 앱"
             icon={<AppIcon icon={ExternalLink} size={20} color="ink" strokeWidth={1.5} />}
-            onPress={() => openInMaps(data)}
+            onPress={() =>
+              openInMaps(data).then((opened) => opened || toast.error('지도 앱을 열지 못했습니다.'))
+            }
           />
           <ActionButton
             label="주소 복사"

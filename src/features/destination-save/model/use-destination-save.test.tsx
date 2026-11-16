@@ -37,8 +37,14 @@ const saved = {
   createdAt: '',
 } as Place;
 
+// gcTime이 Infinity면 캐시 정리 타이머를 두지 않아 테스트가 끝난 뒤 작업자가 바로 끝납니다.
+const testClient = () =>
+  new QueryClient({
+    defaultOptions: { queries: { gcTime: Infinity }, mutations: { gcTime: Infinity } },
+  });
+
 const wrapper = ({ children }: { children: ReactNode }) => (
-  <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>
+  <QueryClientProvider client={testClient()}>{children}</QueryClientProvider>
 );
 
 beforeEach(() => {

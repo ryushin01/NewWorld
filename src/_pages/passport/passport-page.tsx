@@ -1,10 +1,8 @@
 import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import * as Sharing from 'expo-sharing';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { ScrollView, useWindowDimensions } from 'react-native';
-import { captureRef } from 'react-native-view-shot';
+import { ScrollView, useWindowDimensions, type View as NativeView } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
 import { useCheckins } from '@/entities/checkin';
@@ -13,6 +11,7 @@ import { ProfileAvatar, useProfile } from '@/entities/profile';
 import { usePlaces } from '@/entities/place';
 import { BadgeMedal, BadgeShare, evaluateBadges } from '@/features/badges';
 import { savedByCatalogId } from '@/features/destination-save';
+import { useCaptureShare } from '@/shared/lib';
 import { AppText, Button, Header } from '@/shared/ui';
 
 const COLUMNS = 3;
@@ -36,8 +35,9 @@ export const PassportPage = () => {
   const markAvatarLoaded = useCallback(() => setLoadedUrl(avatarUrl), [avatarUrl]);
   const avatarReady = !profileLoading && (!avatarUrl || loadedUrl === avatarUrl);
   const { width } = useWindowDimensions();
-  const card = useRef(null) as unknown as Parameters<typeof captureRef>[0];
-  const [sharing, setSharing] = useState(false);
+  const card = useRef<NativeView>(null);
+  // 상태로만 막으면 다음 렌더 전의 두 번째 누름이 공유 창을 또 엽니다. 공통 훅이 ref로 잠급니다.
+  const { share: captureShare, sharing } = useCaptureShare();
   const [badgeShareOpen, setBadgeShareOpen] = useState(false);
   const size = (width - GUTTER * 2 - GAP * (COLUMNS - 1)) / COLUMNS - 8;
 
@@ -61,15 +61,8 @@ export const PassportPage = () => {
     }`;
 
   const share = async () => {
-    if (sharing) return;
-    setSharing(true);
-    try {
-      const uri = await captureRef(card, { format: 'png', quality: 1 });
-      await Sharing.shareAsync(uri, { mimeType: 'image/png', dialogTitle: '신세계 여권 공유' });
-    } catch {
+    if (!(await captureShare(card, { dialogTitle: '신세계 여권 공유', format: 'png' }))) {
       toast.error('여권을 공유하지 못했습니다.');
-    } finally {
-      setSharing(false);
     }
   };
 

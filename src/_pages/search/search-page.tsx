@@ -10,15 +10,7 @@ import { KindIcon, usePlaces } from '@/entities/place';
 import { usePlaceSearch } from '@/features/place-search';
 import { backend, type SearchResult } from '@/shared/api';
 import { toErrorMessage } from '@/shared/lib';
-import {
-  AppIcon,
-  AppText,
-  Divider,
-  ListRow,
-  LoadingView,
-  MessageView,
-  Touchable,
-} from '@/shared/ui';
+import { AppIcon, AppText, Divider, ListRow, MessageView, Touchable } from '@/shared/ui';
 
 export const SearchPage = () => {
   const router = useRouter();
@@ -46,6 +38,14 @@ export const SearchPage = () => {
     [keyword],
   );
   const customPlaces = myPlaces.filter((place) => !place.catalogId);
+  // 도감과 내 장소는 기기에서 바로 찾으므로, 서버 검색을 기다리는 동안에도 가리지 않습니다.
+  // 입력을 멈추기 전(디바운스)에는 서버 결과가 지난 검색어 것이므로 찾는 중으로 봅니다.
+  const searching =
+    !!keyword &&
+    (search.term !== keyword || search.isFetching || (search.isPending && !search.isError));
+  const remoteResults = keyword && !searching ? (search.data ?? []) : [];
+  const remoteFailed = !!keyword && !searching && search.isError;
+  const hasLocal = customPlaces.length > 0 || catalog.length > 0;
 
   const select = (result: SearchResult) => {
     const params = new URLSearchParams({
@@ -100,22 +100,20 @@ export const SearchPage = () => {
         </XStack>
       </View>
       <YStack flex={1}>
-        {keyword && search.isError && customPlaces.length === 0 && catalog.length === 0 ? (
+        {remoteFailed && !hasLocal ? (
           <MessageView
             message={toErrorMessage(search.error, '검색하지 못했습니다.')}
             actionLabel="다시 시도"
             onAction={() => search.refetch()}
           />
-        ) : keyword && search.isPending ? (
-          <LoadingView label="검색 중입니다." />
         ) : (
           <FlashList
             keyboardShouldPersistTaps="handled"
-            data={search.data ?? []}
+            data={remoteResults}
             keyExtractor={(item) => item.id}
             ItemSeparatorComponent={() => <Divider inset={58} />}
             ListHeaderComponent={
-              customPlaces.length > 0 || catalog.length > 0 ? (
+              hasLocal || searching || remoteFailed || remoteResults.length > 0 ? (
                 <YStack paddingBottom={8}>
                   {catalog.length > 0 ? (
                     <AppText
@@ -162,7 +160,7 @@ export const SearchPage = () => {
                       onPress={() => router.push(`/place/${place.id}`)}
                     />
                   ))}
-                  {keyword && search.isError ? (
+                  {remoteFailed ? (
                     <AppText
                       size="caption"
                       tone="muted"
@@ -173,7 +171,19 @@ export const SearchPage = () => {
                       새 장소를 검색하지 못했습니다. 연결을 확인하거나 지도에서 설정해 주세요.
                     </AppText>
                   ) : null}
-                  {keyword && search.data?.length ? (
+                  {searching ? (
+                    <AppText
+                      testID="search-remote-loading"
+                      size="caption"
+                      tone="muted"
+                      paddingHorizontal={20}
+                      paddingTop={12}
+                      accessibilityLiveRegion="polite"
+                    >
+                      새 장소를 찾는 중입니다.
+                    </AppText>
+                  ) : null}
+                  {remoteResults.length > 0 ? (
                     <AppText
                       size="caption"
                       tone="muted"
@@ -190,7 +200,7 @@ export const SearchPage = () => {
               ) : null
             }
             ListEmptyComponent={
-              keyword && customPlaces.length === 0 && catalog.length === 0 ? (
+              keyword && !searching && !remoteFailed && !hasLocal ? (
                 <AppText
                   tone="muted"
                   textAlign="center"

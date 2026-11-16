@@ -10,9 +10,15 @@ jest.mock('expo-router', () => ({ Link: () => null, useRouter: () => ({ back: je
 jest.mock('sonner-native', () => ({ toast: { error: jest.fn(), success: jest.fn() } }));
 jest.mock('@/shared/api', () => ({ backend: { auth: { signUp: jest.fn(), recover: jest.fn() } } }));
 
+// gcTime이 Infinity면 캐시 정리 타이머를 두지 않아 테스트가 끝난 뒤 작업자가 바로 끝납니다.
+const testClient = () =>
+  new QueryClient({
+    defaultOptions: { queries: { gcTime: Infinity }, mutations: { gcTime: Infinity } },
+  });
+
 const show = (form = <SignUpForm />) =>
   render(
-    <QueryClientProvider client={new QueryClient()}>
+    <QueryClientProvider client={testClient()}>
       <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
         {form}
       </TamaguiProvider>

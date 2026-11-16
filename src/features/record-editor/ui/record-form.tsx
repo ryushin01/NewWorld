@@ -2,7 +2,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as Haptics from 'expo-haptics';
 import { useMemo, useRef, useState } from 'react';
 import { Controller, useForm, type Control, type FieldPath } from 'react-hook-form';
-import { Linking } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
@@ -15,7 +14,13 @@ import {
   type PlaceKind,
   type TripRecord,
 } from '@/shared/api';
-import { CURRENCIES, CURRENCY_LABELS, toErrorMessage, useUnsavedGuard } from '@/shared/lib';
+import {
+  CURRENCIES,
+  CURRENCY_LABELS,
+  openLink,
+  toErrorMessage,
+  useUnsavedGuard,
+} from '@/shared/lib';
 import { AppText, StickyBottomCta, Button, Chip, Field, TagInput, Touchable } from '@/shared/ui';
 import {
   recordFormSchema,
@@ -254,7 +259,11 @@ export const RecordForm = ({
                     onPress={loadConditions}
                   />
                   <Touchable
-                    onPress={() => Linking.openURL('https://open-meteo.com/')}
+                    onPress={() =>
+                      openLink('https://open-meteo.com/').then(
+                        (opened) => opened || toast.error('링크를 열지 못했습니다.'),
+                      )
+                    }
                     accessibilityRole="link"
                     accessibilityLabel="날씨 정보 제공, Open-Meteo 웹사이트 열기"
                     justifyContent="center"
