@@ -8,8 +8,9 @@ tags:
     when:
       platform: iOS
     commands:
+      # 이미 붙인 사진이 있으면 남은 장수가 나옵니다(최대 8장 등).
       - extendedWaitUntil:
-          visible: '최대 10장.*'
+          visible: '최대 [0-9]+장.*'
           timeout: 20000
       - waitForAnimationToEnd
       - tapOn:

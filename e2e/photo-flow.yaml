@@ -18,10 +18,32 @@ appId: com.ryushin01.newworld
 - hideKeyboard
 - tapOn:
     id: photo-add-library
+# 같은 사진을 다시 고르면 한 번만 붙습니다. iOS 선택기는 고를 때마다 사진을 새 파일로 주므로 주소가 아니라
+# 보관함 ID로 거릅니다. 먼저 2장을 고른 뒤 같은 2장과 새 1장을 고르면 3장이어야 합니다(못 거르면 5장).
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: '최대 10장.*'
+          timeout: 20000
+      - waitForAnimationToEnd
+      - tapOn:
+          point: '16%,27%'
+      - tapOn:
+          point: '50%,27%'
+      - tapOn:
+          point: '90%,15%'
+      - extendedWaitUntil:
+          visible: '.*2/10.*'
+          timeout: 20000
+      - tapOn:
+          id: photo-add-library
 - runFlow: _pick-photos.yaml
 - extendedWaitUntil:
     visible: '.*3/10.*'
     timeout: 20000
+- assertNotVisible: '.*5/10.*'
 - tapOn:
     id: record-save
 - extendedWaitUntil:
