@@ -1,7 +1,6 @@
 import { Image } from 'expo-image';
-import { Check, Heart } from 'lucide-react-native';
 import { View, XStack, YStack } from 'tamagui';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, Check, Heart } from '@/shared/ui';
 import { LORE_LABELS } from '../model/myth';
 import type { Destination } from '../model/types';
 

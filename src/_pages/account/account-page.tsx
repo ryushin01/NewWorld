@@ -1,7 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Alert, ScrollView, Switch } from 'react-native';
 import { toast } from 'sonner-native';
@@ -15,7 +14,7 @@ import { useExportData } from '@/features/data-export';
 import { backend, isDemoOffline, setDemoOffline, sync, useSyncState } from '@/shared/api';
 import { LINKS } from '@/shared/config';
 import { openLink, toErrorMessage } from '@/shared/lib';
-import { AppIcon, AppText, Button, Divider, Header, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Button, Divider, Header, Touchable, ChevronRight } from '@/shared/ui';
 
 const openExternal = (url: string) =>
   openLink(url).then((opened) => opened || toast.error('링크를 열지 못했습니다.'));

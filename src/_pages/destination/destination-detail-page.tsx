@@ -2,7 +2,6 @@ import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, ExternalLink, Heart, Mail, MapPin, Share2 } from 'lucide-react-native';
 import { useRef, useState } from 'react';
 import { Modal, ScrollView, Share, type View as NativeView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -40,6 +39,12 @@ import {
   MessageView,
   Tag,
   Touchable,
+  ArrowLeft,
+  ExternalLink,
+  Heart,
+  Mail,
+  MapPin,
+  Share2,
 } from '@/shared/ui';
 import { CheckInPanel } from '@/widgets/check-in-panel';
 import { PlaceMarker } from '@/widgets/place-map';

@@ -1,4 +1,3 @@
-import { BadgeCheck } from 'lucide-react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, Modal, ScrollView } from 'react-native';
 import { View, XStack, YStack } from 'tamagui';
@@ -6,7 +5,7 @@ import type { Destination } from '@/entities/destination';
 import { useProfile } from '@/entities/profile';
 import { BadgeMedal, BadgeShareContent, type BadgeStatus } from '@/features/badges';
 import { formatDay } from '@/shared/lib';
-import { AppIcon, AppText, Button } from '@/shared/ui';
+import { AppIcon, AppText, Button, BadgeCheck } from '@/shared/ui';
 
 type CelebrationProps = {
   destination: Destination;

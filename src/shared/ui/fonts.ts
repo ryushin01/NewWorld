@@ -1,4 +1,5 @@
-import { SortsMillGoudy_400Regular } from '@expo-google-fonts/sorts-mill-goudy';
+// 패키지 입구에서 가져오면 쓰지 않는 기울임꼴(104KB)까지 앱에 들어가므로 굵기 경로에서 가져옵니다.
+import { SortsMillGoudy_400Regular } from '@expo-google-fonts/sorts-mill-goudy/400Regular';
 import { useFonts } from 'expo-font';
 
 /**

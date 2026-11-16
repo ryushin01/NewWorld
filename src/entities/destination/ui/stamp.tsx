@@ -1,8 +1,7 @@
 import { Image } from 'expo-image';
-import { BadgeCheck } from 'lucide-react-native';
 import { View, YStack } from 'tamagui';
 import { formatDay } from '@/shared/lib';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, BadgeCheck } from '@/shared/ui';
 import type { Destination } from '../model/types';
 
 type StampProps = {

@@ -1,8 +1,7 @@
 import { useRouter } from 'expo-router';
-import { CloudOff, RefreshCw, TriangleAlert } from 'lucide-react-native';
 import { XStack } from 'tamagui';
 import { useSyncState } from '@/shared/api';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, CloudOff, RefreshCw, TriangleAlert } from '@/shared/ui';
 
 /** 끊겼거나 올리지 못한 변경이 있을 때만 지도 위에 나타납니다. */
 export const SyncBanner = () => {

@@ -1,10 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
-import { KeyRound } from 'lucide-react-native';
 import { Modal } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, YStack } from 'tamagui';
 import { formatRecoveryCode } from '@/shared/lib';
-import { AppIcon, AppText, Button } from '@/shared/ui';
+import { AppIcon, AppText, Button, KeyRound } from '@/shared/ui';
 import { useRecoveryCodeStore } from '../model/recovery-store';
 
 /** 발급한 복구 코드를 한 번만 보여 줍니다. 닫으면 다시 볼 수 없으므로 보관했는지 묻습니다. */

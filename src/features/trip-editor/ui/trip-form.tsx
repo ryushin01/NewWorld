@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Crypto from 'expo-crypto';
-import { ArrowDown, ArrowUp, X } from 'lucide-react-native';
 import { useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
@@ -11,7 +10,17 @@ import { KindIcon, usePlaces } from '@/entities/place';
 import { useSaveTrip } from '@/entities/trip';
 import { savedMessage, type Trip } from '@/shared/api';
 import { toErrorMessage, useUnsavedGuard } from '@/shared/lib';
-import { AppIcon, AppText, Field, ListRow, StickyBottomCta, Touchable } from '@/shared/ui';
+import {
+  AppIcon,
+  AppText,
+  Field,
+  ListRow,
+  StickyBottomCta,
+  Touchable,
+  ArrowDown,
+  ArrowUp,
+  X,
+} from '@/shared/ui';
 import { moveStop, tripSchema, type TripFormValues } from '../model/schema';
 import { TripDateField } from './trip-date-field';
 

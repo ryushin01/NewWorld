@@ -1,11 +1,10 @@
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera, ImagePlus, X } from 'lucide-react-native';
 import { Alert, ScrollView } from 'react-native';
 import { View, XStack, YStack } from 'tamagui';
 import type { LocalPhoto, Photo } from '@/shared/api';
 import { MAX_PHOTOS_PER_RECORD } from '@/shared/config';
-import { AppIcon, AppText, Touchable } from '@/shared/ui';
+import { AppIcon, AppText, Touchable, Camera, ImagePlus, X } from '@/shared/ui';
 
 type PhotoPickerProps = {
   kept: Photo[];

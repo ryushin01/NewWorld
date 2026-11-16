@@ -1,9 +1,9 @@
-import { ChevronRight } from 'lucide-react-native';
 import type { ReactNode } from 'react';
 import { View, XStack, YStack } from 'tamagui';
 import { Touchable } from './pressable';
 import { AppText } from './typography';
 import { AppIcon } from './icon';
+import { ChevronRight } from './icons';
 
 type ListRowProps = {
   title: string;

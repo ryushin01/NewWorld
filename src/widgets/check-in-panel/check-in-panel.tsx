@@ -1,5 +1,4 @@
 import { useRouter } from 'expo-router';
-import { BadgeCheck, LocateFixed } from 'lucide-react-native';
 import { useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { toast } from 'sonner-native';
@@ -10,7 +9,7 @@ import { evaluateBadges, newlyEarned, type BadgeStatus } from '@/features/badges
 import { CHECK_IN_RADIUS_KM, useCheckIn } from '@/features/check-in';
 import { isSupabaseConfigured } from '@/shared/config';
 import { formatDay, formatDistance } from '@/shared/lib';
-import { AppIcon, AppText, Button } from '@/shared/ui';
+import { AppIcon, AppText, Button, BadgeCheck, LocateFixed } from '@/shared/ui';
 import { Celebration } from './celebration';
 
 /** 토스트는 화면 낭독기가 놓칠 수 있어 같은 문구를 함께 읽어 줍니다. */

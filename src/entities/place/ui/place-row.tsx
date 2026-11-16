@@ -1,6 +1,5 @@
-import { Landmark, Sparkles } from 'lucide-react-native';
 import type { Place, PlaceKind } from '@/shared/api';
-import { AppIcon, ListRow } from '@/shared/ui';
+import { AppIcon, ListRow, Landmark, Sparkles } from '@/shared/ui';
 
 export const KindIcon = ({ kind, size = 22 }: { kind: PlaceKind; size?: number }) =>
   kind === 'real' ? (

@@ -1,6 +1,5 @@
-import { Route } from 'lucide-react-native';
 import type { Trip } from '@/shared/api';
-import { AppIcon, ListRow } from '@/shared/ui';
+import { AppIcon, ListRow, Route } from '@/shared/ui';
 import { formatTripDates } from '../model/format';
 
 export const TripRow = ({ trip, onPress }: { trip: Trip; onPress: () => void }) => (

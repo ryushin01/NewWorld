@@ -3,7 +3,10 @@
 원본: 공유마당 https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?wrtSn=13210384&menuNo=200023 (이용조건 OFL)
 내려받은 파일: 유앤피플 고딕 UNI.ttf (한글 11,172자를 모두 그린 UNI판)
 
-이 폴더의 TTF는 위 파일의 이름만 바꿔(공백·한글 제거) 그대로 넣은 것으로, 글꼴 내용은 바꾸지 않았습니다.
+이 폴더의 TTF는 위 파일에서 화면 표시에 쓰지 않는 TrueType 힌팅 명령과 닿을 수 없는 글리프만 빼고
+이름을 바꾼(공백·한글 제거) 것입니다. 글자 범위·모양·간격과 이름표(저작권)는 그대로입니다.
+원본은 예약 글꼴 이름(Reserved Font Name)을 밝히지 않았습니다.
+만드는 방법: scripts/fonts/build-body-font.py
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
