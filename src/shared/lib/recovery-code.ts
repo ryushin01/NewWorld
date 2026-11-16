@@ -1,4 +1,5 @@
 import * as Crypto from 'expo-crypto';
+import { secureRandomBytes } from './random';
 
 /** 헷갈리는 글자(0/O, 1/I/L)와 U를 뺀 30자에서 12자를 뽑습니다. 약 59비트라 추측하기 어렵습니다. */
 const ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
@@ -20,7 +21,7 @@ export const createRecoveryCode = () => {
   // 30으로 나눈 나머지가 고르게 나오도록 30의 배수(240) 이상인 바이트는 버립니다.
   let code = '';
   while (code.length < LENGTH) {
-    for (const byte of Crypto.getRandomBytes(LENGTH * 2)) {
+    for (const byte of secureRandomBytes(LENGTH * 2)) {
       if (byte < 240 && code.length < LENGTH) code += ALPHABET[byte % ALPHABET.length];
     }
   }

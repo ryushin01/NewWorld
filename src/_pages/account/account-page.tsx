@@ -1,7 +1,7 @@
 import { useMutation } from '@tanstack/react-query';
 import Constants from 'expo-constants';
 import { useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Alert, ScrollView, Switch } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
@@ -13,7 +13,7 @@ import { ArrivalAlertSwitch } from '@/features/arrival-alert';
 import { useExportData } from '@/features/data-export';
 import { backend, isDemoOffline, setDemoOffline, sync, useSyncState } from '@/shared/api';
 import { LINKS } from '@/shared/config';
-import { openLink, toErrorMessage } from '@/shared/lib';
+import { openLink, toErrorMessage, useSubmitLock } from '@/shared/lib';
 import { AppIcon, AppText, Button, Divider, Header, Touchable, ChevronRight } from '@/shared/ui';
 
 const openExternal = (url: string) =>
@@ -110,14 +110,13 @@ export const AccountPage = () => {
   };
 
   // isPending은 다음 렌더에야 바뀌어, 빠르게 두 번 누르면 공유 창이 두 번 뜹니다.
-  const exporting = useRef(false);
+  const exporting = useSubmitLock();
   const runExport = (format: 'json' | 'csv') => {
-    if (exporting.current) return;
-    exporting.current = true;
+    if (!exporting.take()) return;
     exportData.mutate(format, {
       onError: (error) => toast.error(toErrorMessage(error, '내보내지 못했습니다.')),
       onSettled: () => {
-        exporting.current = false;
+        exporting.release();
       },
     });
   };

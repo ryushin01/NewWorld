@@ -35,6 +35,8 @@ export const parseConditions = (data: WeatherResponse | null, iso: string): Cond
 };
 
 const ARCHIVE_AFTER_DAYS = 80;
+/** 연결이 느리면 버튼이 오래 돌기만 하므로 이 시간이 지나면 멈추고 다시 시도하게 합니다. */
+const TIMEOUT_MS = 10000;
 
 /** 해당 날짜와 시각의 날씨와 기온을 Open-Meteo에서 가져옵니다. */
 export const fetchConditions = async (latitude: number, longitude: number, iso: string) => {
@@ -44,8 +46,15 @@ export const fetchConditions = async (latitude: number, longitude: number, iso: 
     age > ARCHIVE_AFTER_DAYS
       ? 'archive-api.open-meteo.com/v1/archive'
       : 'api.open-meteo.com/v1/forecast';
-  const response = await fetch(
-    `https://${host}?latitude=${latitude}&longitude=${longitude}&start_date=${date}&end_date=${date}&timezone=GMT&hourly=weather_code,temperature_2m`,
-  );
-  return parseConditions(response.ok ? ((await response.json()) as WeatherResponse) : null, iso);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      `https://${host}?latitude=${latitude}&longitude=${longitude}&start_date=${date}&end_date=${date}&timezone=GMT&hourly=weather_code,temperature_2m`,
+      { signal: controller.signal },
+    );
+    return parseConditions(response.ok ? ((await response.json()) as WeatherResponse) : null, iso);
+  } finally {
+    clearTimeout(timer);
+  }
 };

@@ -16,14 +16,23 @@ export const compressPhoto = async (photo: LocalPhoto, maxEdge = MAX_EDGE) => {
   // 불러올 때부터 작게 읽어 원본 크기의 비트맵을 메모리에 올리지 않습니다. 사진이 더 작으면 원래 크기로 읽습니다.
   // (`photos.map(compressPhoto)`처럼 넘기면 배열 순서 번호가 maxEdge로 들어가므로 위에서 막습니다.)
   const context = ImageManipulator.manipulate(photo.uri, { maxWidth: maxEdge, maxHeight: maxEdge });
+  let rendered: Awaited<ReturnType<typeof context.renderAsync>> | undefined;
   const saved = await context
     .renderAsync()
-    .then((rendered) => rendered.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 }))
+    .then((image) => {
+      rendered = image;
+      return image.saveAsync({ format: SaveFormat.JPEG, compress: 0.8 });
+    })
     .catch((error: unknown) => {
       // 읽거나 JPEG로 만들 수 없는 사진은 위치 정보가 남은 원본을 그대로 올리지 않고 다른 사진을 고르게 합니다.
       // 파일 쓰기 실패 같은 다른 오류는 사진을 바꿔도 해결되지 않으므로 그대로 던집니다.
       if (isUnreadablePhoto(error)) throw new Error('Unsupported photo format', { cause: error });
       throw error;
+    })
+    .finally(() => {
+      // 네이티브 이미지는 GC를 기다리지 않고 바로 놓아, 사진 여러 장을 연달아 줄일 때 메모리가 쌓이지 않게 합니다.
+      rendered?.release();
+      context.release();
     });
   const bytes = await new File(saved.uri).arrayBuffer();
   return { bytes, uri: saved.uri, width: saved.width, height: saved.height };

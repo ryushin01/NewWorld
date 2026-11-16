@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { useRef, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
@@ -13,7 +13,7 @@ import {
   SignUpForm,
 } from '@/features/auth';
 import { backend } from '@/shared/api';
-import { toErrorMessage } from '@/shared/lib';
+import { toErrorMessage, useSubmitLock } from '@/shared/lib';
 import { AppText, Button, Header, useColors } from '@/shared/ui';
 
 const FormScroll = ({ children }: { children: ReactNode }) => {
@@ -33,18 +33,16 @@ const FormScroll = ({ children }: { children: ReactNode }) => {
 export const SignInPage = () => {
   const { top } = useSafeAreaInsets();
   // isPending은 다음 렌더에야 바뀌므로 빠른 연속 탭은 ref로 막습니다.
-  const browsing = useRef(false);
+  const browsing = useSubmitLock();
   const browse = useMutation({
     mutationFn: () => backend.auth.browse(),
     onError: (error) => {
-      browsing.current = false;
+      browsing.release();
       toast.error(toErrorMessage(error, '데모를 시작하지 못했습니다.'));
     },
   });
   const startBrowsing = () => {
-    if (browsing.current) return;
-    browsing.current = true;
-    browse.mutate();
+    if (browsing.take()) browse.mutate();
   };
   return (
     <View flex={1} paddingTop={top} backgroundColor="surface">
@@ -53,7 +51,7 @@ export const SignInPage = () => {
           <Image
             source={require('~/assets/icon.png')}
             style={{ width: 88, height: 88, borderRadius: 20 }}
-            accessibilityLabel="신세계 앱 아이콘, 별빛 아래의 계단식 피라미드"
+            accessibilityLabel="신세계 앱 아이콘, 어두운 바탕의 금색 보물 지도"
           />
           <AppText size="headline" accessibilityRole="header">
             신세계

@@ -5,7 +5,15 @@ import { useProfile, useUpdateProfile } from '@/entities/profile';
 import { ProfileEditPage } from './profile-edit-page';
 
 const mockBack = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: mockBack }) }));
+const mockPreventRemove = jest.fn();
+const mockAllowLeave = jest.fn();
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: mockBack }),
+  usePreventRemove: (prevent: boolean) => {
+    mockPreventRemove(prevent);
+    return mockAllowLeave;
+  },
+}));
 jest.mock('expo-image-picker', () => ({ launchImageLibraryAsync: jest.fn() }));
 jest.mock('sonner-native', () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 jest.mock('@/shared/ui/header', () => ({ Header: () => null, HeaderTextButton: () => null }));
@@ -64,4 +72,17 @@ it('닉네임이 짧으면 저장하지 않고 이유를 알려 줍니다', asyn
   await fireEvent.press(screen.getByTestId('profile-save'));
   expect(mutate).not.toHaveBeenCalled();
   expect(screen.getByText('닉네임은 2자 이상으로 입력해 주세요.')).toBeTruthy();
+});
+
+it('고친 내용이 있으면 나가기 전에 묻고, 저장에 성공하면 묻지 않고 돌아갑니다', async () => {
+  const mutate = jest.fn((_input, options: { onSuccess: () => void }) => options.onSuccess());
+  await show({ data: profile, isError: false }, mutate);
+  expect(mockPreventRemove).toHaveBeenLastCalledWith(false);
+  await fireEvent.changeText(screen.getByTestId('field-nickname'), '새 닉네임');
+  expect(mockPreventRemove).toHaveBeenLastCalledWith(true);
+  await fireEvent.press(screen.getByTestId('profile-save'));
+  expect(mockAllowLeave).toHaveBeenCalled();
+  expect(mockAllowLeave.mock.invocationCallOrder[0]).toBeLessThan(
+    mockBack.mock.invocationCallOrder.at(-1) ?? 0,
+  );
 });

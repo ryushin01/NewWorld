@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { backend, type ChecklistItem } from '@/shared/api';
+import { backend, QUERY_ROOTS, type ChecklistItem } from '@/shared/api';
 
-const checklistKey = ['checklist'] as const;
+const checklistKey = [QUERY_ROOTS.checklist] as const;
 
 export const useChecklist = () =>
   useQuery({ queryKey: checklistKey, queryFn: () => backend.checklist.list() });

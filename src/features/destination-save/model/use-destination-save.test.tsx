@@ -6,6 +6,7 @@ import { backend, type Place } from '@/shared/api';
 import { useEnsureCatalogPlace, useToggleWish } from './use-destination-save';
 
 jest.mock('@/shared/api', () => ({
+  ...jest.requireActual('@/shared/api/query-roots'),
   backend: { places: { list: jest.fn(), create: jest.fn(), update: jest.fn() } },
 }));
 

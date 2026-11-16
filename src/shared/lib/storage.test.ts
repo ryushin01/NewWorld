@@ -1,5 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { createStore } from './storage';
+import { createEncryptionKey, createStore } from './storage';
 
 it('키체인을 쓸 수 없어도 메모리 저장소로 동작합니다', () => {
   const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
@@ -13,4 +13,10 @@ it('키체인을 쓸 수 없어도 메모리 저장소로 동작합니다', () =
   expect(store.getString('k')).toBeUndefined();
   expect(warn).toHaveBeenCalled();
   jest.restoreAllMocks();
+});
+
+it('새 암호 키는 64가지 글자 16자(96비트)로 만들고, 매번 다릅니다', () => {
+  const key = createEncryptionKey();
+  expect(key).toMatch(/^[A-Za-z0-9_-]{16}$/);
+  expect(createEncryptionKey()).not.toBe(key);
 });
