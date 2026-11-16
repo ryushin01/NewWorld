@@ -157,8 +157,8 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 
 `pnpm-workspace.yaml`의 `patchedDependencies`에 적힌 패키지는 설치할 때 `patches/`의 수정을 덧씌웁니다.
 
-| 패키지 | 고친 것 | 이유 |
-| --- | --- | --- |
+| 패키지                           | 고친 것                                            | 이유                                                                                                                                                                                                              |
+| -------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `expo-image-manipulator@58.0.16` | iOS 처리 우선순위 `.background` → `.userInitiated` | 사진 저장처럼 사용자가 기다리는 작업인데 가장 낮은 우선순위로 돌아, 기기가 바쁠 때 HEIC 사진 한 장을 줄이는 데 몇 분씩 걸렸습니다(같은 시뮬레이터에서 0.35초 대 29초, 부하가 더 높을 때 7분). Android는 해당 없음 |
 
 Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링크합니다. 그래서 소스를 고친 패키지는 `package.json`의 `expo.autolinking.ios.buildFromSource`에도 넣어 소스로 빌드합니다. 빠뜨리면 설치된 소스에는 패치가 보여도 앱에는 원래 코드가 들어갑니다(빌드 기록에 `Switch <모듈> XCFramework`가 보이면 미리 컴파일한 것을 쓴 것입니다). 이 설정을 바꾼 뒤에는 `pod install`을 다시 합니다.
@@ -233,3 +233,31 @@ Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링�
 ## 서버 적용 현황
 
 Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
+
+## 백업과 복원
+
+스키마, RLS 정책, 저장소 버킷과 그 정책, Edge Function, 인증 설정은 이 저장소의 `supabase/`가 원본입니다. 그래서 백업은 데이터와 사진 파일만 받습니다. Supabase CLI 3.1 기준으로 `db dump`의 기본값은 스키마만 담고(`--dry-run`으로 확인), `storage` 명령은 `--experimental`이 있어야 실행됩니다.
+
+### 받기 (연결한 프로젝트)
+
+```bash
+npx supabase db dump --remote --data-only --use-copy -x storage.buckets -x storage.objects -f data.sql
+npx supabase storage cp -r --remote --experimental ss:///record-photos backup/record-photos
+npx supabase storage cp -r --remote --experimental ss:///avatars backup/avatars
+```
+
+- `data.sql`에는 앱 데이터(장소·기록·체크리스트·여정·현장 인증·프로필)와 계정(`auth`)이 들어갑니다. 버킷 행은 마이그레이션이 만들고 사진 목록 행(`storage.objects`)은 사진을 다시 올릴 때 새로 생기므로 뺍니다. 넣어 두면 되돌릴 때 같은 행이 겹쳐 멈춥니다.
+- 사진 경로(`{user_id}/{record_id}/{파일}`)가 그대로여야 기록과 맞고 접근 정책(첫 폴더가 본인 ID)도 통합니다. `cp -r`은 경로를 그대로 둡니다.
+- 받은 날짜와 보관 위치를 적어 둡니다.
+
+### 되돌리기 (새 프로젝트)
+
+1. `npx supabase link --project-ref <새 프로젝트>`: 이후 명령이 모두 새 프로젝트로 갑니다.
+2. `npx supabase db push`: 스키마, RLS·저장소 정책, 버킷, 마이그레이션 기록
+3. `npx supabase config push`: 메일 인증 끄기, 비밀번호 8자 이상. 새 프로젝트는 메일 인증이 켜져 있어 아이디 가입이 막힙니다.
+4. `npx supabase functions deploy delete-account recover-account`(기본 환경 변수만 써서 따로 넣을 비밀 값은 없음)
+5. `psql --single-transaction --variable ON_ERROR_STOP=1 --command 'SET session_replication_role = replica' --file data.sql --dbname <새 DB 연결 문자열>`
+6. `npx supabase storage cp -r --remote --experimental backup/record-photos ss:///record-photos`(`avatars`도 같음)
+7. 앱의 `EXPO_PUBLIC_SUPABASE_URL`·`EXPO_PUBLIC_SUPABASE_ANON_KEY`(EAS 환경 변수)를 새 프로젝트 값으로 바꿔 다시 빌드합니다.
+
+이 순서는 저장소 설정과 CLI 3.1.0의 동작으로 정리했고, 실제 프로젝트에 되돌려 보지는 않았습니다. 처음 되돌려 볼 때 막힌 곳을 이 절에 고칩니다. 일반적인 주의 사항은 [Supabase의 CLI 백업·복원 문서](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)에 있습니다.

@@ -39,9 +39,5 @@
 ## 출시 뒤
 
 - ☐ Sentry DSN을 넣었다면 첫 오류가 들어오는지 확인하고, 소스 맵 올리기를 켭니다([개발 가이드](development.md#오류-모니터링-sentry)).
-- ☐ 정기 백업(무료 플랜은 일일 백업이 없음). `db dump`의 기본값은 스키마만 담으므로 [Supabase의 CLI 백업·복원 문서](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)대로 세 파일을 따로 받습니다(`--remote`는 연결한 프로젝트).
-  - `supabase db dump --remote -f roles.sql --role-only`
-  - `supabase db dump --remote -f schema.sql`
-  - `supabase db dump --remote -f data.sql --use-copy --data-only`: 기록·계정 행과 사진 목록 행
-  - 되돌리기: 새 프로젝트에 `psql --single-transaction --variable ON_ERROR_STOP=1 --file roles.sql --file schema.sql --command 'SET session_replication_role = replica' --file data.sql --dbname <새 DB 연결 문자열>`. Edge Function은 덤프에 없으므로 `supabase functions deploy`로 다시 올립니다.
-- ☐ 사진 파일은 DB 덤프에 들어가지 않습니다. 버킷을 따로 받습니다: `supabase storage cp -r --remote ss:///record-photos backup/record-photos`(`avatars`도 같음). 되돌릴 때는 위 문서의 Storage 절(내려받은 파일을 `upsert`로 다시 올리는 스크립트)을 따릅니다. 받은 날짜와 보관 위치를 적어 둡니다.
+- ☐ 정기 백업(무료 플랜은 일일 백업이 없음): [개발 가이드의 백업과 복원](development.md#백업과-복원)대로 데이터(`db dump --data-only`)와 사진 버킷(`storage cp -r`)을 받습니다. `db dump`의 기본값은 스키마만 담고, 스키마·정책·버킷·함수·인증 설정은 저장소의 `supabase/`가 원본입니다.
+- ☐ 복원 연습: 빈 프로젝트에 한 번 되돌려 보고 막힌 곳을 개발 가이드에 고칩니다. 되돌려 보지 않은 백업은 믿을 수 없습니다.
