@@ -279,3 +279,58 @@ test('복구 코드는 본인만 저장하고, 확인은 서비스 키로만 하
     null,
   );
 });
+
+test('입력 길이 상한(앱 검증과 같은 값)을 넘는 값은 거부하고, 상한까지는 받습니다', async () => {
+  const long = (length) => 'ㄱ'.repeat(length);
+  const place = (await insertPlace(A, '길이 검사')).rows[0].id;
+  const insertRecord = (columns) =>
+    as(
+      A,
+      `insert into public.records (place_id, ${Object.keys(columns).join(', ')})
+       values ($1, ${Object.keys(columns)
+         .map((_, index) => `$${index + 2}`)
+         .join(', ')})`,
+      [place, ...Object.values(columns)],
+    );
+  await insertRecord({ title: long(100), memo: long(2000), lodging: long(200) });
+  await assert.rejects(insertRecord({ memo: long(2001) }), /records_memo_length/);
+  await assert.rejects(insertRecord({ title: long(101) }), /records_title_length/);
+  await assert.rejects(insertRecord({ transport: long(201) }), /records_short_texts_length/);
+  await assert.rejects(insertRecord({ souvenir: long(2001) }), /records_long_texts_length/);
+  await assert.rejects(insertRecord({ members: [long(31)] }), /records_members_limit/);
+  await assert.rejects(
+    insertRecord({ members: Array.from({ length: 51 }, (_, i) => `동행${i}`) }),
+    /records_members_limit/,
+  );
+
+  await assert.rejects(
+    as(A, 'update public.places set memo = $1 where id = $2', [long(2001), place]),
+    /places_memo_length/,
+  );
+  await assert.rejects(
+    as(A, 'update public.places set tags = $1 where id = $2', [
+      Array.from({ length: 21 }, (_, i) => `t${i}`),
+      place,
+    ]),
+    /places_tags_limit/,
+  );
+  await as(A, 'update public.places set tags = $1, address = $2 where id = $3', [
+    [long(30)],
+    long(300),
+    place,
+  ]);
+  await assert.rejects(
+    as(A, `insert into public.trips (title, memo) values ('여정', $1)`, [long(2001)]),
+    /trips_memo_length/,
+  );
+  await assert.rejects(
+    as(A, `insert into public.trips (title, stops) values ('여정', $1)`, [
+      Array.from({ length: 61 }, (_, i) => `d${i}`),
+    ]),
+    /trips_stops_limit/,
+  );
+  await assert.rejects(
+    as(A, `insert into public.checklist_items (title, category) values ('물', $1)`, [long(31)]),
+    /checklist_items_category_length/,
+  );
+});

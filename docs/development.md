@@ -47,6 +47,9 @@ npx supabase functions deploy recover-account
 | 권한   | 모든 테이블과 저장소에 RLS를 적용해 본인 데이터만 접근합니다.                                                                                  |
 | 함수   | `place-search`(주소·장소 검색, 좌표→주소), `delete-account`(계정, 기록 사진, 프로필 사진 삭제), `recover-account`(복구 코드로 비밀번호 재설정) |
 
+- Supabase API는 한 번에 1,000행까지만 돌려주므로 목록 조회와 계정 삭제의 사진 조회는 1,000행씩 끝까지 읽습니다(`src/shared/api/pages.ts`, Edge Function은 `delete-account/pages.ts`).
+- 입력 길이 상한은 앱 검증(`src/shared/config`의 `LIMITS`)과 DB 제약(`20261116000000_input_limits.sql`)이 같은 값입니다. 바꿀 때는 둘을 함께 고칩니다.
+
 ## 오프라인 동작
 
 `shared/api/offline-backend.ts`가 서버 백엔드를 감쌉니다.
@@ -73,6 +76,7 @@ npx supabase functions deploy recover-account
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `pnpm test`                                     | 단위·컴포넌트 테스트 (Jest, React Native Testing Library)                                         |
 | `pnpm run test:db`                              | 마이그레이션을 PGlite에 적용해 RLS와 제약 조건 검사                                               |
+| `pnpm run typecheck:functions`                  | Edge Function을 Node의 supabase-js 타입으로 검사(Deno 없이, `supabase/functions/tsconfig.json`)   |
 | `pnpm run test:e2e`                             | Maestro E2E. 전용 시뮬레이터 `NewWorld E2E`에 데모 모드 Release 앱을 설치해 실행합니다. 아래 참고 |
 | `pnpm run test:e2e:server`                      | 로컬 Supabase에 연결한 Release 앱으로 가입부터 계정 삭제까지 검사합니다. 아래 참고                |
 | `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` | 앱에서 `/storybook` 경로로 컴포넌트 카탈로그 확인                                                 |
@@ -179,6 +183,7 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 - 메일이 없으므로 비밀번호를 잊었을 때는 **복구 코드**로 재설정합니다. 가입할 때 12자 코드(헷갈리는 0/O, 1/I/L 제외, `XXXX-XXXX-XXXX`)를 한 번만 보여 주고, 서버와 기기에는 SHA-256 해시만 저장합니다. 재설정에 쓴 코드는 버리고 새 코드를 보여 주며, MY의 `복구 코드 다시 발급`으로 지금 비밀번호를 확인한 뒤 바꿀 수 있습니다. 5번 틀리면 15분 동안 잠급니다.
 - 서버에서는 코드 해시를 API에 노출되지 않는 `private.recovery_codes`에 둡니다. 앱은 `set_recovery_code`(본인 것만 저장)만 부를 수 있고, 확인과 교체(`verify_recovery_code`, `replace_recovery_code`)는 서비스 키로만 실행되며 Edge Function `recover-account`가 부릅니다.
 - 로그인한 상태에서는 MY의 `비밀번호 변경`으로 지금 비밀번호를 확인한 뒤 바꿉니다.
+- 비밀번호를 바꾸면 다른 기기의 로그인을 끊고(`signOut({ scope: 'others' })`), 복구 코드로 재설정하면 Edge Function이 그 계정의 모든 로그인을 끊은 뒤 앱이 새 비밀번호로 다시 로그인합니다. 서버의 최소 비밀번호 길이도 앱과 같은 8자입니다(`config.toml`).
 - 프로필(`profiles`)은 닉네임(2~20자, 여권과 공유 이미지에 표시), 본명(선택, 본인만 봄), 프로필 사진(비공개 버킷 `avatars`, `{user_id}/{파일}`, 512px JPEG)입니다. 가입 메타데이터로 받은 닉네임과 본명으로 DB 트리거가 만듭니다.
 - 데모 모드의 둘러보기 계정은 비밀번호가 없어 비밀번호 변경이 나오지 않습니다.
 
@@ -205,4 +210,4 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 
 ## 서버 적용 현황
 
-Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)을 적용하고 `npx supabase config push`(메일 인증 끄기), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
+Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.

@@ -1,6 +1,6 @@
 // 복구 코드로 비밀번호 재설정: 아이디와 코드를 확인하고 새 비밀번호를 저장한 뒤, 쓴 코드를 새 코드로 바꿉니다.
 // 로그인 전에 부르므로 anon 키로 호출되며, 확인과 변경은 서비스 키로만 합니다.
-import { createClient } from 'npm:@supabase/supabase-js@2';
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
 const ALPHABET = 'ABCDEFGHJKMNPQRSTVWXYZ23456789';
 const CODE_LENGTH = 12;
@@ -24,6 +24,29 @@ const createCode = () => {
 };
 
 const fail = (message: string, status = 400) => Response.json({ error: message }, { status });
+
+/**
+ * 비밀번호를 잊은 사이 다른 기기에 남은 로그인을 모두 끊습니다. 관리 API에는 회원 id로 세션을 끊는 기능이 없어,
+ * 새 비밀번호로 한 번 로그인해 받은 토큰으로 전체 로그아웃(global)을 요청합니다. 앱은 끝난 뒤 다시 로그인합니다.
+ * 예전에 이메일로 가입한 계정은 아이디와 주소가 달라 실제 주소를 조회해 씁니다.
+ */
+const revokeSessions = async (admin: SupabaseClient, userId: string, password: string) => {
+  const { data, error } = await admin.auth.admin.getUserById(userId);
+  if (error || !data.user?.email) throw error ?? new Error('email not found');
+  const anon = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const { data: signedIn, error: signInError } = await anon.auth.signInWithPassword({
+    email: data.user.email,
+    password,
+  });
+  if (signInError || !signedIn.session) throw signInError ?? new Error('no session');
+  const { error: signOutError } = await admin.auth.admin.signOut(
+    signedIn.session.access_token,
+    'global',
+  );
+  if (signOutError) throw signOutError;
+};
 
 Deno.serve(async (request) => {
   if (request.method !== 'POST') return fail('허용하지 않는 요청입니다.', 405);
@@ -52,6 +75,8 @@ Deno.serve(async (request) => {
 
   const { error: updateError } = await admin.auth.admin.updateUserById(userId, { password });
   if (updateError) return fail(updateError.message, 400);
+  // 끊지 못해도 비밀번호는 이미 바뀌었으므로 재설정은 성공으로 둡니다(남은 세션은 토큰 만료로 끝남).
+  await revokeSessions(admin, userId, password).catch((error) => console.error(error));
 
   // 비밀번호를 바꾼 뒤에 코드를 교체해, 비밀번호 저장이 실패하면 기존 코드를 그대로 쓸 수 있게 합니다.
   const recoveryCode = createCode();

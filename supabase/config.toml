@@ -4,6 +4,8 @@ project_id = "newworld"
 site_url = "newworld://"
 additional_redirect_urls = ["newworld://", "exp+newworld://**"]
 enable_signup = true
+# 앱의 가입·재설정 검사(8자 이상)와 맞춥니다. API로 직접 가입해도 짧은 비밀번호를 받지 않습니다.
+minimum_password_length = 8
 
 [auth.email]
 # 아이디로 가입하며 앱 전용 주소로는 메일을 받을 수 없으므로 메일 인증을 끕니다.

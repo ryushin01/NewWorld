@@ -3,8 +3,17 @@
   "compilerOptions": {
     "strict": true,
     "types": ["jest"],
-    "paths": { "@/*": ["./src/*"], "~/*": ["./*"] }
+    "paths": {
+      "@/*": ["./src/*"],
+      "~/*": ["./*"]
+    }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
-  "exclude": ["node_modules", "supabase/functions/**/index.ts", "ios", "android"]
+  "exclude": [
+    "node_modules",
+    "supabase/functions/**/index.ts",
+    "ios",
+    "android",
+    "supabase/functions/_types"
+  ]
 }
