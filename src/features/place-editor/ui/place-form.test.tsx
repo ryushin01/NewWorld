@@ -32,16 +32,16 @@ const initial = {
   latitude: -13.16,
   longitude: -72.54,
   memo: '',
-  tags: [],
+  tags: [] as string[],
   catalogId: null,
   wishlisted: false,
 };
 
-const show = (mutate: jest.Mock) => {
+const show = (mutate: jest.Mock, place = initial) => {
   jest.mocked(useSavePlace).mockReturnValue({ mutate, isPending: false } as never);
   return render(
     <TamaguiProvider config={tamaguiConfig} defaultTheme="light">
-      <PlaceForm initial={initial} onSaved={jest.fn()} />
+      <PlaceForm initial={place} onSaved={jest.fn()} />
     </TamaguiProvider>,
   );
 };
@@ -65,4 +65,12 @@ it('저장에 실패하면 다시 누를 수 있습니다', async () => {
   await waitFor(() => expect(mutate).toHaveBeenCalledTimes(1));
   await fireEvent.press(screen.getByTestId('place-save'));
   await waitFor(() => expect(mutate).toHaveBeenCalledTimes(2));
+});
+
+it('예전에 저장한 너무 긴 태그 때문에 저장되지 않으면 태그 칸에 이유를 보여 줍니다', async () => {
+  const mutate = jest.fn();
+  await show(mutate, { ...initial, tags: ['가'.repeat(31)] });
+  await fireEvent.press(screen.getByTestId('place-save'));
+  await waitFor(() => expect(screen.getByText('태그는 30자 이내로 입력해 주세요.')).toBeTruthy());
+  expect(mutate).not.toHaveBeenCalled();
 });

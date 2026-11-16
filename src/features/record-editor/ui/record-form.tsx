@@ -14,15 +14,18 @@ import {
   type PlaceKind,
   type TripRecord,
 } from '@/shared/api';
+import { LIMITS } from '@/shared/config';
 import {
   CURRENCIES,
   CURRENCY_LABELS,
+  fieldErrorMessage,
   openLink,
   toErrorMessage,
   useUnsavedGuard,
 } from '@/shared/lib';
 import { AppText, StickyBottomCta, Button, Chip, Field, TagInput, Touchable } from '@/shared/ui';
 import {
+  RECORD_TEXT_LIMITS,
   recordFormSchema,
   toFormValues,
   toRecordInput,
@@ -58,6 +61,7 @@ const TextField = ({ control, name, label, placeholder, multiline, numeric }: Te
         placeholder={placeholder}
         multiline={multiline}
         keyboardType={numeric ? 'decimal-pad' : 'default'}
+        maxLength={RECORD_TEXT_LIMITS[name]}
         value={field.value as string}
         onChangeText={field.onChange}
         onBlur={field.onBlur}
@@ -218,7 +222,7 @@ export const RecordForm = ({
           <Controller
             control={control}
             name="members"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <TagInput
                 testID="record-member"
                 label="동행"
@@ -226,6 +230,9 @@ export const RecordForm = ({
                 value={field.value}
                 onChange={field.onChange}
                 suggestions={memberSuggestions}
+                maxItems={LIMITS.members}
+                maxLength={LIMITS.tagLength}
+                error={fieldErrorMessage(fieldState.error)}
               />
             )}
           />

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { LIMITS } from '@/shared/config';
 
 export const tripSchema = z
   .object({
@@ -6,11 +7,14 @@ export const tripSchema = z
       .string()
       .trim()
       .min(1, '여정 이름을 입력해 주세요.')
-      .max(100, '100자 이내로 입력해 주세요.'),
+      .max(LIMITS.title, `${LIMITS.title}자 이내로 입력해 주세요.`),
     startDate: z.string().nullable(),
     endDate: z.string().nullable(),
-    stops: z.array(z.string()).min(1, '여행지를 한 곳 이상 넣어 주세요.'),
-    memo: z.string(),
+    stops: z
+      .array(z.string())
+      .min(1, '여행지를 한 곳 이상 넣어 주세요.')
+      .max(LIMITS.stops, `여행지는 ${LIMITS.stops}곳까지 넣을 수 있습니다.`),
+    memo: z.string().max(LIMITS.longText, `${LIMITS.longText}자 이내로 입력해 주세요.`),
   })
   .refine((trip) => !trip.startDate || !trip.endDate || trip.startDate <= trip.endDate, {
     path: ['endDate'],

@@ -67,6 +67,12 @@ type TagInputProps = {
   testID?: string;
   /** 눌러서 바로 추가할 수 있는 최근 값 */
   suggestions?: string[];
+  /** 넣을 수 있는 개수. 다 차면 입력 칸을 막고 안내합니다. */
+  maxItems?: number;
+  /** 값 하나의 글자 수 */
+  maxLength?: number;
+  /** 저장할 때 검사에서 걸린 이유(예: 이전에 저장한 너무 긴 태그) */
+  error?: string;
 };
 
 /** 완료 키로 값을 하나씩 추가하는 입력 */
@@ -77,12 +83,21 @@ export const TagInput = ({
   onChange,
   testID,
   suggestions = [],
+  maxItems,
+  maxLength,
+  error,
 }: TagInputProps) => {
   const [draft, setDraft] = useState('');
-  const remaining = suggestions.filter((item) => !value.includes(item)).slice(0, 6);
+  const full = maxItems !== undefined && value.length >= maxItems;
+  // 추천 값은 입력 칸을 거치지 않으므로 글자 수 상한을 넘는 값은 보여 주지 않습니다.
+  const remaining = full
+    ? []
+    : suggestions
+        .filter((item) => !value.includes(item) && (!maxLength || item.length <= maxLength))
+        .slice(0, 6);
   const commit = () => {
     const next = draft.trim();
-    if (next && !value.includes(next)) onChange([...value, next]);
+    if (next && !full && !value.includes(next)) onChange([...value, next]);
     setDraft('');
   };
   return (
@@ -91,7 +106,14 @@ export const TagInput = ({
         testID={testID}
         label={label}
         placeholder={placeholder}
-        hint="입력 후 완료 키를 누르면 추가됩니다."
+        hint={
+          full
+            ? `${label}은(는) ${maxItems}개까지 넣을 수 있습니다.`
+            : '입력 후 완료 키를 누르면 추가됩니다.'
+        }
+        disabled={full}
+        maxLength={maxLength}
+        error={error}
         value={draft}
         onChangeText={setDraft}
         onSubmitEditing={commit}

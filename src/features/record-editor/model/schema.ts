@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { PlaceKind, RecordInput, TripRecord } from '@/shared/api';
+import { LIMITS } from '@/shared/config';
 import { parseOptionalNumber } from '@/shared/lib';
 
 const optionalNumber = (label: string, min: number, max: number) =>
@@ -12,24 +13,44 @@ const optionalNumber = (label: string, min: number, max: number) =>
     { message: `${label}은(는) ${min}에서 ${max} 사이 숫자로 입력해 주세요.` },
   );
 
+const text = (max: number) => z.string().max(max, `${max}자 이내로 입력해 주세요.`);
+
 export const recordFormSchema = z.object({
   visitedAt: z.string(),
-  title: z.string().max(100, '100자 이내로 입력해 주세요.'),
-  memo: z.string(),
+  title: text(LIMITS.title),
+  memo: text(LIMITS.longText),
   partySize: optionalNumber('인원', 1, 100),
-  members: z.array(z.string()),
+  members: z
+    .array(text(LIMITS.tagLength))
+    .max(LIMITS.members, `동행은 ${LIMITS.members}명까지 넣을 수 있습니다.`),
   rating: z.number().nullable(),
-  weather: z.string(),
+  weather: text(LIMITS.shortText),
   temperature: optionalNumber('기온', -60, 60),
-  transport: z.string(),
-  lodging: z.string(),
+  transport: text(LIMITS.shortText),
+  lodging: text(LIMITS.shortText),
   cost: optionalNumber('비용', 0, 1000000000),
   currency: z.string(),
-  highlights: z.string(),
-  gateway: z.string(),
-  encounters: z.string(),
-  souvenir: z.string(),
+  highlights: text(LIMITS.longText),
+  gateway: text(LIMITS.longText),
+  encounters: text(LIMITS.longText),
+  souvenir: text(LIMITS.longText),
 });
+
+/** 입력 칸의 글자 수 상한. 스키마와 같은 값을 칸에도 걸어 넘치게 칠 수 없게 합니다. */
+export const RECORD_TEXT_LIMITS = {
+  title: LIMITS.title,
+  memo: LIMITS.longText,
+  partySize: 3,
+  weather: LIMITS.shortText,
+  temperature: 6,
+  transport: LIMITS.shortText,
+  lodging: LIMITS.shortText,
+  cost: 13,
+  highlights: LIMITS.longText,
+  gateway: LIMITS.longText,
+  encounters: LIMITS.longText,
+  souvenir: LIMITS.longText,
+} as const;
 
 export type RecordFormValues = z.infer<typeof recordFormSchema>;
 

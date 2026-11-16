@@ -1,35 +1,38 @@
 import { chunk, fetchAllPages } from './pages';
 
-const pager = (total: number) =>
-  jest.fn(async (from: number, to: number) => ({
-    data: Array.from(
-      { length: Math.max(0, Math.min(to, total - 1) - from + 1) },
-      (_, i) => from + i,
-    ),
+type Row = { storage_path: string };
+const paths = (count: number): Row[] =>
+  Array.from({ length: count }, (_, i) => ({
+    storage_path: `u/r/${String(i).padStart(5, '0')}.jpg`,
+  }));
+
+const server = (rows: Row[], pageSize: number) =>
+  jest.fn(async (after: string | null) => ({
+    data: rows.filter((row) => after === null || row.storage_path > after).slice(0, pageSize),
     error: null,
   }));
 
-it('1,000행을 넘어도 끝까지 나눠 읽습니다', async () => {
-  const fetchPage = pager(2500);
-  const rows = await fetchAllPages(fetchPage);
+it('1,000행을 넘어도 마지막 경로 다음부터 끝까지 읽습니다', async () => {
+  const fetchPage = server(paths(2500), 1000);
+  const rows = await fetchAllPages(fetchPage, (row) => row.storage_path);
   expect(rows).toHaveLength(2500);
-  expect(rows.at(-1)).toBe(2499);
-  expect(fetchPage.mock.calls).toEqual([
-    [0, 999],
-    [1000, 1999],
-    [2000, 2999],
-  ]);
+  expect(fetchPage.mock.calls).toEqual([[null], ['u/r/00999.jpg'], ['u/r/01999.jpg']]);
 });
 
 it('딱 나누어떨어지면 빈 쪽을 한 번 더 읽고 멈춥니다', async () => {
-  const fetchPage = pager(2000);
-  await expect(fetchAllPages(fetchPage)).resolves.toHaveLength(2000);
+  const fetchPage = server(paths(2000), 1000);
+  await expect(fetchAllPages(fetchPage, (row) => row.storage_path)).resolves.toHaveLength(2000);
   expect(fetchPage).toHaveBeenCalledTimes(3);
 });
 
 it('조회가 실패하면 지우지 않도록 오류를 던집니다', async () => {
   const error = new Error('timeout');
-  await expect(fetchAllPages(async () => ({ data: null, error }))).rejects.toBe(error);
+  await expect(
+    fetchAllPages(
+      async () => ({ data: null, error }),
+      (row: Row) => row.storage_path,
+    ),
+  ).rejects.toBe(error);
 });
 
 it('경로를 정한 수만큼 나눕니다', () => {

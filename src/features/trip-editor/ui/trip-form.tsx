@@ -9,6 +9,7 @@ import { findDestination, searchDestinations } from '@/entities/destination';
 import { KindIcon, usePlaces } from '@/entities/place';
 import { useSaveTrip } from '@/entities/trip';
 import { savedMessage, type Trip } from '@/shared/api';
+import { LIMITS } from '@/shared/config';
 import { toErrorMessage, useUnsavedGuard } from '@/shared/lib';
 import {
   AppIcon,
@@ -117,6 +118,7 @@ export const TripForm = ({ trip, initialTitle, initialStops, onSaved }: TripForm
               label="여정 이름"
               required
               placeholder="예: 페루 잉카 일주"
+              maxLength={LIMITS.title}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
@@ -232,15 +234,17 @@ export const TripForm = ({ trip, initialTitle, initialStops, onSaved }: TripForm
         <Controller
           control={control}
           name="memo"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Field
               testID="trip-memo"
               label="메모"
               multiline
               placeholder="예산, 예약 번호, 하고 싶은 일"
+              maxLength={LIMITS.longText}
               value={field.value}
               onChangeText={field.onChange}
               onBlur={field.onBlur}
+              error={fieldState.error?.message}
             />
           )}
         />

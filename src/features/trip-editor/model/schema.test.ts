@@ -19,3 +19,9 @@ it('경유지 순서를 바꾸고 끝에서는 그대로 둡니다', () => {
   expect(moveStop(['a', 'b'], 0, -1)).toEqual(['a', 'b']);
   expect(moveStop(['a', 'b'], 1, 1)).toEqual(['a', 'b']);
 });
+
+it('메모와 여행지 수의 상한을 넘으면 거부합니다', () => {
+  expect(tripSchema.safeParse({ ...trip, memo: 'ㄱ'.repeat(2001) }).success).toBe(false);
+  const stops = Array.from({ length: 61 }, (_, index) => `d${index}`);
+  expect(tripSchema.safeParse({ ...trip, stops }).success).toBe(false);
+});
