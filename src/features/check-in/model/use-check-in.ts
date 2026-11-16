@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { useCheckins, useCreateCheckin } from '@/entities/checkin';
 import type { Destination } from '@/entities/destination';
 import type { CheckIn } from '@/shared/api';
-import { distanceKm } from '@/shared/lib';
+import { distanceKm, withTimeout } from '@/shared/lib';
 
 /** 유적 단지와 연고지의 넓이를 고려해 3km 안이면 현장으로 봅니다. */
 export const CHECK_IN_RADIUS_KM = 3;
@@ -13,22 +13,15 @@ export const CHECK_IN_RADIUS_KM = 3;
 const LOCATION_TIMEOUT_MS = 15000;
 
 const currentCoords = async () => {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<null>((resolve) => {
-    timer = setTimeout(() => resolve(null), LOCATION_TIMEOUT_MS);
-  });
-  try {
-    const position = await Promise.race([
-      Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
-      timeout,
-    ]);
-    if (position) return position.coords;
-    // 2분 안에 받은 위치만 현장으로 인정합니다.
-    const last = await Location.getLastKnownPositionAsync({ maxAge: 120000 });
-    return last?.coords ?? null;
-  } finally {
-    clearTimeout(timer);
-  }
+  const position = await withTimeout(
+    Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+    LOCATION_TIMEOUT_MS,
+    null,
+  );
+  if (position) return position.coords;
+  // 2분 안에 받은 위치만 현장으로 인정합니다.
+  const last = await Location.getLastKnownPositionAsync({ maxAge: 120000 });
+  return last?.coords ?? null;
 };
 
 export type CheckInResult =

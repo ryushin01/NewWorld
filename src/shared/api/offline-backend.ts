@@ -1,5 +1,6 @@
 import { isTransientError } from '../lib/errors';
 import { isRecord, parseStoredJson } from '../lib/stored-json';
+import { withTimeout } from '../lib/timeout';
 import type {
   Backend,
   ChecklistItem,
@@ -296,6 +297,8 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
   let snapshot: Snapshot = { ...EMPTY_SNAPSHOT };
   let state: SyncState = { online, ops };
   let running: Promise<void> | null = null;
+  /** 저장 화면이 결과를 기다리는 작업. 백그라운드로 보낸 작업의 결과는 읽을 곳이 없어 남기지 않습니다. */
+  const waiting = new Set<string>();
   const results = new Map<string, { value?: unknown; error?: unknown }>();
   const stateListeners = new Set<() => void>();
   const syncedListeners = new Set<() => void>();
@@ -412,10 +415,7 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
     if (!online && !force) return false;
     try {
       // 토큰 갱신은 서버에 닿지 않으면 오래 재시도하므로 화면을 기다리게 하지 않습니다.
-      return await Promise.race([
-        base.auth.isReady(),
-        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), READY_TIMEOUT)),
-      ]);
+      return await withTimeout(base.auth.isReady(), READY_TIMEOUT, false);
     } catch {
       return false;
     }
@@ -433,7 +433,7 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
         online = true;
         ops = ops.filter((op) => op.id !== next.id);
         mergeSent(next, value);
-        results.set(next.id, { value });
+        if (waiting.has(next.id)) results.set(next.id, { value });
         removeUnusedPhotos(opPhotos(next));
         sent += 1;
         saveOps();
@@ -443,7 +443,7 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
         ops = ops.map((op) =>
           op.id === next.id ? { ...op, status: 'failed' as const, error: message } : op,
         );
-        results.set(next.id, { error });
+        if (waiting.has(next.id)) results.set(next.id, { error });
         saveOps();
       }
     }
@@ -470,10 +470,16 @@ export const createOfflineBackend = (base: Backend, deps: Deps) => {
   const write = async <T>(body: OpBody, label: string, local: () => T): Promise<T> => {
     const id = deps.newId();
     ops = [...ops, { ...body, id, label, status: 'pending' } as OutboxOp];
-    saveOps();
-    await flush();
-    const result = results.get(id);
-    results.delete(id);
+    waiting.add(id);
+    let result: { value?: unknown; error?: unknown } | undefined;
+    try {
+      saveOps();
+      await flush();
+      result = results.get(id);
+    } finally {
+      waiting.delete(id);
+      results.delete(id);
+    }
     if (result && 'error' in result) {
       const failed = ops.find((op) => op.id === id);
       ops = ops.filter((op) => op.id !== id);

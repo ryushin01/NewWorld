@@ -8,6 +8,7 @@ import { compressPhoto } from '../lib/photo';
 import { createRecoveryCode, hashRecoveryCode } from '../lib/recovery-code';
 import { storageAdapter } from '../lib/storage';
 import { isRecord, parseStoredJson } from '../lib/stored-json';
+import { withTimeout } from '../lib/timeout';
 import type {
   Backend,
   ChecklistItem,
@@ -487,15 +488,9 @@ export const supabaseBackend: Backend = {
     },
     async signOut() {
       // 토큰이 만료된 채 끊겨 있으면 갱신 재시도가 길어지므로 오래 기다리지 않습니다.
-      const { error } = await Promise.race([
-        client.auth.signOut(),
-        new Promise<{ error: Error }>((resolve) =>
-          setTimeout(
-            () => resolve({ error: new TypeError('Network request failed') }),
-            SIGN_OUT_TIMEOUT,
-          ),
-        ),
-      ]);
+      const { error } = await withTimeout(client.auth.signOut(), SIGN_OUT_TIMEOUT, {
+        error: new TypeError('Network request failed'),
+      });
       if (!error) return;
       if (!isTransientError(error)) throw error;
       // 끊긴 상태에서도 이 기기에서는 로그아웃되어야 합니다. 서버 토큰은 만료되면 사라집니다.
