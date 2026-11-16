@@ -249,16 +249,17 @@ npx supabase storage cp -r --remote --experimental ss:///avatars backup/avatars
 - `data.sql`에는 앱 데이터(장소·기록·체크리스트·여정·현장 인증·프로필)와 계정(`auth`)이 들어갑니다. 버킷 행은 마이그레이션이 만들고 사진 목록 행(`storage.objects`)은 사진을 다시 올릴 때 새로 생기므로 뺍니다. 넣어 두면 되돌릴 때 같은 행이 겹쳐 멈춥니다.
 - 사진 경로(`{user_id}/{record_id}/{파일}`)가 그대로여야 기록과 맞고 접근 정책(첫 폴더가 본인 ID)도 통합니다. `cp -r`은 경로를 그대로 둡니다.
 - 데이터 덤프와 사진 복사 사이에 바뀐 사진은 서로 맞지 않습니다. 앱에는 점검 화면이 없으므로 이용이 적은 시간에 받고, 덤프 바로 뒤에 사진을 받습니다. 그사이 지운 사진은 되돌린 뒤 기록에는 남지만 파일이 없어 서명 주소가 비고(화면에 나오지 않음), 새로 올린 사진은 기록 없이 파일만 남습니다.
-- 받은 날짜와 보관 위치를 적어 둡니다.
+- 받은 날짜, 보관 위치, 그때 서버에 적용된 마지막 마이그레이션(`npx supabase migration list --remote`의 마지막 줄)을 적어 둡니다. 되돌릴 때 이 마이그레이션까지의 스키마에 데이터를 넣습니다.
 
 ### 되돌리기 (새 프로젝트)
 
 1. `npx supabase link --project-ref <새 프로젝트>`: 이후 명령이 모두 새 프로젝트로 갑니다.
-2. `npx supabase db push --remote`: 스키마, RLS·저장소 정책, 버킷, 마이그레이션 기록(`--remote`가 없으면 로컬 DB에 적용)
-3. `npx supabase config push`: 메일 인증 끄기, 비밀번호 8자 이상. 새 프로젝트는 메일 인증이 켜져 있어 아이디 가입이 막힙니다.
-4. `npx supabase functions deploy`: 이름 없이 실행해 `place-search`·`delete-account`·`recover-account`를 모두 올립니다(기본 환경 변수만 써서 따로 넣을 비밀 값은 없음).
-5. `psql --single-transaction --variable ON_ERROR_STOP=1 --command 'SET session_replication_role = replica' --file data.sql --dbname <새 DB 연결 문자열>`
-6. `npx supabase storage cp -r --remote --experimental backup/record-photos ss:///record-photos`(`avatars`도 같음)
-7. 앱의 `EXPO_PUBLIC_SUPABASE_URL`·`EXPO_PUBLIC_SUPABASE_ANON_KEY`(EAS 환경 변수)를 새 프로젝트 값으로 바꿔 다시 빌드합니다.
+2. 받을 때 적어 둔 마이그레이션까지만 올립니다. 그보다 새 파일을 `supabase/migrations`에서 잠시 다른 곳으로 옮기고 `npx supabase db push --remote`(`--remote`가 없으면 로컬 DB에 적용)를 실행합니다. 데이터는 받을 때와 같은 스키마에만 들어갑니다(예: 낚시·맛집 칸을 지우는 `20261108000000` 전에 받은 데이터는 지운 뒤의 스키마에 넣을 수 없음).
+3. `psql --single-transaction --variable ON_ERROR_STOP=1 --command 'SET session_replication_role = replica' --file data.sql --dbname <새 DB 연결 문자열>`
+4. 옮긴 파일을 되돌리고(`git checkout -- supabase/migrations`) 다시 `npx supabase db push --remote`: 남은 마이그레이션이 되돌린 데이터 위에서 돌아, 칸 정리나 기존 계정의 프로필 만들기(`20261111000000`) 같은 데이터 변환도 함께 됩니다. 모든 마이그레이션을 먼저 올리면 프로필 만들기가 빈 계정 표를 읽고, 데이터를 넣을 때는 트리거가 꺼져 있어 되돌린 계정에 프로필이 생기지 않습니다.
+5. `npx supabase config push`: 메일 인증 끄기, 비밀번호 8자 이상. 새 프로젝트는 메일 인증이 켜져 있어 아이디 가입이 막힙니다.
+6. `npx supabase functions deploy`: 이름 없이 실행해 `place-search`·`delete-account`·`recover-account`를 모두 올립니다(기본 환경 변수만 써서 따로 넣을 비밀 값은 없음).
+7. `npx supabase storage cp -r --remote --experimental backup/record-photos ss:///record-photos`(`avatars`도 같음)
+8. 앱의 `EXPO_PUBLIC_SUPABASE_URL`·`EXPO_PUBLIC_SUPABASE_ANON_KEY`(EAS 환경 변수)를 새 프로젝트 값으로 바꿔 다시 빌드합니다.
 
 이 순서는 저장소 설정과 CLI 3.1.0의 동작으로 정리했고, 실제 프로젝트에 되돌려 보지는 않았습니다. 처음 되돌려 볼 때 막힌 곳을 이 절에 고칩니다. 일반적인 주의 사항은 [Supabase의 CLI 백업·복원 문서](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)에 있습니다.
