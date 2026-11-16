@@ -1,7 +1,7 @@
 # NewWorld - 신세계
 
 [![CI](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml/badge.svg)](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml)
-![version](https://img.shields.io/badge/version-2.15.0-c2792b)
+![version](https://img.shields.io/badge/version-2.16.0-c2792b)
 
 피라미드와 잉카 유적부터 아발론과 에덴 동산까지, 역사와 신화·전설 속 여행지를 탐험하고 기록하는 모바일 앱입니다.
 
@@ -69,7 +69,7 @@
 | 상태·데이터 | TanStack Query, zustand, MMKV, React Hook Form, Zod, dayjs                                                                                                                                             |
 | 서버        | Supabase(Postgres, RLS, Auth, Storage, Edge Functions), OpenStreetMap Photon, Open-Meteo                                                                                                               |
 | 품질        | ESLint, Prettier, husky, lint-staged, Jest, React Native Testing Library, PGlite, Maestro, Storybook                                                                                                   |
-| 배포        | EAS Build, GitHub Actions                                                                                                                                                                              |
+| 배포·운영   | EAS Build, GitHub Actions, Sentry(오류 모니터링, DSN을 넣으면 켜짐)                                                                                                                                    |
 
 ## 시작하기
 
@@ -115,11 +115,12 @@ src/
 
 ## 문서
 
-| 문서                                           | 내용                                                       |
-| ---------------------------------------------- | ---------------------------------------------------------- |
-| [개발 가이드](docs/development.md)             | 환경 변수, 서버 준비, 테스트, 배포, 디자인 토큰, 도감 자료 |
-| [시퀀스 다이어그램](docs/sequence-diagrams.md) | 현장 인증 스탬프, 근처 여행지 도착 알림                    |
-| [CHANGELOG](CHANGELOG.md)                      | 버전 기록                                                  |
+| 문서                                           | 내용                                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| [개발 가이드](docs/development.md)             | 환경 변수, 서버 준비, 테스트, 배포, 백업과 복원, 디자인 토큰, 도감 자료 |
+| [시퀀스 다이어그램](docs/sequence-diagrams.md) | 현장 인증 스탬프, 근처 여행지 도착 알림                                 |
+| [출시 체크리스트](docs/release-checklist.md)   | 서버·EAS·App Store·Google Play 제출 전에 할 일, 출시 뒤 백업            |
+| [CHANGELOG](CHANGELOG.md)                      | 버전 기록                                                               |
 
 ## 글꼴
 

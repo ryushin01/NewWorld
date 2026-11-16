@@ -324,19 +324,25 @@ const findRecord = (id: string) => {
 const toRecord = async (id: string, input: RecordSaveInput): Promise<TripRecord> => {
   const place = findPlace(input.record.placeId);
   // 서버 모드와 같은 압축 경로가 실제 기기에서 동작하는지 함께 검증합니다.
-  const compressed = await Promise.all(input.newPhotos.map((photo) => compressPhoto(photo)));
-  const added: Photo[] = await Promise.all(
-    compressed.map(async (photo) => {
-      const name = await photoStore.save(photo.uri);
-      return {
+  // 서버 모드처럼 한 장씩 줄여, 큰 사진 여러 장을 한꺼번에 풀어 메모리가 치솟지 않게 합니다.
+  const added: Photo[] = [];
+  try {
+    for (const photo of input.newPhotos) {
+      const { bytes, width, height } = await compressPhoto(photo);
+      const name = await photoStore.write(bytes);
+      added.push({
         id: nextId(),
         path: `${PHOTO_PREFIX}${name}`,
         url: photoStore.uriOf(name),
-        width: photo.width,
-        height: photo.height,
-      };
-    }),
-  );
+        width,
+        height,
+      });
+    }
+  } catch (error) {
+    // 뒤 사진이 실패하면 앞에서 저장한 파일도 지워, 기록 없이 남는 파일이 생기지 않게 합니다.
+    removePhotos(added);
+    throw error;
+  }
   return {
     ...input.record,
     id,
@@ -472,7 +478,7 @@ export const demoBackend: Backend = {
       if (avatar !== undefined) {
         // 상태를 저장한 뒤에 이전 사진을 지워, 저장 전에 앱이 꺼져도 사진이 사라지지 않게 합니다.
         file = avatar
-          ? await photoStore.save((await compressPhoto(avatar, AVATAR_EDGE)).uri)
+          ? await photoStore.write((await compressPhoto(avatar, AVATAR_EDGE)).bytes)
           : null;
       }
       profiles.set(userId, { nickname, name, avatar: file });

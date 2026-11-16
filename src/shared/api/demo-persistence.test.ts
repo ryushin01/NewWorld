@@ -11,9 +11,10 @@ jest.mock('../lib/storage', () => ({
 }));
 
 jest.mock('../lib/photo', () => ({
-  compressPhoto: jest.fn(async () => ({ uri: 'file:///cache/a.jpg', width: 10, height: 10 })),
+  compressPhoto: jest.fn(async () => ({ bytes: new ArrayBuffer(1), width: 10, height: 10 })),
   photoStore: {
     save: jest.fn(async () => 'saved.jpg'),
+    write: jest.fn(async () => 'saved.jpg'),
     uriOf: (name: string) => `file:///container-${(global as never as { c: string }).c}/${name}`,
     remove: jest.fn(),
   },

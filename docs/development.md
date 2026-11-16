@@ -13,27 +13,37 @@ pnpm install
 pnpm run ios       # 또는 pnpm run android
 ```
 
+`app.config.ts`(아이콘·스플래시·권한·플러그인)를 바꾸면 `npx expo prebuild`로 네이티브 폴더에 반영합니다. 이미 있는 `ios/`·`android/`에는 `expo run:*`가 변경을 다시 반영하지 않습니다. Expo CLI 58의 `prebuild`는 기본으로 폴더를 지우고 새로 만들어 Pods·빌드 캐시도 사라지므로, 빌드 캐시를 살리려면 `--no-clean`을 붙입니다(E2E 스크립트는 빌드 전에 `prebuild --no-clean`을 돌림).
+
 `.env`가 없으면 가상 데이터로 동작하는 **데모 모드**로 실행됩니다. 로그인 화면의 `둘러보기` 버튼(아이디 `guest`)으로 바로 들어가거나 아이디로 가입할 수 있습니다. 가입한 계정의 비밀번호는 솔트를 붙인 SHA-256 해시로만 기기에 저장하고, 변경 내용도 기기에 저장됩니다. MY의 계정 삭제를 누르면 예시 데이터로 되돌아갑니다.
 
 ## 환경 변수
 
 `.env.example`을 `.env`로 복사해 채웁니다.
 
-| 변수                                                        | 용도                                                 |
-| ----------------------------------------------------------- | ---------------------------------------------------- |
-| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | 서버 연결. 없으면 데모 모드입니다.                   |
-| `GOOGLE_MAPS_ANDROID_API_KEY`                               | Android 지도. iOS는 Apple 지도를 써서 필요 없습니다. |
+| 변수                                                        | 용도                                                  |
+| ----------------------------------------------------------- | ----------------------------------------------------- |
+| `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` | 서버 연결. 없으면 데모 모드입니다.                    |
+| `GOOGLE_MAPS_ANDROID_API_KEY`                               | Android 지도. iOS는 Apple 지도를 써서 필요 없습니다.  |
+| `EXPO_PUBLIC_SENTRY_DSN`                                    | 오류 모니터링(Sentry). 없으면 오류를 보내지 않습니다. |
+
+### 오류 모니터링 (Sentry)
+
+- `src/_app/monitoring.ts`가 앱을 열 때 가장 먼저 Sentry를 시작합니다. DSN이 없으면 아무것도 하지 않습니다.
+- 화면 오류(루트 `ErrorBoundary`)와 처리하지 않은 오류를 보냅니다. 아이디·IP(`sendDefaultPii`), 화면 캡처, 뷰 구조, 실패한 요청은 보내지 않고, 콘솔 기록은 버리며 요청 주소의 쿼리(서명 토큰)는 지웁니다. 성능 추적은 끕니다.
+- 켜려면 Sentry 무료 플랜에서 React Native 프로젝트를 만들고 DSN을 EAS 환경 변수 `EXPO_PUBLIC_SENTRY_DSN`에 넣은 뒤 다시 빌드합니다.
+- 지금은 소스 맵을 올리지 않아 Release 오류의 위치가 번들 기준으로 보입니다. 원래 코드 위치로 보려면 config plugin(`@sentry/react-native/expo`)과 `getSentryExpoConfig`(Metro)를 더하고, EAS에 `SENTRY_AUTH_TOKEN`을 넣고, `pnpm-workspace.yaml`의 `@sentry/cli`를 `true`로 바꿉니다.
 
 장소 검색은 Edge Function에서 OpenStreetMap 기반 [Photon](https://photon.komoot.io/) 공개 서버를 호출하므로 별도 키가 필요 없습니다. 공개 서버는 사용량 보장이 없고 한국어 지명은 잘 찾지 못하므로, 공개 배포 전에 자체 서버나 유료 지오코더로 바꿉니다. 공용 Nominatim은 Supabase Edge의 접속을 403으로 차단합니다.
 
 ## 서버 준비 (Supabase)
 
-> **주의:** `20261108000000_ruins_travel.sql`은 이전 낚시·맛집 기록의 전용 칸을 삭제하며 되돌릴 수 없습니다. 기존 데이터가 있는 서버는 `npx supabase db dump --data-only`로 백업한 뒤 `db push`를 실행합니다.
+> **주의:** `20261108000000_ruins_travel.sql`은 이전 낚시·맛집 기록의 전용 칸을 삭제하며 되돌릴 수 없습니다. 기존 데이터가 있는 서버는 [백업과 복원](#백업과-복원)대로 받은 뒤 `db push`를 실행합니다.
 
 ```bash
 npx supabase login
 npx supabase link --project-ref <프로젝트 ID>
-npx supabase db push
+npx supabase db push --remote   # CLI 3부터 --remote가 없으면 로컬 DB에 적용합니다.
 npx supabase config push   # 메일 인증 끄기(아이디 가입) 등 인증 설정을 올립니다.
 npx supabase functions deploy place-search
 npx supabase functions deploy delete-account
@@ -143,6 +153,18 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 
 저장소는 공개된 지 하루가 안 된 패키지를 받지 않습니다(`minimumReleaseAge`). `expo install`이 갓 나온 판을 고르면 설치가 멈추므로 하루 기다린 뒤 다시 실행합니다.
 
+### 고쳐 쓰는 패키지 (`patches/`)
+
+`pnpm-workspace.yaml`의 `patchedDependencies`에 적힌 패키지는 설치할 때 `patches/`의 수정을 덧씌웁니다.
+
+| 패키지                           | 고친 것                                            | 이유                                                                                                                                                                                                              |
+| -------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `expo-image-manipulator@58.0.16` | iOS 처리 우선순위 `.background` → `.userInitiated` | 사진 저장처럼 사용자가 기다리는 작업인데 가장 낮은 우선순위로 돌아, 기기가 바쁠 때 HEIC 사진 한 장을 줄이는 데 몇 분씩 걸렸습니다(같은 시뮬레이터에서 0.35초 대 29초, 부하가 더 높을 때 7분). Android는 해당 없음 |
+
+Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링크합니다. 그래서 소스를 고친 패키지는 `package.json`의 `expo.autolinking.ios.buildFromSource`에도 넣어 소스로 빌드합니다. 빠뜨리면 설치된 소스에는 패치가 보여도 앱에는 원래 코드가 들어갑니다(빌드 기록에 `Switch <모듈> XCFramework`가 보이면 미리 컴파일한 것을 쓴 것입니다). 이 설정을 바꾼 뒤에는 `pod install`을 다시 합니다.
+
+패치는 정확한 버전에만 걸립니다. 그 패키지를 올리면 pnpm이 쓰이지 않는 패치라며 설치를 멈추므로, 새 버전에서도 같은 문제가 있는지 확인한 뒤 `pnpm patch <패키지>@<새 버전>`으로 다시 만들거나(`pnpm patch-commit`) 고쳐졌으면 `patchedDependencies` 줄과 패치 파일을 지웁니다.
+
 ## 빌드 주의 사항
 
 - 가입 화면의 비밀번호 칸은 iOS에서 `textContentType="oneTimeCode"`입니다. `newPassword`나 `password`로 두면 비밀번호 칸이 둘인 화면에서 강력한 암호 시트가 입력 중에 다시 떠 글자 입력이 끊겼습니다(iOS 27 시뮬레이터 기준).
@@ -210,4 +232,34 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 
 ## 서버 적용 현황
 
-Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
+Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push --remote`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
+
+## 백업과 복원
+
+스키마, RLS 정책, 저장소 버킷과 그 정책, Edge Function, 인증 설정은 이 저장소의 `supabase/`가 원본입니다. 그래서 백업은 데이터와 사진 파일만 받습니다. Supabase CLI 3.1 기준으로 `db dump`의 기본값은 스키마만 담고(`--dry-run`으로 확인), `storage` 명령은 `--experimental`이 있어야 실행됩니다.
+
+### 받기 (연결한 프로젝트)
+
+```bash
+npx supabase db dump --remote --data-only --use-copy -x storage.buckets -x storage.objects -f data.sql
+npx supabase storage cp -r --remote --experimental ss:///record-photos backup/record-photos
+npx supabase storage cp -r --remote --experimental ss:///avatars backup/avatars
+```
+
+- `data.sql`에는 앱 데이터(장소·기록·체크리스트·여정·현장 인증·프로필)와 계정(`auth`)이 들어갑니다. 버킷 행은 마이그레이션이 만들고 사진 목록 행(`storage.objects`)은 사진을 다시 올릴 때 새로 생기므로 뺍니다. 넣어 두면 되돌릴 때 같은 행이 겹쳐 멈춥니다.
+- 사진 경로(`{user_id}/{record_id}/{파일}`)가 그대로여야 기록과 맞고 접근 정책(첫 폴더가 본인 ID)도 통합니다. `cp -r`은 경로를 그대로 둡니다.
+- 데이터 덤프와 사진 복사 사이에 바뀐 사진은 서로 맞지 않습니다. 앱에는 점검 화면이 없으므로 이용이 적은 시간에 받고, 덤프 바로 뒤에 사진을 받습니다. 그사이 지운 사진은 되돌린 뒤 기록에는 남지만 파일이 없어 서명 주소가 비고(화면에 나오지 않음), 새로 올린 사진은 기록 없이 파일만 남습니다.
+- 받은 날짜, 보관 위치, 그때 서버에 적용된 마지막 마이그레이션을 적어 둡니다. `npx supabase migration list --remote`에서 REMOTE 열이 채워진 마지막 줄입니다(아직 올리지 않은 로컬 파일도 함께 나오므로 맨 끝 줄이 아닐 수 있음). 덤프 전후에 한 번씩 실행해 같은지 보고, 그사이 마이그레이션이 올라갔으면 다시 받습니다. 되돌릴 때 이 마이그레이션까지의 스키마에 데이터를 넣습니다.
+
+### 되돌리기 (새 프로젝트)
+
+1. `npx supabase link --project-ref <새 프로젝트>`: 이후 명령이 모두 새 프로젝트로 갑니다.
+2. 받을 때 적어 둔 마이그레이션까지만 올립니다. 그보다 새 파일을 `supabase/migrations`에서 잠시 다른 곳으로 옮기고 `npx supabase db push --remote`(`--remote`가 없으면 로컬 DB에 적용)를 실행합니다. 데이터는 받을 때와 같은 스키마에만 들어갑니다(예: 낚시·맛집 칸을 지우는 `20261108000000` 전에 받은 데이터는 지운 뒤의 스키마에 넣을 수 없음).
+3. `psql --single-transaction --variable ON_ERROR_STOP=1 --command 'SET session_replication_role = replica' --file data.sql --dbname <새 DB 연결 문자열>`
+4. 옮긴 파일을 원래 자리로 다시 옮기고 `npx supabase db push --remote`: 남은 마이그레이션이 되돌린 데이터 위에서 돌아, 칸 정리나 기존 계정의 프로필 만들기(`20261111000000`) 같은 데이터 변환도 함께 됩니다. 모든 마이그레이션을 먼저 올리면 프로필 만들기가 빈 계정 표를 읽고, 데이터를 넣을 때는 트리거가 꺼져 있어 되돌린 계정에 프로필이 생기지 않습니다.
+5. `npx supabase config push`: 메일 인증 끄기, 비밀번호 8자 이상. 새 프로젝트는 메일 인증이 켜져 있어 아이디 가입이 막힙니다.
+6. `npx supabase functions deploy`: 이름 없이 실행해 `place-search`·`delete-account`·`recover-account`를 모두 올립니다(기본 환경 변수만 써서 따로 넣을 비밀 값은 없음).
+7. `npx supabase storage cp -r --remote --experimental backup/record-photos ss:///record-photos`(`avatars`도 같음)
+8. 앱의 `EXPO_PUBLIC_SUPABASE_URL`·`EXPO_PUBLIC_SUPABASE_ANON_KEY`(EAS 환경 변수)를 새 프로젝트 값으로 바꿔 다시 빌드합니다.
+
+이 순서는 저장소 설정과 CLI 3.1.0의 동작으로 정리했고, 실제 프로젝트에 되돌려 보지는 않았습니다. 처음 되돌려 볼 때 막힌 곳을 이 절에 고칩니다. 일반적인 주의 사항은 [Supabase의 CLI 백업·복원 문서](https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore)에 있습니다.

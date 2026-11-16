@@ -10,6 +10,12 @@ jest.mock('react-native-mmkv', () => ({
     };
   },
 }));
+// 오류 모니터링은 네이티브 SDK가 없는 Jest에서 부르기만 기록합니다.
+jest.mock('@sentry/react-native', () => ({
+  init: jest.fn(),
+  captureException: jest.fn(),
+  wrap: (component) => component,
+}));
 // 네이티브 Worklets가 없는 Jest에서는 애니메이션 드라이버를 쓰지 않습니다.
 jest.mock('@tamagui/animations-reanimated', () => ({ createAnimations: () => undefined }));
 jest.mock('react-native-maps', () => ({

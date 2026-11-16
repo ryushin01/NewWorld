@@ -41,6 +41,10 @@ xcrun simctl bootstatus "$udid" -b > /dev/null
 echo "E2E 시뮬레이터: $DEVICE_NAME ($udid)"
 
 if [ -z "${SKIP_BUILD:-}" ]; then
+  # 네이티브 폴더(ios/)가 이미 있으면 expo run:ios는 app.config의 아이콘·스플래시·권한 변경을 다시 반영하지 않습니다.
+  # 그래서 아이콘을 바꾼 뒤에도 로컬 빌드에 예전 아이콘이 남았습니다. 빌드 전에 prebuild로 설정을 맞춥니다(pod install은 run:ios가 함).
+  # CLI 58의 prebuild는 기본으로 폴더를 지우고 새로 만들어 Pods·빌드 캐시까지 사라지므로, --no-clean으로 있는 폴더에 반영만 합니다.
+  npx expo prebuild --platform ios --no-install --no-clean
   npx expo run:ios --configuration Release --device "$udid" --no-bundler
 fi
 

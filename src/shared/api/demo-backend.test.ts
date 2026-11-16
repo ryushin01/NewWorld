@@ -1,9 +1,10 @@
 import { demoBackend as api } from './demo-backend';
 
 jest.mock('../lib/photo', () => ({
-  compressPhoto: jest.fn(async () => ({ uri: 'file:///c.jpg' })),
+  compressPhoto: jest.fn(async () => ({ bytes: new ArrayBuffer(1), width: 10, height: 10 })),
   photoStore: {
     save: jest.fn(async () => 'a.jpg'),
+    write: jest.fn(async () => 'a.jpg'),
     uriOf: (name: string) => `file:///${name}`,
     remove: jest.fn(),
   },
@@ -62,6 +63,73 @@ it('장소를 만들고 기록과 사진을 저장한 뒤 함께 삭제합니다
 
   await api.places.remove(place.id);
   await expect(api.records.get(record.id)).rejects.toThrow();
+});
+
+it('사진을 한 장씩 줄여 큰 사진 여러 장을 한꺼번에 풀지 않습니다', async () => {
+  const { compressPhoto } = jest.requireMock('../lib/photo') as { compressPhoto: jest.Mock };
+  compressPhoto.mockClear();
+  let active = 0;
+  let peak = 0;
+  compressPhoto.mockImplementation(async () => {
+    active += 1;
+    peak = Math.max(peak, active);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    active -= 1;
+    return { bytes: new ArrayBuffer(1), width: 10, height: 10 };
+  });
+  const place = await api.places.create({
+    name: '사진 유적',
+    kind: 'real',
+    address: '',
+    latitude: 35,
+    longitude: 128,
+    memo: '',
+    tags: [],
+    catalogId: null,
+    wishlisted: false,
+  });
+  const record = await api.records.create({
+    record: baseRecord(place.id),
+    keptPhotos: [],
+    newPhotos: [1, 2, 3].map((n) => ({ uri: `file:///${n}.jpg`, width: 4032, height: 3024 })),
+  });
+  expect(record.photos).toHaveLength(3);
+  expect(compressPhoto).toHaveBeenCalledTimes(3);
+  expect(peak).toBe(1);
+  await api.places.remove(place.id);
+});
+
+it('뒤 사진을 줄이지 못하면 앞에서 저장한 사진 파일도 지우고 오류를 그대로 알립니다', async () => {
+  const { compressPhoto, photoStore } = jest.requireMock('../lib/photo') as {
+    compressPhoto: jest.Mock;
+    photoStore: { write: jest.Mock; remove: jest.Mock };
+  };
+  compressPhoto
+    .mockResolvedValueOnce({ bytes: new ArrayBuffer(1), width: 10, height: 10 })
+    .mockRejectedValueOnce(new Error('Unsupported photo format'));
+  photoStore.write.mockResolvedValueOnce('first.jpg');
+  photoStore.remove.mockClear();
+  const place = await api.places.create({
+    name: '실패 유적',
+    kind: 'real',
+    address: '',
+    latitude: 36,
+    longitude: 129,
+    memo: '',
+    tags: [],
+    catalogId: null,
+    wishlisted: false,
+  });
+  await expect(
+    api.records.create({
+      record: baseRecord(place.id),
+      keptPhotos: [],
+      newPhotos: [1, 2].map((n) => ({ uri: `file:///${n}.jpg`, width: 10, height: 10 })),
+    }),
+  ).rejects.toThrow('Unsupported photo format');
+  expect(photoStore.remove).toHaveBeenCalledWith('first.jpg');
+  expect((await api.places.get(place.id)).recordCount).toBe(0);
+  await api.places.remove(place.id);
 });
 
 const signUpInput = {

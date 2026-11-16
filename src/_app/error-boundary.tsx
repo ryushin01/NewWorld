@@ -5,6 +5,7 @@ import { useColorScheme } from 'react-native';
 import { TamaguiProvider, View } from 'tamagui';
 import { MessageView } from '@/shared/ui';
 import { tamaguiConfig } from '../../tamagui.config';
+import { reportError } from './monitoring';
 
 /**
  * 화면을 그리다 예외가 나면 Release 앱은 빈 화면으로 멈춥니다. 그 대신 안내와 다시 시도를 보여 줍니다.
@@ -14,6 +15,7 @@ export const AppErrorBoundary = ({ error, retry }: ErrorBoundaryProps) => {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => undefined);
+    reportError(error);
     console.error(error);
   }, [error]);
   return (
