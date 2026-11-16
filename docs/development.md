@@ -153,6 +153,18 @@ Expo SDK가 버전을 정하는 패키지(`expo*`, `react`, `react-native*`, `@r
 
 저장소는 공개된 지 하루가 안 된 패키지를 받지 않습니다(`minimumReleaseAge`). `expo install`이 갓 나온 판을 고르면 설치가 멈추므로 하루 기다린 뒤 다시 실행합니다.
 
+### 고쳐 쓰는 패키지 (`patches/`)
+
+`pnpm-workspace.yaml`의 `patchedDependencies`에 적힌 패키지는 설치할 때 `patches/`의 수정을 덧씌웁니다.
+
+| 패키지 | 고친 것 | 이유 |
+| --- | --- | --- |
+| `expo-image-manipulator@58.0.16` | iOS 처리 우선순위 `.background` → `.userInitiated` | 사진 저장처럼 사용자가 기다리는 작업인데 가장 낮은 우선순위로 돌아, 기기가 바쁠 때 HEIC 사진 한 장을 줄이는 데 몇 분씩 걸렸습니다(같은 시뮬레이터에서 0.35초 대 29초, 부하가 더 높을 때 7분). Android는 해당 없음 |
+
+Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링크합니다. 그래서 소스를 고친 패키지는 `package.json`의 `expo.autolinking.ios.buildFromSource`에도 넣어 소스로 빌드합니다. 빠뜨리면 설치된 소스에는 패치가 보여도 앱에는 원래 코드가 들어갑니다(빌드 기록에 `Switch <모듈> XCFramework`가 보이면 미리 컴파일한 것을 쓴 것입니다). 이 설정을 바꾼 뒤에는 `pod install`을 다시 합니다.
+
+패치는 정확한 버전에만 걸립니다. 그 패키지를 올리면 pnpm이 쓰이지 않는 패치라며 설치를 멈추므로, 새 버전에서도 같은 문제가 있는지 확인한 뒤 `pnpm patch <패키지>@<새 버전>`으로 다시 만들거나(`pnpm patch-commit`) 고쳐졌으면 `patchedDependencies` 줄과 패치 파일을 지웁니다.
+
 ## 빌드 주의 사항
 
 - 가입 화면의 비밀번호 칸은 iOS에서 `textContentType="oneTimeCode"`입니다. `newPassword`나 `password`로 두면 비밀번호 칸이 둘인 화면에서 강력한 암호 시트가 입력 중에 다시 떠 글자 입력이 끊겼습니다(iOS 27 시뮬레이터 기준).

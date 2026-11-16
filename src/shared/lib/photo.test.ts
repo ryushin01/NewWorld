@@ -1,10 +1,18 @@
 import { ImageManipulator } from 'expo-image-manipulator';
-import { compressPhoto } from './photo';
+import { compressPhoto, photoStore } from './photo';
 
+const mockArrayBuffer = jest.fn(async () => new ArrayBuffer(4));
+const mockDelete = jest.fn();
+const mockWrite = jest.fn(async () => undefined);
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'uuid' }));
 jest.mock('expo-file-system', () => ({
-  File: jest.fn().mockImplementation(() => ({ arrayBuffer: async () => new ArrayBuffer(4) })),
-  Directory: jest.fn(),
+  File: jest.fn().mockImplementation(() => ({
+    exists: true,
+    arrayBuffer: mockArrayBuffer,
+    delete: mockDelete,
+    write: mockWrite,
+  })),
+  Directory: jest.fn().mockImplementation(() => ({ create: jest.fn() })),
   Paths: { document: 'file:///doc' },
 }));
 
@@ -44,7 +52,28 @@ it('긴 변을 넘지 않게 불러온 뒤 JPEG로 저장합니다', async () =>
     maxHeight: 1920,
   });
   expect(mockSaveAsync).toHaveBeenCalledWith({ format: 'jpeg', compress: 0.8 });
-  expect(result).toMatchObject({ uri: 'file:///out.jpg', width: 1920, height: 1275 });
+  expect(result).toEqual({ bytes: expect.any(ArrayBuffer), width: 1920, height: 1275 });
+});
+
+it('줄인 사진을 읽은 뒤 캐시에 남은 임시 파일을 지웁니다', async () => {
+  await compressPhoto(photo);
+  expect(mockDelete).toHaveBeenCalledTimes(1);
+  mockArrayBuffer.mockRejectedValueOnce(new Error('read failed'));
+  await expect(compressPhoto(photo)).rejects.toThrow('read failed');
+  expect(mockDelete).toHaveBeenCalledTimes(2);
+});
+
+it('임시 파일을 지우지 못해도 줄인 사진은 돌려줍니다', async () => {
+  mockDelete.mockImplementationOnce(() => {
+    throw new Error('busy');
+  });
+  await expect(compressPhoto(photo)).resolves.toMatchObject({ width: 1920 });
+});
+
+it('줄인 사진 데이터를 보관소에 새 이름으로 씁니다', async () => {
+  const bytes = new ArrayBuffer(8);
+  await expect(photoStore.write(bytes)).resolves.toBe('uuid.jpg');
+  expect(mockWrite).toHaveBeenCalledWith(bytes);
 });
 
 it('배열 map에 그대로 넘겨 순서 번호가 크기로 들어오면 막습니다', async () => {

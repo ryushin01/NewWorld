@@ -16,7 +16,11 @@ type PhotoPickerProps = {
 const SIZE = 88;
 
 const toLocal = (assets: ImagePicker.ImagePickerAsset[]): LocalPhoto[] =>
-  assets.map(({ uri, width, height }) => ({ uri, width, height }));
+  assets.map(({ uri, width, height, assetId }) => ({ uri, width, height, assetId }));
+
+/** 선택기는 고를 때마다 사진을 새 파일로 복사해 주소가 달라지므로, 보관함 ID가 있으면 그것으로 비교합니다. */
+const isSamePhoto = (a: LocalPhoto, b: LocalPhoto) =>
+  a.assetId && b.assetId ? a.assetId === b.assetId : a.uri === b.uri;
 
 export const PhotoPicker = ({ kept, added, onChangeKept, onChangeAdded }: PhotoPickerProps) => {
   const count = kept.length + added.length;
@@ -33,7 +37,7 @@ export const PhotoPicker = ({ kept, added, onChangeKept, onChangeAdded }: PhotoP
     if (result.canceled) return;
     // 같은 사진을 다시 고르면 한 번만 첨부합니다.
     const fresh = toLocal(result.assets).filter(
-      (photo) => !added.some((item) => item.uri === photo.uri),
+      (photo) => !added.some((item) => isSamePhoto(item, photo)),
     );
     onChangeAdded([...added, ...fresh].slice(0, MAX_PHOTOS_PER_RECORD - kept.length));
   };

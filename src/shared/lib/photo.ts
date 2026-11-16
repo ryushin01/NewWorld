@@ -10,6 +10,15 @@ const UNREADABLE = /could not load the image|cannot create image data/i;
 const isUnreadablePhoto = (error: unknown) =>
   error instanceof Error && UNREADABLE.test(error.message);
 
+/** 임시 파일을 지웁니다. 지우지 못해도 OS가 캐시를 비울 때 지워지므로 저장은 그대로 진행합니다. */
+const discard = (file: File) => {
+  try {
+    if (file.exists) file.delete();
+  } catch {
+    // 위와 같은 이유로 무시합니다.
+  }
+};
+
 /** 긴 변을 줄이고 JPEG로 압축합니다. 위치 정보(EXIF)도 이 과정에서 제거됩니다. */
 export const compressPhoto = async (photo: LocalPhoto, maxEdge = MAX_EDGE) => {
   if (!(maxEdge > 0)) throw new RangeError(`maxEdge must be positive: ${maxEdge}`);
@@ -34,11 +43,24 @@ export const compressPhoto = async (photo: LocalPhoto, maxEdge = MAX_EDGE) => {
       rendered?.release();
       context.release();
     });
-  const bytes = await new File(saved.uri).arrayBuffer();
-  return { bytes, uri: saved.uri, width: saved.width, height: saved.height };
+  // 줄인 사진은 데이터로 읽어 쓰고 캐시 폴더에 남기지 않습니다. 남기면 저장한 사진만큼 앱 용량이 계속 늘어납니다.
+  const output = new File(saved.uri);
+  try {
+    const bytes = await output.arrayBuffer();
+    return { bytes, width: saved.width, height: saved.height };
+  } finally {
+    discard(output);
+  }
 };
 
 const outboxDir = () => new Directory(Paths.document, 'outbox-photos');
+
+const newStoredFile = () => {
+  const directory = outboxDir();
+  directory.create({ intermediates: true, idempotent: true });
+  const name = `${Crypto.randomUUID()}.jpg`;
+  return { name, file: new File(directory, name) };
+};
 
 /**
  * 업로드 대기 중인 사진 보관소입니다.
@@ -46,11 +68,16 @@ const outboxDir = () => new Directory(Paths.document, 'outbox-photos');
  * iOS는 앱 업데이트 때 컨테이너 경로가 바뀌므로 경로가 아닌 파일 이름을 저장합니다.
  */
 export const photoStore = {
+  /** 고른 사진 파일을 복사해 둡니다. */
   async save(uri: string) {
-    const directory = outboxDir();
-    directory.create({ intermediates: true, idempotent: true });
-    const name = `${Crypto.randomUUID()}.jpg`;
-    await new File(uri).copy(new File(directory, name));
+    const { name, file } = newStoredFile();
+    await new File(uri).copy(file);
+    return name;
+  },
+  /** 줄인 사진 데이터를 파일로 씁니다(데모 모드의 기록 사진과 프로필 사진). */
+  async write(bytes: ArrayBuffer) {
+    const { name, file } = newStoredFile();
+    await file.write(bytes);
     return name;
   },
   uriOf: (name: string) => new File(outboxDir(), name).uri,

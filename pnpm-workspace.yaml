@@ -5,3 +5,5 @@ allowBuilds:
   esbuild: false
   # Sentry 소스 맵 업로드용 CLI 바이너리를 받는 스크립트입니다. 지금은 업로드하지 않아 받지 않습니다.
   '@sentry/cli': false
+patchedDependencies:
+  expo-image-manipulator@58.0.16: patches/expo-image-manipulator@58.0.16.patch

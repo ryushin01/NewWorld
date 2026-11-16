@@ -2,6 +2,15 @@
   "name": "newworld",
   "version": "2.16.0",
   "main": "expo-router/entry",
+  "expo": {
+    "autolinking": {
+      "ios": {
+        "buildFromSource": [
+          "expo-image-manipulator"
+        ]
+      }
+    }
+  },
   "dependencies": {
     "@expo-google-fonts/sorts-mill-goudy": "^0.4.1",
     "@gorhom/bottom-sheet": "^5.2.14",

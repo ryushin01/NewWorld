@@ -1,0 +1,44 @@
+diff --git a/ios/ImageManipulatorContext.swift b/ios/ImageManipulatorContext.swift
+index c2d719caad0fc2fcedcb342b122682e1c9c16ca7..5d2971317cb9c14dd06525b1dae4caca6788af02 100644
+--- a/ios/ImageManipulatorContext.swift
++++ b/ios/ImageManipulatorContext.swift
+@@ -9,6 +9,12 @@ import UIKit
+ public final class ImageManipulatorContext: SharedObject {
+   internal typealias Loader = () async throws -> UIImage
+ 
++  /**
++   NewWorld 패치: 사진 저장처럼 사용자가 기다리는 작업인데 원래 `.background`로 돌려,
++   기기가 바쁠 때 HEIC 사진 한 장을 줄이는 데 몇 분씩 걸렸습니다(같은 사진이 이 우선순위로는 0.4초).
++   */
++  private static let taskPriority: TaskPriority = .userInitiated
++
+   /**
+    The last task added to the rendering pipeline.
+    */
+@@ -25,7 +31,7 @@ public final class ImageManipulatorContext: SharedObject {
+    */
+   init(loader: @escaping Loader) {
+     self.loader = loader
+-    currentTask = Task(priority: .background) {
++    currentTask = Task(priority: Self.taskPriority) {
+       return try await loader()
+     }
+     super.init()
+@@ -36,7 +42,7 @@ public final class ImageManipulatorContext: SharedObject {
+    */
+   @discardableResult
+   internal func addTransformer(_ transformer: ImageTransformer) -> Self {
+-    currentTask = Task(priority: .background) { [currentTask] in
++    currentTask = Task(priority: Self.taskPriority) { [currentTask] in
+       // The task can be canceled in the meantime (e.g. by resetting to the original image).
+       // In this case there is no reason to transform the image any further.
+       try Task.checkCancellation()
+@@ -61,7 +67,7 @@ public final class ImageManipulatorContext: SharedObject {
+     // Firstly cancel currently running manipulations.
+     currentTask.cancel()
+ 
+-    currentTask = Task(priority: .background) {
++    currentTask = Task(priority: Self.taskPriority) {
+       return try await loader()
+     }
+   }

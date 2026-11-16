@@ -41,7 +41,13 @@ export type Photo = {
 };
 
 /** 아직 업로드하지 않은 기기 안의 사진 */
-export type LocalPhoto = { uri: string; width: number; height: number };
+export type LocalPhoto = {
+  uri: string;
+  width: number;
+  height: number;
+  /** 기기 사진 보관함의 ID. 같은 사진을 다시 골랐는지 알아보는 데만 씁니다(촬영한 사진은 없음). */
+  assetId?: string | null;
+};
 
 export type TripRecord = {
   id: string;
