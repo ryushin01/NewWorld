@@ -1,10 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import * as Linking from 'expo-linking';
 import { TamaguiProvider } from 'tamagui';
 import { tamaguiConfig } from '~/tamagui.config';
 import { useExportData } from '@/features/data-export';
 import { AccountPage } from './account-page';
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock('expo-linking', () => ({ openURL: jest.fn(() => Promise.resolve()) }));
 jest.mock('expo-constants', () => ({ expoConfig: { version: '1.0.0' } }));
 jest.mock('sonner-native', () => ({ toast: { error: jest.fn() } }));
 jest.mock('@/shared/ui/header', () => ({ Header: () => null }));
@@ -69,4 +71,17 @@ it('계정 정보를 보여 줍니다', async () => {
   await show(jest.fn());
   expect(screen.getByLabelText('여행자, 아이디 traveler')).toBeTruthy();
   expect(screen.getByTestId('my-password')).toBeTruthy();
+});
+
+it('개인정보 처리방침과 출처를 브라우저 링크로 엽니다', async () => {
+  await show(jest.fn());
+  const privacy = screen.getByTestId('my-privacy');
+  expect(privacy.props.accessibilityRole).toBe('link');
+  expect(privacy.props.accessibilityLabel).toBe('개인정보 처리방침, 브라우저에서 열기');
+  await fireEvent.press(privacy);
+  expect(Linking.openURL).toHaveBeenCalledWith(
+    'https://github.com/ryushin01/NewWorld/blob/main/docs/privacy-policy.md',
+  );
+  await fireEvent.press(screen.getByTestId('my-sources'));
+  expect(Linking.openURL).toHaveBeenLastCalledWith('https://github.com/ryushin01/NewWorld#출처');
 });

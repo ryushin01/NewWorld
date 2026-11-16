@@ -13,8 +13,12 @@ import { useSessionStore } from '@/entities/session';
 import { ArrivalAlertSwitch } from '@/features/arrival-alert';
 import { useExportData } from '@/features/data-export';
 import { backend, isDemoOffline, setDemoOffline, sync, useSyncState } from '@/shared/api';
-import { toErrorMessage } from '@/shared/lib';
+import { LINKS } from '@/shared/config';
+import { openLink, toErrorMessage } from '@/shared/lib';
 import { AppIcon, AppText, Button, Divider, Header, Touchable } from '@/shared/ui';
+
+const openExternal = (url: string) =>
+  openLink(url).then((opened) => opened || toast.error('링크를 열지 못했습니다.'));
 
 const Row = ({ label, value }: { label: string; value: string }) => (
   <YStack paddingVertical={14} gap={2} accessible accessibilityLabel={`${label}, ${value}`}>
@@ -30,16 +34,22 @@ const LinkRow = ({
   value,
   onPress,
   testID,
+  external = false,
 }: {
   label: string;
   value?: string;
   onPress: () => void;
   testID: string;
+  /** 앱 밖(브라우저)으로 나가는 줄은 링크로 알립니다. */
+  external?: boolean;
 }) => (
   <Touchable
     testID={testID}
     onPress={onPress}
-    accessibilityLabel={value ? `${label}, ${value}` : label}
+    accessibilityRole={external ? 'link' : 'button'}
+    accessibilityLabel={
+      external ? `${label}, 브라우저에서 열기` : value ? `${label}, ${value}` : label
+    }
     paddingVertical={14}
   >
     <XStack alignItems="center" gap={8}>
@@ -193,6 +203,20 @@ export const AccountPage = () => {
           <Row
             label="데이터 저장"
             value={backend.mode === 'demo' ? '데모 모드 (이 기기에 저장)' : '서버 동기화'}
+          />
+          <Divider />
+          <LinkRow
+            testID="my-privacy"
+            label="개인정보 처리방침"
+            external
+            onPress={() => openExternal(LINKS.privacyPolicy)}
+          />
+          <Divider />
+          <LinkRow
+            testID="my-sources"
+            label="출처·라이선스"
+            external
+            onPress={() => openExternal(LINKS.sources)}
           />
           <Divider />
           <Row label="앱 버전" value={Constants.expoConfig?.version ?? '-'} />

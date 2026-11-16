@@ -2,11 +2,9 @@ import dayjs from 'dayjs';
 import { Image } from 'expo-image';
 import * as Linking from 'expo-linking';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Sharing from 'expo-sharing';
 import { ArrowLeft, ExternalLink, Heart, Mail, MapPin, Share2 } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { Modal, Platform, ScrollView, Share, type View as NativeView } from 'react-native';
-import { captureRef } from 'react-native-view-shot';
+import { Modal, ScrollView, Share, type View as NativeView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
@@ -16,13 +14,20 @@ import {
   LORE_LABELS,
   Postcard,
   READING_LINKS,
-  type Destination,
 } from '@/entities/destination';
 import { KindBadge, KindIcon, usePlaces } from '@/entities/place';
 import { RecordRow, useRecords } from '@/entities/record';
 import { savedByCatalogId, useToggleWish } from '@/features/destination-save';
 import { useAutoPosition } from '@/features/nearby';
-import { distanceKm, formatCoordinate, toErrorMessage } from '@/shared/lib';
+import { LINKS } from '@/shared/config';
+import {
+  distanceKm,
+  formatCoordinate,
+  openInMaps,
+  openLink,
+  toErrorMessage,
+  useCaptureShare,
+} from '@/shared/lib';
 import {
   AppIcon,
   AppMapView,
@@ -38,18 +43,6 @@ import {
 } from '@/shared/ui';
 import { CheckInPanel } from '@/widgets/check-in-panel';
 import { PlaceMarker } from '@/widgets/place-map';
-
-const openLink = (url: string) =>
-  Linking.openURL(url).catch(() => toast.error('링크를 열지 못했습니다.'));
-
-const openInMaps = ({ latitude, longitude, name }: Destination) => {
-  const label = encodeURIComponent(name);
-  openLink(
-    Platform.OS === 'ios'
-      ? `https://maps.apple.com/?ll=${latitude},${longitude}&q=${label}`
-      : `geo:${latitude},${longitude}?q=${latitude},${longitude}(${label})`,
-  );
-};
 
 /** 한자·그리스 문자 원어명에는 라틴 전용 글꼴을 쓰지 않습니다. */
 const isLatin = (text: string) => /^[\p{Script=Latin}\p{N}\s.,'’-]+$/u.test(text);
@@ -77,11 +70,9 @@ const BulletList = ({ items }: { items: string[] }) => (
   </YStack>
 );
 
-const SOURCES_URL = 'https://github.com/ryushin01/NewWorld#출처';
-
 const LinkLine = ({ label, url }: { label: string; url: string }) => (
   <Touchable
-    onPress={() => openLink(url)}
+    onPress={() => openLink(url).then((opened) => opened || toast.error('링크를 열지 못했습니다.'))}
     accessibilityRole="link"
     accessibilityLabel={`${label}, 브라우저에서 열기`}
     justifyContent="center"
@@ -129,24 +120,13 @@ export const DestinationDetailPage = () => {
   const myRecords = saved ? (records.data ?? []) : [];
   const [solid, setSolid] = useState(false);
   const postcard = useRef<NativeView>(null);
-  const sharingPostcard = useRef(false);
   const [postcardOpen, setPostcardOpen] = useState(false);
-  const [sharing, setSharing] = useState(false);
+  // 이미지로 찍는 동안 다시 누르면 공유 창이 겹치므로 공통 훅이 ref로 막습니다.
+  const { share, sharing } = useCaptureShare();
 
   const sharePostcard = async () => {
-    // 이미지로 찍는 동안 다시 누르면 공유 창이 겹치므로 막습니다.
-    if (sharingPostcard.current) return;
-    sharingPostcard.current = true;
-    setSharing(true);
-    try {
-      const target = postcard as unknown as Parameters<typeof captureRef>[0];
-      const uri = await captureRef(target, { format: 'jpg', quality: 0.9 });
-      await Sharing.shareAsync(uri, { mimeType: 'image/jpeg', dialogTitle: '엽서 공유' });
-    } catch {
+    if (!(await share(postcard, { dialogTitle: '엽서 공유' }))) {
       toast.error('엽서를 만들지 못했습니다.');
-    } finally {
-      sharingPostcard.current = false;
-      setSharing(false);
     }
   };
   const position = useAutoPosition();
@@ -215,7 +195,11 @@ export const DestinationDetailPage = () => {
           <IconAction
             label={fantasy ? '연고지 지도' : '지도 앱'}
             icon={ExternalLink}
-            onPress={() => openInMaps(destination)}
+            onPress={() =>
+              openInMaps(destination).then(
+                (opened) => opened || toast.error('지도 앱을 열지 못했습니다.'),
+              )
+            }
           />
           <IconAction label="엽서" icon={Mail} onPress={() => setPostcardOpen(true)} />
           <IconAction
@@ -352,7 +336,7 @@ export const DestinationDetailPage = () => {
         )}
         {/* 사진·참고 자료의 출처는 화면이 아니라 README와 docs/credits.md에 두고, 여기서는 그곳으로 잇습니다. */}
         <YStack padding={20} gap={6}>
-          <LinkLine label="자료·사진 출처 (README)" url={SOURCES_URL} />
+          <LinkLine label="자료·사진 출처 (README)" url={LINKS.sources} />
         </YStack>
       </ScrollView>
       {solid ? (
