@@ -9,6 +9,7 @@ import type { Backend } from './types';
 
 export * from './types';
 export { fetchConditions } from './conditions';
+export { QUERY_ROOTS } from './query-roots';
 export { isDemoOffline, setDemoOffline } from './demo-backend';
 export type { OutboxOp } from './offline-backend';
 

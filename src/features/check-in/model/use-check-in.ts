@@ -1,10 +1,9 @@
 import * as Crypto from 'expo-crypto';
 import * as Location from 'expo-location';
-import { useRef } from 'react';
 import { useCheckins, useCreateCheckin } from '@/entities/checkin';
 import type { Destination } from '@/entities/destination';
 import type { CheckIn } from '@/shared/api';
-import { distanceKm, withTimeout } from '@/shared/lib';
+import { distanceKm, withTimeout, useSubmitLock } from '@/shared/lib';
 
 /** 유적 단지와 연고지의 넓이를 고려해 3km 안이면 현장으로 봅니다. */
 export const CHECK_IN_RADIUS_KM = 3;
@@ -42,11 +41,10 @@ export const useCheckIn = () => {
   const checkins = useCheckins();
   const create = useCreateCheckin();
   // isPending은 다음 렌더에야 바뀌므로 빠른 연속 누름은 ref로 막습니다.
-  const busy = useRef(false);
+  const lock = useSubmitLock();
 
   return async (destination: Destination, { demo = false } = {}): Promise<CheckInResult> => {
-    if (busy.current) return { status: 'busy' };
-    busy.current = true;
+    if (!lock.take()) return { status: 'busy' };
     try {
       let { latitude, longitude } = destination;
       if (!demo) {
@@ -78,7 +76,7 @@ export const useCheckIn = () => {
     } catch {
       return { status: 'error' };
     } finally {
-      busy.current = false;
+      lock.release();
     }
   };
 };

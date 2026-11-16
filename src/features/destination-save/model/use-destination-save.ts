@@ -49,7 +49,8 @@ export const useToggleWish = () => {
     onError: (_error, _destination, context) => {
       if (context?.previous) client.setQueryData(placeKeys.all, context.previous);
     },
-    onSettled: () => client.invalidateQueries(),
+    // 가고 싶어요는 장소 목록에만 들어갑니다.
+    onSettled: () => client.invalidateQueries({ queryKey: placeKeys.all }),
   });
   return (destination: Destination, options?: { onError?: (error: unknown) => void }) => {
     if (locks.current.has(destination.id)) return;
@@ -68,7 +69,7 @@ export const useEnsureCatalogPlace = () => {
     const saved = await findSaved(destination);
     if (saved) return saved.id;
     const created = await backend.places.create(toCatalogPlaceInput(destination, false));
-    await client.invalidateQueries();
+    await client.invalidateQueries({ queryKey: placeKeys.all });
     return created.id;
   };
 };

@@ -1,6 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Haptics from 'expo-haptics';
-import { useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { toast } from 'sonner-native';
@@ -8,7 +7,13 @@ import { View, XStack, YStack } from 'tamagui';
 import { KIND_META, PLACE_KINDS, useSavePlace } from '@/entities/place';
 import { savedMessage, type Place, type PlaceInput } from '@/shared/api';
 import { LIMITS } from '@/shared/config';
-import { fieldErrorMessage, formatCoordinate, toErrorMessage, useUnsavedGuard } from '@/shared/lib';
+import {
+  fieldErrorMessage,
+  formatCoordinate,
+  toErrorMessage,
+  useSubmitLock,
+  useUnsavedGuard,
+} from '@/shared/lib';
 import { AppIcon, AppText, StickyBottomCta, Chip, Field, TagInput, MapPin } from '@/shared/ui';
 import { placeSchema } from '../model/schema';
 
@@ -34,11 +39,10 @@ export const PlaceForm = ({ placeId, initial, onSaved }: PlaceFormProps) => {
 
   // isPending은 다음 렌더에야 바뀌어 빠른 두 번 누름을 막지 못하므로 ref로 잠급니다.
   // 저장하면 화면을 떠나므로 실패했을 때만 풉니다.
-  const submitting = useRef(false);
+  const lock = useSubmitLock();
   const submit = () =>
     handleSubmit((data) => {
-      if (submitting.current) return;
-      submitting.current = true;
+      if (!lock.take()) return;
       save.mutate(data, {
         onSuccess: (place) => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -47,7 +51,7 @@ export const PlaceForm = ({ placeId, initial, onSaved }: PlaceFormProps) => {
           onSaved(place);
         },
         onError: (error) => {
-          submitting.current = false;
+          lock.release();
           toast.error(toErrorMessage(error, '장소를 저장하지 못했습니다.'));
         },
       });

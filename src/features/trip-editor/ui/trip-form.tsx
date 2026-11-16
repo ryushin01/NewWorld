@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Crypto from 'expo-crypto';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { toast } from 'sonner-native';
@@ -10,7 +10,7 @@ import { KindIcon, usePlaces } from '@/entities/place';
 import { useSaveTrip } from '@/entities/trip';
 import { savedMessage, type Trip } from '@/shared/api';
 import { LIMITS } from '@/shared/config';
-import { toErrorMessage, useUnsavedGuard } from '@/shared/lib';
+import { toErrorMessage, useUnsavedGuard, useSubmitLock } from '@/shared/lib';
 import {
   AppIcon,
   AppText,
@@ -54,7 +54,7 @@ const IconButton = ({
 export const TripForm = ({ trip, initialTitle, initialStops, onSaved }: TripFormProps) => {
   const save = useSaveTrip();
   const places = usePlaces();
-  const locked = useRef(false);
+  const lock = useSubmitLock();
   const [query, setQuery] = useState('');
   const {
     control,
@@ -83,8 +83,7 @@ export const TripForm = ({ trip, initialTitle, initialStops, onSaved }: TripForm
 
   const submit = () =>
     handleSubmit((values) => {
-      if (locked.current) return;
-      locked.current = true;
+      if (!lock.take()) return;
       save.mutate(
         { ...values, id: trip?.id ?? Crypto.randomUUID() },
         {
@@ -94,7 +93,7 @@ export const TripForm = ({ trip, initialTitle, initialStops, onSaved }: TripForm
             onSaved(saved);
           },
           onError: (error) => {
-            locked.current = false;
+            lock.release();
             toast.error(toErrorMessage(error, '여정을 저장하지 못했습니다.'));
           },
         },
