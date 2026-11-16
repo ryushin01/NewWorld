@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { backend, type Trip } from '@/shared/api';
+import { backend, QUERY_ROOTS, type Trip } from '@/shared/api';
 
-const tripKeys = { all: ['trips'] as const };
+const tripKeys = { all: [QUERY_ROOTS.trips] as const };
 
 export const useTrips = () =>
   useQuery({ queryKey: tripKeys.all, queryFn: () => backend.trips.list() });

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as Haptics from 'expo-haptics';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Controller, useForm, type Control, type FieldPath } from 'react-hook-form';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { toast } from 'sonner-native';
@@ -22,6 +22,7 @@ import {
   openLink,
   toErrorMessage,
   useUnsavedGuard,
+  useSubmitLock,
 } from '@/shared/lib';
 import { AppText, StickyBottomCta, Button, Chip, Field, TagInput, Touchable } from '@/shared/ui';
 import {
@@ -154,12 +155,9 @@ export const RecordForm = ({
   };
 
   // isPending은 다음 렌더에야 바뀌고 장소 생성도 먼저 끝나야 하므로 ref로 중복 저장을 막습니다.
-  const submitting = useRef(false);
-  const unlock = () => {
-    submitting.current = false;
-  };
+  const lock = useSubmitLock();
   const failed = (error: unknown) => {
-    unlock();
+    lock.release();
     toast.error(
       toErrorMessage(error, '기록을 저장하지 못했습니다. 입력한 내용은 그대로 있습니다.'),
     );
@@ -167,8 +165,7 @@ export const RecordForm = ({
 
   const submit = () =>
     handleSubmit(async (values) => {
-      if (submitting.current) return;
-      submitting.current = true;
+      if (!lock.take()) return;
       try {
         const resolved = placeId ?? (await resolvePlaceId?.());
         if (!resolved) throw new Error('여행지를 찾을 수 없습니다.');

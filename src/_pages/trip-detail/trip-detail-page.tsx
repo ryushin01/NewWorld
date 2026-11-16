@@ -1,6 +1,5 @@
 import * as Crypto from 'expo-crypto';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { Polyline } from 'react-native-maps';
 import { toast } from 'sonner-native';
@@ -15,7 +14,7 @@ import { findDestination, type Destination } from '@/entities/destination';
 import { KindIcon, usePlaces } from '@/entities/place';
 import { formatTripDates, useDeleteTrip, useTrip } from '@/entities/trip';
 import { savedByCatalogId } from '@/features/destination-save';
-import { toErrorMessage } from '@/shared/lib';
+import { toErrorMessage, useSubmitLock } from '@/shared/lib';
 import {
   AppMapView,
   AppText,
@@ -56,7 +55,7 @@ export const TripDetailPage = () => {
   const checklist = useChecklist();
   const upsert = useUpsertChecklist();
   const remove = useDeleteTrip();
-  const creating = useRef(false);
+  const creating = useSubmitLock();
 
   if (!trip.data) {
     return (
@@ -82,8 +81,7 @@ export const TripDetailPage = () => {
       go();
       return;
     }
-    if (creating.current) return;
-    creating.current = true;
+    if (!creating.take()) return;
     const build = stops.every((stop) => stop.realm === 'fantasy')
       ? buildFantasyItems
       : buildDefaultItems;
@@ -93,7 +91,7 @@ export const TripDetailPage = () => {
         onSuccess: go,
         onError: (error) => toast.error(toErrorMessage(error, '체크리스트를 만들지 못했습니다.')),
         onSettled: () => {
-          creating.current = false;
+          creating.release();
         },
       },
     );

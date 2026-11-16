@@ -2,7 +2,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import NetInfo from '@react-native-community/netinfo';
 import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
 import { AppState, type AppStateStatus } from 'react-native';
-import { sync } from '@/shared/api';
+import { QUERY_ROOTS, sync } from '@/shared/api';
 import { storageAdapter } from '@/shared/lib';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -47,7 +47,12 @@ export const connectQueryManagers = () => {
   const subscription = AppState.addEventListener('change', onAppState);
   // 일시적인 서버 오류나 잘못된 연결 상태 보고로 멈춘 전송을 다시 시도합니다.
   const timer = setInterval(() => void sync.flush({ force: true }), RETRY_INTERVAL);
-  const unsubscribeSynced = sync.onSynced(() => void queryClient.invalidateQueries());
+  // 밀린 변경을 올린 뒤에는 서버 데이터 목록만 다시 받습니다(프로필·장소 검색은 동기화와 무관).
+  const unsubscribeSynced = sync.onSynced(() => {
+    for (const root of Object.values(QUERY_ROOTS)) {
+      void queryClient.invalidateQueries({ queryKey: [root] });
+    }
+  });
   return () => {
     subscription.remove();
     clearInterval(timer);

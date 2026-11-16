@@ -10,7 +10,7 @@ import type { z } from 'zod';
 import { ProfileAvatar, useProfile, useUpdateProfile } from '@/entities/profile';
 import { FormField, profileSchema } from '@/features/auth';
 import type { LocalPhoto } from '@/shared/api';
-import { toErrorMessage, useSubmitLock } from '@/shared/lib';
+import { toErrorMessage, useSubmitLock, useUnsavedGuard } from '@/shared/lib';
 import { Button, Header, LoadingView, MessageView, useColors } from '@/shared/ui';
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -27,10 +27,17 @@ const ProfileEditForm = ({
   const lock = useSubmitLock();
   /** undefined: 그대로, null: 지움, LocalPhoto: 새 사진 */
   const [avatar, setAvatar] = useState<LocalPhoto | null | undefined>(undefined);
-  const { control, handleSubmit, setFocus } = useForm<ProfileForm>({
+  const {
+    control,
+    handleSubmit,
+    setFocus,
+    formState: { isDirty },
+  } = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: { nickname: initial.nickname, name: initial.name },
   });
+  // 다른 입력 화면처럼, 고친 내용(사진 포함)을 두고 나가려 하면 먼저 묻습니다.
+  const allowLeave = useUnsavedGuard(isDirty || avatar !== undefined);
   const typedNickname = useWatch({ control, name: 'nickname' });
   const preview = avatar === undefined ? initial.avatarUrl : (avatar?.uri ?? null);
 
@@ -53,6 +60,7 @@ const ProfileEditForm = ({
       {
         onSuccess: () => {
           toast.success('프로필을 저장했습니다.');
+          allowLeave();
           router.back();
         },
         onError: (error) => {
