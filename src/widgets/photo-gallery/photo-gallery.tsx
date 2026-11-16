@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useState } from 'react';
-import { FlatList, Modal, useWindowDimensions } from 'react-native';
+import { AccessibilityInfo, FlatList, Modal, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   runOnJS,
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { View } from 'tamagui';
 import type { Photo } from '@/shared/api';
 import { AppText, Touchable, X } from '@/shared/ui';
+import { clampOffset, fittedSize } from './zoom';
 
 const MAX_SCALE = 4;
 const DOUBLE_TAP_SCALE = 2.5;
@@ -41,11 +42,15 @@ const ZoomableImage = ({
   const startX = useSharedValue(0);
   const startY = useSharedValue(0);
 
-  /** 확대한 만큼만 끌 수 있게 해 사진 밖의 빈 곳이 보이지 않게 합니다. */
-  const clamp = (value: number, size: number, zoom: number) => {
+  // 끌 수 있는 범위는 화면이 아니라 화면에 맞춘 사진 크기로 셉니다.
+  const fitted = fittedSize(photo, { width, height });
+  const clampX = (value: number, zoom: number) => {
     'worklet';
-    const limit = ((zoom - 1) * size) / 2;
-    return Math.min(limit, Math.max(-limit, value));
+    return clampOffset(value, fitted.width, width, zoom);
+  };
+  const clampY = (value: number, zoom: number) => {
+    'worklet';
+    return clampOffset(value, fitted.height, height, zoom);
   };
   const report = (zoom: number) => {
     'worklet';
@@ -55,11 +60,14 @@ const ZoomableImage = ({
   const pinch = Gesture.Pinch()
     .onUpdate((event) => {
       scale.value = Math.max(1, Math.min(saved.value * event.scale, MAX_SCALE));
+      // 줄이는 동안에도 범위 안으로 당겨 빈 곳이 보이지 않게 합니다.
+      x.value = clampX(x.value, scale.value);
+      y.value = clampY(y.value, scale.value);
     })
     .onEnd(() => {
       saved.value = scale.value;
-      x.value = withTiming(clamp(x.value, width, scale.value));
-      y.value = withTiming(clamp(y.value, height, scale.value));
+      x.value = withTiming(clampX(x.value, scale.value));
+      y.value = withTiming(clampY(y.value, scale.value));
       report(scale.value);
     });
   const pan = Gesture.Pan()
@@ -73,8 +81,8 @@ const ZoomableImage = ({
       startY.value = y.value;
     })
     .onUpdate((event) => {
-      x.value = clamp(startX.value + event.translationX, width, scale.value);
-      y.value = clamp(startY.value + event.translationY, height, scale.value);
+      x.value = clampX(startX.value + event.translationX, scale.value);
+      y.value = clampY(startY.value + event.translationY, scale.value);
     });
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
@@ -161,6 +169,12 @@ export const PhotoGallery = ({ photos, label }: { photos: Photo[]; label: string
     setViewerIndex(null);
     setZoomed(false);
   };
+  // 쪽 번호의 accessibilityLiveRegion은 Android에서만 읽히므로, 직접 넘겼을 때는 iOS에서도 읽어 줍니다.
+  const turnPage = (next: number, current: number, update: (page: number) => void) => {
+    if (next === current) return;
+    update(next);
+    AccessibilityInfo.announceForAccessibility(`사진 ${next + 1} / ${photos.length}`);
+  };
 
   return (
     <View>
@@ -171,7 +185,7 @@ export const PhotoGallery = ({ photos, label }: { photos: Photo[]; label: string
         showsHorizontalScrollIndicator={false}
         keyExtractor={(photo) => photo.id}
         onMomentumScrollEnd={(event) =>
-          setPage(Math.round(event.nativeEvent.contentOffset.x / width))
+          turnPage(Math.round(event.nativeEvent.contentOffset.x / width), page, setPage)
         }
         renderItem={({ item, index }) => (
           <Touchable
@@ -212,7 +226,11 @@ export const PhotoGallery = ({ photos, label }: { photos: Photo[]; label: string
             getItemLayout={(_data, index) => ({ length: width, offset: width * index, index })}
             keyExtractor={(photo) => photo.id}
             onMomentumScrollEnd={(event) =>
-              setViewerPage(Math.round(event.nativeEvent.contentOffset.x / width))
+              turnPage(
+                Math.round(event.nativeEvent.contentOffset.x / width),
+                viewerPage,
+                setViewerPage,
+              )
             }
             renderItem={({ item, index }) => (
               <ZoomableImage
