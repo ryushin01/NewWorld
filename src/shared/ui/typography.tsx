@@ -1,8 +1,11 @@
-import { styled, Text } from 'tamagui';
+import { forwardRef, type ComponentRef } from 'react';
+import { Platform } from 'react-native';
+import { styled, Text, type GetProps } from 'tamagui';
 import { FONT } from './fonts';
+import { toAriaProps } from './web-a11y';
 
 // v3의 숫자 lineHeight는 글자 크기에 곱하는 배수이므로 픽셀은 문자열로 적습니다.
-export const AppText = styled(Text, {
+const AppTextFrame = styled(Text, {
   name: 'AppText',
   fontFamily: FONT.body,
   color: 'text',
@@ -31,3 +34,12 @@ export const AppText = styled(Text, {
     latin: { true: { fontFamily: FONT.latin, letterSpacing: 0.5 } },
   } as const,
 });
+
+/** 웹: 제목(header)·알림(liveRegion) 같은 accessibility* 속성을 role·aria-*로 바꿉니다(web-a11y.ts). */
+const WebAppText = forwardRef<ComponentRef<typeof AppTextFrame>, GetProps<typeof AppTextFrame>>(
+  function AppText(props, ref) {
+    return <AppTextFrame ref={ref} {...toAriaProps(props)} />;
+  },
+);
+
+export const AppText = (Platform.OS === 'web' ? WebAppText : AppTextFrame) as typeof AppTextFrame;

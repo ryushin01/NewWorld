@@ -1,5 +1,13 @@
 # Changelog
 
+## 2.17.0 - 미출시
+
+- 웹 데모: https://ryushin01.github.io/NewWorld/ (GitHub Pages). `main`에 앱 코드가 바뀌면 `deploy-web.yml`이 `pnpm run build:web`으로 만들어 올림. `.env`를 읽지 않고 Supabase 값을 지워 늘 데모 모드(가상 데이터, 브라우저 저장)로 빌드되고 비밀 값이 필요 없음. 새로고침·하위 경로는 `404.html`(같은 앱)이 받고, 넓은 화면에서는 휴대폰 폭으로 가운데에 둠
+- 웹 화면이 깨지던 원인: Tamagui 컴파일러가 웹에서 정적 스타일을 클래스 이름으로 바꾸지만 그 CSS가 Expo 웹 번들에 실리지 않아 가로 배치·여백·색이 빠졌음(개발 문서에 '보류'로 남아 있던 문제). 웹 번들만 Expo 기본 변환기로 넘겨 Tamagui가 실행 중에 스타일을 넣음(`metro.transformer.js`). iOS 번들은 이전 설정과 바이트 단위로 같음
+- 웹 접근성: Tamagui 3가 웹에서 `accessibility*` 속성을 바꾸지 않아 버튼이 버튼으로 읽히지 않고 Tab으로 갈 수 없었음. 웹에서만 `Touchable`·`AppText`·`Field`의 역할·이름·상태·오류를 `role`·`aria-*`로 바꾸고, Tab 초점과 Enter·Space 누르기, `:focus-visible` 초점 표시를 더함. 장식용 스위치·프로필 사진은 웹에서도 낭독·Tab 순서에서 뺌. `<html lang="ko">`
+- 웹 대체: `react-native-maps`는 웹을 지원하지 않아 지도 자리에 안내를 둠(웹 번들에서만 대체 모듈). `Alert.alert`는 react-native-web에서 아무것도 하지 않아 확인 창이 뜨지 않고 삭제·로그아웃·나가기가 멈췄으므로 브라우저 `alert`·`confirm`으로. 사진은 브라우저 저장소에 data URL로(한도를 넘으면 메모리), 여권·뱃지·엽서 공유와 CSV·JSON 내보내기는 브라우저 공유 창이나 내려받기로. 도착 알림은 권한을 묻기 전에 앱에서만 된다고 알림. NetInfo의 인터넷 확인 요청(`/`)이 Pages에서 404가 나 웹에서는 끔
+- 의존성: `react-dom`, `react-native-web`(Expo SDK 58 권장판), `html2canvas-pro`(react-native-view-shot이 웹에서 화면을 이미지로 찍을 때 쓰는 선택 의존성)
+
 ## 2.16.0 - 미출시
 
 - 운영: 오류 모니터링(Sentry React Native 8.28, Expo SDK 58 권장판). `EXPO_PUBLIC_SENTRY_DSN`이 있을 때만 켜지고, 화면 오류(루트 ErrorBoundary)와 처리하지 않은 오류를 보냄. 아이디·IP, 화면 캡처, 뷰 구조, 실패한 요청은 보내지 않고 콘솔 기록을 버리며 요청 주소의 쿼리(서명 토큰)를 지움. 성능 추적은 끔

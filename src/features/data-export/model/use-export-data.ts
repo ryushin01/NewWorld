@@ -2,7 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { Platform } from 'react-native';
 import { backend, sync } from '@/shared/api';
+import { downloadOnWeb } from '@/shared/lib';
 import { recordsToCsv, toBackupJson } from './serialize';
 
 export type ExportFormat = 'json' | 'csv';
@@ -26,7 +28,13 @@ const shareFile = async (format: ExportFormat) => {
     format === 'csv'
       ? recordsToCsv(records)
       : toBackupJson(places, records, checklist, new Date().toISOString(), trips, checkins);
-  const file = new File(Paths.cache, `newworld-${dayjs().format('YYYYMMDD-HHmmss')}.${format}`);
+  const name = `newworld-${dayjs().format('YYYYMMDD-HHmmss')}.${format}`;
+  // 웹 데모는 파일 폴더와 공유 창이 없어 바로 내려받습니다.
+  if (Platform.OS === 'web') {
+    downloadOnWeb(new Blob([content], { type: MIME[format] }), name);
+    return;
+  }
+  const file = new File(Paths.cache, name);
   file.create({ overwrite: true });
   file.write(content);
   try {
