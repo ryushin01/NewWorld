@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.17.2 - 미출시
+
+- 의존성: Sentry React Native 8.28.0 → 8.28.1(Expo SDK 58 범위 `~8.28.0` 안). Sentry가 2026-11-13 iOS 서명 인증서를 폐기해 이전 판은 iOS 빌드에서 `Sentry.xcframework` 서명 검증이 `CSSMERR_TP_CERT_REVOKED`로 실패할 수 있음. 같은 내용을 새 인증서로 다시 낸 판(iOS SDK 9.29.0 → 9.29.3)으로 올림
+- 의존성: Expo SDK 58 패치판으로 맞춤(`npx expo install --fix`, 17개). expo 58.0.26, expo-router 58.0.32, expo-location 58.0.22, expo-notifications 58.1.9, expo-dev-client 58.0.21 등과 jest-expo 58.0.15. expo-image-manipulator는 58.0.16 그대로라 우선순위 패치(`patches/`)도 그대로 적용됨
+- 의존성: @hookform/resolvers 7.0.7, lucide-react-native 1.74(Dependabot #41). 앱이 쓰는 아이콘 43개는 1.72·1.73·1.74에서 도형이 같음
+
 ## 2.17.1 - 미출시
 
 - 표기: '아서왕'을 '아더왕'으로 바꿈. 아발론·카멜롯·스톤헨지 소개와 '켈트·아더왕' 묶음, 코스 '아더왕의 길'과 완주 뱃지 이름, 《아더왕의 죽음》 같은 읽을거리, 데모 데이터에 적용. 번존스의 그림 제목도 〈아발론에서 잠든 아더〉로, 크노소스 소개의 고고학자 아서 에번스(Arthur Evans)도 아더 에번스로 맞춰 인물 이름 '아서'를 모두 '아더'로 씀
