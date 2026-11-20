@@ -1,4 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import { createMMKV } from 'react-native-mmkv';
 import { secureRandomBytes } from './random';
 
@@ -44,6 +45,8 @@ const createMemoryStore = (): KeyValueStore => {
  */
 export const createStore = (): KeyValueStore => {
   try {
+    // 웹 데모는 키체인이 없고 가상 데이터만 다루므로 암호화하지 않고 브라우저 저장소(MMKV 웹 구현)에 둡니다.
+    if (Platform.OS === 'web') return createMMKV({ id: 'newworld' });
     return createMMKV({ id: 'newworld', encryptionKey: getEncryptionKey() });
   } catch (error) {
     console.warn('보안 저장소를 열지 못해 메모리 저장소를 사용합니다.', error);
