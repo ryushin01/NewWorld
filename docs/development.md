@@ -156,6 +156,8 @@ npx serve -s dist                       # / 경로로 만든 dist를 열어 보�
 | 도착 알림            | 지역 감시가 없어 권한을 묻기 전에 앱에서만 된다고 알림                                                                       | `arrival-alert-switch.tsx`                                                  |
 | 인터넷 확인(NetInfo) | 사이트 맨 위(`/`)를 요청해 Pages에서 404가 나므로 끄고 브라우저의 온라인 상태만 씀                                           | `src/_app/query-client.ts`                                                  |
 
+README의 [웹 데모 화면](../README.md#웹-데모-화면)(`docs/images/web-*.jpg`)은 배포된 데모를 브라우저 402×874, 픽셀 배율 2로 찍어 iOS 화면과 같은 506×1100 JPG로 줄인 것입니다. `pnpm run screenshots`는 iOS 화면만 다시 찍으므로, 웹 화면이 바뀌면 같은 크기로 직접 다시 찍습니다.
+
 ## 구조 규칙
 
 Feature-Sliced Design을 따릅니다. `src/app`은 Expo Router 경로이며 `src/_pages`를 다시 내보내기만 합니다.
