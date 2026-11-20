@@ -4,7 +4,7 @@ export type Course = { id: string; title: string; summary: string; stops: string
 export const COURSES: Course[] = [
   {
     id: 'arthur',
-    title: '아서왕의 길',
+    title: '아더왕의 길',
     summary: '거석의 평원에서 시작해 원탁의 성을 지나 사과의 섬으로 향합니다.',
     stops: ['stonehenge', 'camelot', 'avalon', 'tir-na-nog'],
   },

@@ -10,7 +10,7 @@ it('제목, 날짜, 경유지 수를 보여 주고 누를 수 있습니다', asy
       <TripRow
         trip={{
           id: 't1',
-          title: '아서왕의 길',
+          title: '아더왕의 길',
           startDate: null,
           endDate: null,
           stops: ['a', 'b'],

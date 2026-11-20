@@ -6,7 +6,7 @@ const meta = {
   args: {
     trip: {
       id: 't1',
-      title: '아서왕의 길',
+      title: '아더왕의 길',
       startDate: '2027-05-01',
       endDate: '2027-05-09',
       stops: ['stonehenge', 'camelot', 'avalon'],

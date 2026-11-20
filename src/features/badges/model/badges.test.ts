@@ -26,15 +26,15 @@ jest.mock('@/entities/destination', () => {
       make('colosseum', 'real', '유럽'),
       make('rapa', 'real', '오세아니아'),
       make('stonehenge', 'real', '유럽'),
-      make('avalon', 'fantasy', '켈트·아서왕', 'legend'),
-      make('camelot', 'fantasy', '켈트·아서왕', 'legend'),
+      make('avalon', 'fantasy', '켈트·아더왕', 'legend'),
+      make('camelot', 'fantasy', '켈트·아더왕', 'legend'),
       make('eden', 'fantasy', '중동·이집트'),
       make('elysion', 'fantasy', '그리스·로마'),
       make('hades', 'fantasy', '그리스·로마'),
       make('yomi', 'fantasy', '동양'),
       make('xibalba', 'fantasy', '신대륙 전설'),
     ],
-    COURSES: [{ id: 'arthur', title: '아서왕의 길', stops: ['stonehenge', 'camelot', 'avalon'] }],
+    COURSES: [{ id: 'arthur', title: '아더왕의 길', stops: ['stonehenge', 'camelot', 'avalon'] }],
     MYTH_SPACES: spaces,
   };
 });
