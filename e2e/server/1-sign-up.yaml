@@ -86,7 +86,7 @@ appId: com.ryushin01.newworld
 - inputText: first-password
 - assertVisible:
     id: field-passwordConfirm
-    text: "•{14}"
+    text: '•{14}'
 - pressKey: Enter
 - runFlow: ../_hide-keyboard-android.yaml
 - runFlow:
