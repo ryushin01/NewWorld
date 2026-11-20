@@ -1,2 +1,5 @@
 # pnpm credits가 데이터에서 만드는 파일이라, 서식을 바꾸면 credits.test.ts의 비교가 깨집니다.
 docs/credits.md
+
+# pnpm이 만들고 다시 쓰는 파일이라, 서식을 바꾸면 다음 설치 때 되돌아가며 불필요한 변경이 생깁니다.
+pnpm-lock.yaml
