@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Image } from 'expo-image';
 import { View } from 'tamagui';
-import { AppText } from '@/shared/ui';
+import { AppText, webHidden } from '@/shared/ui';
 
 type ProfileAvatarProps = {
   nickname: string;
@@ -28,6 +28,7 @@ export const ProfileAvatar = ({ nickname, uri, size = 64, onReady }: ProfileAvat
       justifyContent="center"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
+      {...webHidden}
     >
       {uri ? (
         <Image

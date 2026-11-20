@@ -9,10 +9,12 @@ import { useSessionBootstrap, useSessionStore } from '@/entities/session';
 // 백그라운드 도착 작업은 앱이 깨어날 때 가장 먼저 정의되어야 하므로 루트에서 불러옵니다.
 import { useNotificationLink, useStopArrivalOnSignOut } from '@/features/arrival-alert';
 import { RecoveryCodeModal } from '@/features/auth';
+import { installWebAlert } from '@/shared/lib';
 import { useAppFonts, useColors } from '@/shared/ui';
 import { Providers } from './providers';
 
 SplashScreen.preventAutoHideAsync();
+installWebAlert();
 
 /** 다른 계정의 데이터가 남지 않도록 로그아웃하면 캐시를 비웁니다. */
 const useClearCacheOnSignOut = () => {

@@ -1,7 +1,7 @@
 import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persister';
 import NetInfo from '@react-native-community/netinfo';
 import { focusManager, onlineManager, QueryClient } from '@tanstack/react-query';
-import { AppState, type AppStateStatus } from 'react-native';
+import { AppState, Platform, type AppStateStatus } from 'react-native';
 import { QUERY_ROOTS, sync } from '@/shared/api';
 import { storageAdapter } from '@/shared/lib';
 
@@ -33,6 +33,9 @@ export const persistOptions = {
 
 /** 앱이 앞으로 나오거나 네트워크가 돌아오면 서버와 다시 동기화합니다. */
 export const connectQueryManagers = () => {
+  // 웹은 인터넷 확인으로 사이트 맨 위(/)를 요청하는데, Pages의 /NewWorld 밖이라 404가 납니다.
+  // 앱은 연결 여부(isConnected, 웹은 브라우저의 온라인 상태)만 쓰므로 웹에서는 확인 요청을 끕니다.
+  if (Platform.OS === 'web') NetInfo.configure({ reachabilityShouldRun: () => false });
   onlineManager.setEventListener((setOnline) =>
     NetInfo.addEventListener((state) => {
       const online = state.isConnected !== false;

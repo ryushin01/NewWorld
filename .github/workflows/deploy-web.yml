@@ -1,0 +1,54 @@
+name: 웹 데모 배포
+
+# 가상 데이터로 동작하는 웹 데모를 GitHub Pages(https://ryushin01.github.io/NewWorld/)에 올립니다.
+# Supabase 값을 넘기지 않아 늘 데모 모드로 빌드되고, 비밀 값이 필요 없습니다.
+on:
+  push:
+    branches: [main]
+    paths:
+      - src/**
+      - assets/**
+      - app.config.ts
+      - metro.config.js
+      - metro.transformer.js
+      - tamagui.config.ts
+      - package.json
+      - pnpm-lock.yaml
+      - scripts/build-web.mjs
+      - .github/workflows/deploy-web.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: 웹 데모 빌드 (/NewWorld 경로, 데모 모드)
+        run: pnpm run build:web
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

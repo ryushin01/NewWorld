@@ -1,7 +1,8 @@
-import { forwardRef, type ComponentProps } from 'react';
+import { forwardRef, useId, type ComponentProps } from 'react';
 import type { TextInput } from 'react-native';
 import { Input, TextArea, YStack } from 'tamagui';
 import { AppText } from './typography';
+import { webOnly } from './web-a11y';
 
 type FieldProps = {
   label: string;
@@ -18,6 +19,9 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
 ) {
   const Control = multiline ? TextArea : Input;
   const accessibilityLabel = `${label}${required ? ', 필수' : ''}`;
+  // 웹: 이름·도움말·오류 상태를 aria-*로 이어 줍니다(Tamagui 3는 웹에서 accessibility*를 바꾸지 않음).
+  const descriptionId = useId();
+  const description = error ?? hint;
   return (
     <YStack gap={8}>
       <AppText size="caption" tone="muted" bold>
@@ -39,6 +43,11 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
         color="text"
         fontSize={16}
         placeholderTextColor="muted"
+        {...webOnly({
+          'aria-label': accessibilityLabel,
+          'aria-invalid': error ? true : undefined,
+          'aria-describedby': description ? descriptionId : undefined,
+        })}
         {...input}
       />
       {error ? (
@@ -47,11 +56,12 @@ export const Field = forwardRef<TextInput, FieldProps>(function Field(
           tone="danger"
           accessibilityLiveRegion="polite"
           accessibilityRole="alert"
+          {...webOnly({ id: descriptionId })}
         >
           {error}
         </AppText>
       ) : hint ? (
-        <AppText size="caption" tone="muted">
+        <AppText size="caption" tone="muted" {...webOnly({ id: descriptionId })}>
           {hint}
         </AppText>
       ) : null}

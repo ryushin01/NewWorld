@@ -4,7 +4,7 @@ const config: ExpoConfig = {
   name: '신세계',
   slug: 'newworld',
   scheme: 'newworld',
-  version: '2.16.0',
+  version: '2.17.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
   userInterfaceStyle: 'automatic',
@@ -25,7 +25,8 @@ const config: ExpoConfig = {
     softwareKeyboardLayoutMode: 'resize',
     predictiveBackGestureEnabled: false,
   },
-  web: { favicon: './assets/favicon.png' },
+  // 웹 데모(GitHub Pages). 한 페이지 앱으로 내보내고, 없는 경로는 404.html(같은 앱)이 받습니다.
+  web: { favicon: './assets/favicon.png', output: 'single' },
   plugins: [
     './plugins/with-gradle-memory',
     [
@@ -81,7 +82,11 @@ const config: ExpoConfig = {
     ],
   ],
   extra: { googleMapsConfigured: Boolean(process.env.GOOGLE_MAPS_ANDROID_API_KEY) },
-  experiments: { typedRoutes: true },
+  experiments: {
+    typedRoutes: true,
+    // GitHub Pages는 /NewWorld 아래에서 열리므로 웹 데모를 만들 때만 경로를 붙입니다(scripts/build-web.mjs).
+    ...(process.env.EXPO_WEB_BASE_URL ? { baseUrl: process.env.EXPO_WEB_BASE_URL } : {}),
+  },
 };
 
 export default config;

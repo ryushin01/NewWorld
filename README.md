@@ -1,11 +1,13 @@
 # NewWorld - 신세계
 
 [![CI](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml/badge.svg)](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml)
-![version](https://img.shields.io/badge/version-2.16.0-c2792b)
+![version](https://img.shields.io/badge/version-2.17.0-c2792b)
 
 피라미드와 잉카 유적부터 아발론과 에덴 동산까지, 역사와 신화·전설 속 여행지를 탐험하고 기록하는 모바일 앱입니다.
 
-> **프로젝트 상태:** 포트폴리오용 앱이며 스토어에는 출시하지 않았습니다. 서버 없이 가상 데이터로 동작하는 데모 모드로 실행되고, 변경 내용은 기기에 저장됩니다. Supabase 설정 값을 넣으면 서버 동기화로 전환됩니다.
+**웹 데모:** [ryushin01.github.io/NewWorld](https://ryushin01.github.io/NewWorld/) · 로그인 화면의 **둘러보기**를 누르면 가입 없이 바로 들어갑니다.
+
+> **프로젝트 상태:** 포트폴리오용 앱이며 스토어에는 출시하지 않았습니다. 서버 없이 가상 데이터로 동작하는 데모 모드로 실행되고, 변경 내용은 기기(웹 데모는 브라우저)에 저장됩니다. Supabase 설정 값을 넣으면 서버 동기화로 전환됩니다.
 
 ## 화면
 
@@ -57,6 +59,17 @@
 | 통계               | 도감 달성률, 연도별 여행 횟수, 자주 간 곳, 동행, 평균 별점과 비용                                             |
 | 계정·동기화        | 아이디 가입과 로그인, 복구 코드, 닉네임·프로필 사진, 서버 동기화, 오프라인 저장, CSV·JSON 내보내기, 계정 삭제 |
 
+## 웹 데모
+
+휴대폰 앱을 Expo Web으로 내보내 GitHub Pages에 올린 데모입니다. 같은 가상 데이터로 동작하며, 서버 주소나 키는 들어 있지 않습니다. 넓은 화면에서는 휴대폰 폭으로 가운데에 보입니다.
+
+| 구분        | 웹 데모에서                                                                                                                                                            |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 그대로 동작 | 실존·환상 탭, 초성 검색, 여행지 상세, 전설의 현장 코스, 연대표, 여정, 여행 기록(사진 첨부·확대 포함), 체크리스트, 통계, 여행 여권, 기념 뱃지, 프로필 편집, 아이디 가입 |
+| 바뀌어 동작 | 현장 인증은 브라우저 위치 권한으로(또는 데모 인증 버튼), 여권·뱃지·엽서 공유와 CSV·JSON 내보내기는 브라우저 공유 창이나 내려받기, 확인 창은 브라우저 기본 창           |
+| 앱에서만    | 지도 표시(react-native-maps가 웹을 지원하지 않아 지도 자리에 안내를 둠), 근처 여행지 도착 알림(지역 감시·백그라운드 위치·알림)                                         |
+| 저장        | 브라우저 저장소에만 둡니다. 사진은 저장소 한도(보통 5MB)를 넘으면 새로고침 전까지만 보이고, MY의 계정 삭제로 예시 데이터로 되돌립니다                                  |
+
 ## 기술 스택
 
 ![React, TypeScript, Supabase, PostgreSQL, Jest, pnpm, GitHub Actions](https://skillicons.dev/icons?i=react,ts,supabase,postgres,jest,pnpm,githubactions)
@@ -69,7 +82,7 @@
 | 상태·데이터 | TanStack Query, zustand, MMKV, React Hook Form, Zod, dayjs                                                                                                                                             |
 | 서버        | Supabase(Postgres, RLS, Auth, Storage, Edge Functions), OpenStreetMap Photon, Open-Meteo                                                                                                               |
 | 품질        | ESLint, Prettier, husky, lint-staged, Jest, React Native Testing Library, PGlite, Maestro, Storybook                                                                                                   |
-| 배포·운영   | EAS Build, GitHub Actions, Sentry(오류 모니터링, DSN을 넣으면 켜짐)                                                                                                                                    |
+| 배포·운영   | EAS Build, GitHub Actions, GitHub Pages(웹 데모, react-native-web), Sentry(오류 모니터링, DSN을 넣으면 켜짐)                                                                                           |
 
 ## 시작하기
 
@@ -92,6 +105,7 @@ pnpm run ios       # 또는 pnpm run android
 | `pnpm run test:e2e:server`    | 로컬 Supabase에 연결한 E2E 테스트                |
 | `pnpm run assets`             | 앱 아이콘과 지도 핀 생성                         |
 | `pnpm run screenshots`        | README 화면 다시 찍기(iOS 시뮬레이터, 데모 모드) |
+| `pnpm run build:web`          | 웹 데모 빌드(`dist/`, GitHub Pages용)            |
 
 서버 연결과 배포 방법은 [개발 가이드](docs/development.md)를 참고하세요.
 
@@ -115,12 +129,12 @@ src/
 
 ## 문서
 
-| 문서                                           | 내용                                                                    |
-| ---------------------------------------------- | ----------------------------------------------------------------------- |
-| [개발 가이드](docs/development.md)             | 환경 변수, 서버 준비, 테스트, 배포, 백업과 복원, 디자인 토큰, 도감 자료 |
-| [시퀀스 다이어그램](docs/sequence-diagrams.md) | 현장 인증 스탬프, 근처 여행지 도착 알림                                 |
-| [출시 체크리스트](docs/release-checklist.md)   | 서버·EAS·App Store·Google Play 제출 전에 할 일, 출시 뒤 백업            |
-| [CHANGELOG](CHANGELOG.md)                      | 버전 기록                                                               |
+| 문서                                           | 내용                                                                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------- |
+| [개발 가이드](docs/development.md)             | 환경 변수, 서버 준비, 테스트, 배포(웹 데모 포함), 백업과 복원, 디자인 토큰, 도감 자료 |
+| [시퀀스 다이어그램](docs/sequence-diagrams.md) | 현장 인증 스탬프, 근처 여행지 도착 알림                                               |
+| [출시 체크리스트](docs/release-checklist.md)   | 서버·EAS·App Store·Google Play 제출 전에 할 일, 출시 뒤 백업                          |
+| [CHANGELOG](CHANGELOG.md)                      | 버전 기록                                                                             |
 
 ## 글꼴
 

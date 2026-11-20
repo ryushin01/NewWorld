@@ -128,6 +128,32 @@ npx eas-cli@latest submit --platform all
 
 Supabase와 Google 지도 값은 EAS 환경 변수에 등록합니다.
 
+### 웹 데모 (GitHub Pages)
+
+https://ryushin01.github.io/NewWorld/ 에 데모 모드 웹 앱을 올립니다. `main`에 앱 코드·에셋·설정이 바뀌어 올라오면 `.github/workflows/deploy-web.yml`이 `pnpm run build:web`으로 만들어 Pages(원본: GitHub Actions)에 배포합니다. 비밀 값은 쓰지 않습니다.
+
+```bash
+pnpm run build:web                      # dist/, 경로 /NewWorld
+EXPO_WEB_BASE_URL= pnpm run build:web   # 로컬에서 / 경로로 확인
+npx serve -s dist                       # / 경로로 만든 dist를 열어 보기
+```
+
+- `scripts/build-web.mjs`는 `.env`를 읽지 않고(`EXPO_NO_DOTENV`) Supabase 값을 지운 채 `expo export --platform web`을 돌려 늘 데모 모드로 만듭니다. `index.html`의 언어를 `ko`로 바꾸고, 넓은 화면에서 휴대폰 폭으로 가운데에 두는 스타일을 넣고, 같은 파일을 `404.html`로 복사해 새로고침이나 직접 연 하위 경로(`/NewWorld/destination/avalon`)도 열리게 합니다. Pages는 이때 상태 코드 404로 앱을 주므로 검색 엔진은 첫 화면만 색인합니다.
+- `app.config.ts`는 `EXPO_WEB_BASE_URL`이 있을 때만 `experiments.baseUrl`을 붙입니다. iOS·Android 빌드에는 영향이 없습니다.
+- 웹에서만 바꿔 쓰는 것:
+
+| 대상                 | 웹에서                                                                                                                       | 위치                                                                        |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Tamagui 컴파일러     | 건너뜀. 실행 중에 스타일을 넣습니다(iOS 번들은 이전 설정과 바이트 단위로 같음을 확인)                                        | `metro.config.js`, `metro.transformer.js`                                   |
+| `react-native-maps`  | 지도 자리에 안내를 두는 대체 모듈                                                                                            | `src/shared/ui/react-native-maps.web.tsx`                                   |
+| 접근성 속성          | `Touchable`·`AppText`·`Field`의 `accessibility*`를 `role`·`aria-*`로 바꾸고, Tab 초점·Enter·Space·`:focus-visible` 표시를 줌 | `src/shared/ui/web-a11y.ts`, `pressable.tsx`, `typography.tsx`, `field.tsx` |
+| `Alert.alert`        | react-native-web에서는 아무것도 하지 않아 브라우저 `alert`·`confirm`으로                                                     | `src/shared/lib/web-alert.ts`                                               |
+| 저장소(MMKV)         | 키체인이 없어 암호화하지 않고 브라우저 저장소에                                                                              | `src/shared/lib/storage.ts`                                                 |
+| 사진 보관            | 파일 폴더 대신 data URL로 브라우저 저장소에(한도를 넘으면 메모리)                                                            | `src/shared/lib/photo.web.ts`                                               |
+| 이미지 공유·내보내기 | 화면 찍기는 `html2canvas-pro`로, 브라우저 공유 창이 파일을 받으면 그것으로, 아니면 내려받기                                  | `use-capture-share.ts`, `web-download.ts`, `use-export-data.ts`             |
+| 도착 알림            | 지역 감시가 없어 권한을 묻기 전에 앱에서만 된다고 알림                                                                       | `arrival-alert-switch.tsx`                                                  |
+| 인터넷 확인(NetInfo) | 사이트 맨 위(`/`)를 요청해 Pages에서 404가 나므로 끄고 브라우저의 온라인 상태만 씀                                           | `src/_app/query-client.ts`                                                  |
+
 ## 구조 규칙
 
 Feature-Sliced Design을 따릅니다. `src/app`은 Expo Router 경로이며 `src/_pages`를 다시 내보내기만 합니다.
@@ -185,7 +211,7 @@ Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링�
 - 유앤피플 고딕 UNI(공유마당, OFL)는 한글 11,172자를 모두 그린 공식 배포 TTF에서 화면 표시에 쓰지 않는 TrueType 힌팅과 닿을 수 없는 글리프만 뺐습니다(2.5MB → 1.2MB). 글자 범위·모양·간격(`kern` 표 포함)은 원본과 같고, 다시 만들 때는 공유마당 원본으로 `python3 scripts/fonts/build-body-font.py`를 실행합니다(fontTools 필요). 사용자가 쓰는 닉네임·여행기 글자도 빈칸 없이 그립니다.
 - 두 글꼴 모두 굵기가 하나라 `fontWeight`를 더하지 않습니다(iOS는 없는 굵기를 만들지 않고, Android는 가짜로 굵게 그림). 굵은 본문은 제목 글꼴로 구분합니다.
 - `useAppFonts`(`src/shared/ui/fonts.ts`)로 불러오고, 끝날 때까지 스플래시를 유지합니다. 실패하면 시스템 글꼴로 계속합니다.
-- 웹 빌드(Expo Web)는 시도했으나 Tamagui 3의 가로 배치·고정 위치 스타일이 적용되지 않아 보류했습니다.
+- 웹 데모에서 가로 배치·여백·색이 빠지던 원인은 Tamagui 컴파일러였습니다. 웹에서 정적 스타일을 클래스 이름으로 바꾸지만 그 CSS가 Expo 웹 번들에 실리지 않았습니다. 웹 번들만 컴파일러를 건너뜁니다(아래 [웹 데모](#웹-데모-github-pages)).
 
 ## 여행지 도감 자료
 
