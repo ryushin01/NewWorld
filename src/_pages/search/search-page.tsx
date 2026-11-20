@@ -20,6 +20,7 @@ import {
   Map,
   MapPin,
   XCircle,
+  webOnly,
 } from '@/shared/ui';
 
 export const SearchPage = () => {
@@ -92,6 +93,7 @@ export const SearchPage = () => {
             placeholder="유적지, 도시, 전설의 땅 이름"
             placeholderTextColor="muted"
             accessibilityLabel="유적지, 도시, 전설의 땅 이름"
+            {...webOnly({ 'aria-label': '유적지, 도시, 전설의 땅 이름' })}
             returnKeyType="search"
             fontSize={16}
             color="text"

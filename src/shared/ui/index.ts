@@ -8,6 +8,7 @@ export { Touchable } from './pressable';
 export { StickyBottomCta } from './sticky-bottom-cta';
 export { LoadingView, MessageView } from './state-view';
 export { AppText } from './typography';
+export { webHidden, webOnly } from './web-a11y';
 export { useAppFonts } from './fonts';
 export { useColors } from './colors';
 export { AppIcon } from './icon';

@@ -14,7 +14,16 @@ import { useExportData } from '@/features/data-export';
 import { backend, isDemoOffline, setDemoOffline, sync, useSyncState } from '@/shared/api';
 import { LINKS } from '@/shared/config';
 import { openLink, toErrorMessage, useSubmitLock } from '@/shared/lib';
-import { AppIcon, AppText, Button, Divider, Header, Touchable, ChevronRight } from '@/shared/ui';
+import {
+  AppIcon,
+  AppText,
+  Button,
+  Divider,
+  Header,
+  Touchable,
+  ChevronRight,
+  webHidden,
+} from '@/shared/ui';
 
 const openExternal = (url: string) =>
   openLink(url).then((opened) => opened || toast.error('링크를 열지 못했습니다.'));
@@ -230,7 +239,12 @@ export const AccountPage = () => {
           >
             <XStack alignItems="center" gap={12} minHeight={44}>
               <AppText flex={1}>데모 모드 연결 끊기</AppText>
-              <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no">
+              <View
+                pointerEvents="none"
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+                {...webHidden}
+              >
                 <Switch value={demoOffline} />
               </View>
             </XStack>

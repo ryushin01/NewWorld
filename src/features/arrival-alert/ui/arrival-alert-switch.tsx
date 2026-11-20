@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Alert, Linking, Switch } from 'react-native';
+import { Alert, Linking, Platform, Switch } from 'react-native';
 import { toast } from 'sonner-native';
 import { View, XStack, YStack } from 'tamagui';
-import { AppText, Touchable } from '@/shared/ui';
+import { AppText, Touchable, webHidden } from '@/shared/ui';
 import {
   disableArrivalAlert,
   enableArrivalAlert,
@@ -51,6 +51,14 @@ export const ArrivalAlertSwitch = ({ checkedIds }: { checkedIds: ReadonlySet<str
         setEnabled(false);
         return;
       }
+      // 웹에는 지역 감시(geofencing)와 백그라운드 위치가 없어, 위치 권한을 묻기 전에 알립니다.
+      if (Platform.OS === 'web') {
+        Alert.alert(
+          '알림을 켜지 못했습니다',
+          '웹 데모에서는 근처 여행지 도착 알림을 쓸 수 없습니다. iOS·Android 앱에서 켤 수 있습니다.',
+        );
+        return;
+      }
       if (!(await confirm())) return;
       const result = await enableArrivalAlert(checkedIds);
       if (result === 'enabled') {
@@ -95,7 +103,12 @@ export const ArrivalAlertSwitch = ({ checkedIds }: { checkedIds: ReadonlySet<str
             이동하면 새 위치 기준으로 다시 고릅니다.
           </AppText>
         </YStack>
-        <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no">
+        <View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+          {...webHidden}
+        >
           <Switch value={enabled} />
         </View>
       </XStack>
