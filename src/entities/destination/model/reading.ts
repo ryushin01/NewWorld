@@ -7,7 +7,7 @@ const gutenberg = (label: string, id: number): DestinationSource => ({
 
 /** 저작권이 끝난 원전을 읽을 수 있는 곳입니다. 대부분 영어 번역본입니다. */
 export const READING_LINKS: Record<string, DestinationSource[]> = {
-  avalon: [gutenberg('맬러리 《아서왕의 죽음》 (영어)', 1251)],
+  avalon: [gutenberg('맬러리 《아더왕의 죽음》 (영어)', 1251)],
   camelot: [gutenberg('테니슨 《왕의 목가》 (영어)', 610)],
   atlantis: [
     gutenberg('플라톤 《크리티아스》 (영어)', 1571),

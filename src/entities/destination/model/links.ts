@@ -11,7 +11,7 @@ export const DESTINATION_LINKS: DestinationLink[] = [
   {
     a: 'avalon',
     b: 'camelot',
-    note: '아서왕은 카멜롯을 다스리다 상처를 입고 아발론으로 떠납니다.',
+    note: '아더왕은 카멜롯을 다스리다 상처를 입고 아발론으로 떠납니다.',
   },
   { a: 'avalon', b: 'tir-na-nog', note: '서쪽 바다 너머의 켈트 낙원이라는 뿌리를 나눕니다.' },
   {
