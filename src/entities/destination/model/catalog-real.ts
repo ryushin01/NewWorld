@@ -603,7 +603,7 @@ export const REAL_DESTINATIONS: RealDestination[] = [
     tagline: '하지의 해를 맞이하는 평원의 거석',
     group: '유럽',
     lore: 'history',
-    loreNote: '멀린이 아일랜드에서 거인의 돌을 옮겨 왔다는 아서왕 전설',
+    loreNote: '멀린이 아일랜드에서 거인의 돌을 옮겨 왔다는 아더왕 전설',
     location: '영국 잉글랜드 솔즈베리 평원',
     era: '기원전 3000~1500년경',
     latitude: 51.1789,

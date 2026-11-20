@@ -8,7 +8,7 @@ const destination = {
   name: '아발론',
   location: '서쪽 바다 너머',
   era: '12세기 문헌 등장',
-  tagline: '상처 입은 아서왕이 쉬러 간 사과의 섬',
+  tagline: '상처 입은 아더왕이 쉬러 간 사과의 섬',
   image: require('~/assets/destinations/avalon.webp'),
 } as Destination;
 

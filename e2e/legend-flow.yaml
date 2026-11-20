@@ -59,7 +59,7 @@ appId: com.ryushin01.newworld
     visible:
       id: trip-detail-title
     timeout: 8000
-- assertVisible: 아서왕의 길
+- assertVisible: 아더왕의 길
 - assertVisible: 4곳 중 1곳 다녀옴
 - scrollUntilVisible:
     element:
@@ -73,7 +73,7 @@ appId: com.ryushin01.newworld
     visible: 21개 중 0개 챙김
     timeout: 8000
 - assertVisible:
-    id: checklist-list-아서왕의 길
+    id: checklist-list-아더왕의 길
 - tapOn: 뒤로 가기
 - waitForAnimationToEnd
 - tapOn: 뒤로 가기
