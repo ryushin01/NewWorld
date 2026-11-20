@@ -15,6 +15,8 @@ pnpm run ios       # 또는 pnpm run android
 
 `app.config.ts`(아이콘·스플래시·권한·플러그인)를 바꾸면 `npx expo prebuild`로 네이티브 폴더에 반영합니다. 이미 있는 `ios/`·`android/`에는 `expo run:*`가 변경을 다시 반영하지 않습니다. Expo CLI 58의 `prebuild`는 기본으로 폴더를 지우고 새로 만들어 Pods·빌드 캐시도 사라지므로, 빌드 캐시를 살리려면 `--no-clean`을 붙입니다(E2E 스크립트는 빌드 전에 `prebuild --no-clean`을 돌림).
 
+Expo 패키지를 올린 뒤(`npx expo install --fix` 등) 이미 있는 `ios/`로 빌드하면, `ios/Podfile.lock`이 옛 판을 고정하고 있어 `pod install`이 `CocoaPods could not find compatible versions for pod "ExpoModulesWorklets"`(또는 `ExpoModulesCore`)로 멈출 수 있습니다. `cd ios && pod update --no-repo-update`로 pod을 다시 풀고 빌드합니다. EAS 빌드는 네이티브 폴더를 새로 만들어 이 문제가 없습니다.
+
 `.env`가 없으면 가상 데이터로 동작하는 **데모 모드**로 실행됩니다. 로그인 화면의 `둘러보기` 버튼(아이디 `guest`)으로 바로 들어가거나 아이디로 가입할 수 있습니다. 가입한 계정의 비밀번호는 솔트를 붙인 SHA-256 해시로만 기기에 저장하고, 변경 내용도 기기에 저장됩니다. MY의 계정 삭제를 누르면 예시 데이터로 되돌아갑니다.
 
 ## 환경 변수
