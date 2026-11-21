@@ -54,3 +54,7 @@ yarn-error.*
 
 # Supabase CLI 연결 상태
 supabase/.temp/
+
+# Playwright(웹 데모 오프라인 E2E) 결과
+test-results/
+playwright-report/

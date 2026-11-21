@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.17.3 - 미출시
+
+- 오프라인 검증: 웹 데모를 빌드해 localhost 밖 요청을 모두 막은 상태에서 둘러보기 → 실존·환상·지도·기록·MY 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반과 외부 요청이 없는지 보는 Playwright E2E(`pnpm run test:web`, `e2e/web/offline.spec.ts`)와 CI `web-offline` 작업. 조사해 보니 데모 모드는 이미 서버·CDN 없이 돌아 앱 동작은 바꾸지 않음
+- 웹 접근성: 웹에서 제목(`role="heading"`)에 `aria-level`이 없어 axe가 막던 것을 고침(기본 2단계)
+- 문서: 개발 문서의 오프라인 동작에 데모 모드가 인터넷 없이 도는 범위와 `test:web`, README 웹 데모 절과 버전 배지
+
 ## 2.17.2 - 미출시
 
 - 의존성: Sentry React Native 8.28.0 → 8.28.1(Expo SDK 58 범위 `~8.28.0` 안). Sentry가 2026-11-13 iOS 서명 인증서를 폐기해 이전 판은 iOS 빌드에서 `Sentry.xcframework` 서명 검증이 `CSSMERR_TP_CERT_REVOKED`로 실패할 수 있음. 같은 내용을 새 인증서로 다시 낸 판(iOS SDK 9.29.0 → 9.29.3)으로 올림
