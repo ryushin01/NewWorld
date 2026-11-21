@@ -28,7 +28,6 @@ Expo는 SDK마다 큰 변경이 있어 기억하는 API가 이름이 바뀌었�
 ## 3. 설치·개발 명령
 
 - 패키지 매니저: pnpm(`packageManager`), Node.js 24(`.nvmrc`). iOS는 Xcode·CocoaPods, Android는 Android Studio·JDK
-- `bun.lock`이 있으면 `npx` 대신 `bunx`를 씁니다(지금은 pnpm).
 
 ```bash
 pnpm install
@@ -48,7 +47,7 @@ pnpm run build:web             # 웹 데모 빌드(dist/, /NewWorld 경로, 늘 
 
 ## 4. 검사·테스트 명령
 
-CI(`.github/workflows/ci.yml`)는 이 순서로 돕니다. 작업을 끝냈다고 하기 전에 최소한 lint와 typecheck를 돌립니다.
+CI(`.github/workflows/ci.yml`, `main` 푸시·모든 PR)의 `verify` 작업은 이 순서로 돕니다. 작업을 끝냈다고 하기 전에 최소한 lint와 typecheck를 돌립니다.
 
 ```bash
 pnpm install --frozen-lockfile
@@ -57,25 +56,26 @@ pnpm run typecheck:functions   # Edge Function 타입 검사
 pnpm run lint                  # expo lint
 pnpm test                      # Jest + React Native Testing Library
 pnpm run test:db               # 마이그레이션을 PGlite에 적용해 RLS·제약 검사
+pnpm run test:web              # 웹 데모 오프라인 E2E(CI의 web-offline 작업, Playwright + axe)
 ```
 
-- 서식: `pnpm run format`(Prettier, 커밋 때 lint-staged가 돌림). `prettier --check .`가 저장소 전체에서 통과해야 합니다.
-- **Testing Library 원칙:** 구현 세부가 아니라 사용자가 보는 동작을 검사하고, 요소는 역할·이름(`getByRole`)이나 레이블(`getByLabelText`)로 찾습니다. 도구는 단위·컴포넌트 Jest + React Native Testing Library, 화면 흐름 Maestro E2E입니다. 기존 테스트는 `getByTestId`·`getByText`가 많고 axe 자동 검사는 없습니다(표준과 다른 점, React Native라 axe 대신 접근성 속성을 테스트로 확인).
+- `test:web`은 웹 데모를 `/` 경로로 빌드해 `expo serve`로 띄우고 localhost 밖 요청을 모두 막은 채 둘러보기 → 모든 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반·외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`). 처음 한 번은 `pnpm exec playwright install chromium`. 아직 못 고친 접근성 문제는 테스트 파일의 알려진 목록에 있습니다. 데모 모드는 서버·CDN 없이 돌아야 합니다(자세히: `docs/development.md`의 오프라인 동작).
+
+- 서식: `pnpm run format`(Prettier, 커밋 때 lint-staged가 `*.{ts,tsx,js,mjs}`에 돌림). CI에는 없지만 `pnpm exec prettier --check .`가 저장소 전체에서 통과해야 합니다.
+- **Testing Library 원칙:** 구현 세부가 아니라 사용자가 보는 동작을 검사하고, 요소는 역할·이름(`getByRole`)이나 레이블(`getByLabelText`)로 찾습니다. 도구는 단위·컴포넌트 Jest + React Native Testing Library, 앱 화면 흐름 Maestro E2E, 웹 데모 Playwright + axe입니다. 기존 테스트는 `getByTestId`·`getByText`가 많습니다. 버그를 고치면 고치기 전에 실패하는 테스트를 함께 넣습니다.
 - E2E(로컬, Maestro): `pnpm run test:e2e`(전용 시뮬레이터 `NewWorld E2E`, Release 빌드), `pnpm run test:e2e:server`(로컬 Supabase). E2E는 Release 빌드로 돌립니다.
 - 컴포넌트 카탈로그: `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` 뒤 앱의 `/storybook`
 - 그 밖: `pnpm run credits`(출처 문서 갱신), `pnpm run assets`(지도 핀 생성), `pnpm run screenshots`(README iOS 화면)
 
 ## 5. 코드 스타일
 
-- **TypeScript strict**(`tsconfig.json`의 `"strict": true`, Edge Function도 같음)를 유지하고 `any`·`as` 단언·`@ts-ignore`는 피합니다. 외부 입력은 Zod로 검증합니다.
-- **Prettier**(`.prettierrc`: `singleQuote`, `printWidth: 100`, `trailingComma: all`) 설정을 그대로 따릅니다. Biome는 쓰지 않습니다.
+- TypeScript strict(Edge Function도 같음), `any`·`as` 단언·`@ts-ignore` 금지, 외부 입력은 Zod로 검증합니다. 서식은 `.prettierrc`(`singleQuote`, `printWidth: 100`, `trailingComma: all`)를 따릅니다.
 - 기존 FSD 구조와 파일 위치를 따릅니다. 아이콘(Lucide)은 `src/shared/ui/icons.ts`에서 하나씩 가져와 `@/shared/ui`로 씁니다(패키지 입구 가져오기는 ESLint가 막음). 글꼴 패키지도 굵기 경로(`/400Regular`)에서 가져옵니다.
 - 글꼴은 굵기가 하나라 `fontWeight`를 더하지 않습니다. 굵은 본문은 제목 글꼴로 구분합니다.
 - 색 토큰: 작은 글자에 `brand`(`#c2792b`)를 쓰지 말고 `brandText`, 환상 세계 글자는 `fantasyText`를 씁니다.
 - 입력 길이 상한은 앱(`src/shared/config`의 `LIMITS`)과 DB 제약(`20261116000000_input_limits.sql`)을 함께 고칩니다.
 - 기기 저장값은 `src/shared/lib/stored-json.ts`의 `parseStoredJson`·`isRecord`로 읽습니다.
-- 접근성(**WCAG 2.2·KWCAG 2.2**): 네이티브 요소와 `accessibilityRole`·레이블을 먼저 씁니다(웹에서는 `web-a11y.ts`가 `role`·`aria-*`로 바꿈). 글자 대비 4.5:1 이상, 키보드 조작과 `:focus-visible` 초점 표시 유지, 조작 크기 24px 이상(권장 44), 입력칸 레이블과 오류 연결, 화면 전환 없는 안내는 `role="status"`. 자동 검사 도구(eslint-plugin-jsx-a11y, axe)는 이 저장소에 없습니다(`eslint-config-expo`만 씀). 접근성 속성은 단위 테스트와 웹 데모에서 직접 확인합니다.
-- 버그를 고치면 고치기 전에 실패하는 테스트를 함께 넣습니다.
+- 접근성(WCAG 2.2·KWCAG 2.2, 세부는 공통 규칙): `accessibilityRole`·레이블을 먼저 씁니다(웹에서는 `src/shared/ui/web-a11y.ts`가 `role`·`aria-*`로 바꿈). eslint-plugin-jsx-a11y는 없고(`eslint-config-expo`만 씀), 자동 검사는 웹 데모의 axe(`pnpm run test:web`)와 단위 테스트로 합니다.
 
 ## 6. Git·PR
 
@@ -104,7 +104,11 @@ pnpm run test:db               # 마이그레이션을 PGlite에 적용해 RLS·
 - `20261108000000_ruins_travel.sql`은 되돌릴 수 없게 칸을 지웁니다. 데이터가 있는 서버는 백업한 뒤 올립니다.
 - `patches/`의 패치는 정확한 버전에만 걸립니다. 그 패키지를 올리면 패치를 다시 만들거나 지우고, iOS는 `expo.autolinking.ios.buildFromSource`도 확인합니다.
 - `docs/credits.md`와 `pnpm-lock.yaml`은 Prettier 대상이 아닙니다.
-- 공개된 지 하루가 안 된 패키지는 설치되지 않습니다(`minimumReleaseAge`). `expo install`이 멈추면 하루 뒤 다시 실행합니다.
+- 공개된 지 하루가 안 된 패키지는 설치되지 않습니다(pnpm 기본 `minimumReleaseAge`). `expo install`이 멈추면 하루 뒤 다시 실행합니다.
+
+- CI·배포·릴리스 상태는 명령 결과(`gh run`, `gh release`, `curl`)로 확인한 것만 말합니다.
+- 먼저 묻기: 새 런타임 의존성, 빌드·네이티브 설정(`app.config.ts`, `eas.json`, `metro.config.js`, `tsconfig.json`) 변경, 운영 Supabase에 마이그레이션 적용.
+- 절대 금지: 비밀값을 `EXPO_PUBLIC_*`(앱 번들에 들어감)에 넣기, `.env` 커밋, `eslint-disable`·`--no-verify`로 검사 우회, `main` 직접 푸시.
 
 ## 9. 공통 규칙
 
