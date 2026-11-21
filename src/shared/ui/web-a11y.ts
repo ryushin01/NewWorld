@@ -22,6 +22,8 @@ export type NativeA11yProps = {
   accessibilityLiveRegion?: 'none' | 'polite' | 'assertive';
   accessibilityElementsHidden?: boolean;
   importantForAccessibility?: 'auto' | 'yes' | 'no' | 'no-hide-descendants';
+  /** 웹 제목의 단계. 없으면 2(화면 제목 아래 구역 제목)로 둡니다. */
+  'aria-level'?: number;
 };
 
 /** React Native 역할 이름 중 ARIA와 다른 것 */
@@ -49,12 +51,15 @@ export const toAriaProps = <P extends NativeA11yProps>({
   accessibilityLiveRegion,
   accessibilityElementsHidden,
   importantForAccessibility,
+  'aria-level': level,
   ...rest
 }: P) => {
   const role = toAriaRole(accessibilityRole);
   const state = accessibilityState ?? {};
   const aria: Record<string, unknown> = {
     role,
+    // role="heading"은 aria-level이 있어야 합니다(없으면 화면 낭독기가 단계를 알 수 없음).
+    'aria-level': role === 'heading' ? (level ?? 2) : level,
     'aria-label': accessibilityLabel,
     'aria-disabled': state.disabled || undefined,
     'aria-busy': state.busy || undefined,

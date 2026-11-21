@@ -44,3 +44,14 @@ it('선택 상태는 탭에서만 aria-selected로, 버튼에는 붙이지 않�
     toAriaProps({ accessibilityRole: 'button', accessibilityState: { selected: true } }),
   ).toEqual({ role: 'button' });
 });
+
+it('제목에는 aria-level을 붙입니다(없으면 axe가 aria-required-attr로 막음)', () => {
+  expect(toAriaProps({ accessibilityRole: 'header' })).toEqual({
+    role: 'heading',
+    'aria-level': 2,
+  });
+  expect(toAriaProps({ accessibilityRole: 'header', 'aria-level': 1 })).toEqual({
+    role: 'heading',
+    'aria-level': 1,
+  });
+});
