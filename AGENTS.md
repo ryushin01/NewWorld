@@ -1,41 +1,114 @@
-This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
+# NewWorld 에이전트 안내
 
-## Expo has changed — do not trust your training data
+## 1. 프로젝트 개요
 
-Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:
+역사 유적과 신화·전설 속 여행지를 탐험하고 기록하는 Expo(React Native) 모바일 앱입니다. 모바일 우선 패턴, 성능, iOS·Android·웹 호환을 먼저 생각합니다.
 
-1. Read the major version of the `expo` package in `package.json`.
-2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
-3. For anything else, fetch https://docs.expo.dev/llms.txt — an index of all Expo docs with corrections to common LLM misconceptions. Follow its links to the specific page you need; never answer from memory.
+- 화면 축: 모바일 앱(iOS·Android) 하나. 웹 데모는 같은 앱의 웹 빌드입니다.
+- 웹 데모: https://ryushin01.github.io/NewWorld/ (로그인 화면의 `둘러보기`, 아이디 `guest`)
+- 스토어에는 출시하지 않았습니다. 출시 준비는 `docs/release-checklist.md`에 있습니다.
 
-## Commands
+## 2. 기술 스택과 구조
 
-Use `bunx` instead of `npx` if the project uses bun (`bun.lock` present).
+- Expo SDK 58, React Native 0.88, React 19, Expo Router, Tamagui 3, TanStack Query, Zustand, React Hook Form + Zod, Supabase(선택), Sentry(선택)
+- Feature-Sliced Design: `src/_app` → `src/_pages` → `widgets` → `features` → `entities` → `shared`(위 층만 아래 층을 가져옴). Steiger는 쓰지 않습니다.
+- `src/app/`은 Expo Router 경로입니다. 파일 하나가 화면이고 `_layout.tsx`가 내비게이터이며, `src/_pages`를 다시 내보내기만 합니다. 경로가 아닌 코드(컴포넌트, 훅, 유틸)는 `src/app/` 밖에 둡니다.
+- `Link`, `router`, `useLocalSearchParams`는 `expo-router`에서 가져옵니다.
+- 서버 원본: `supabase/`(마이그레이션, RLS, 버킷 정책, Edge Function `place-search`·`delete-account`·`recover-account`, 인증 설정)
+- 자세한 내용: `docs/development.md`, `docs/sequence-diagrams.md`
+
+### Expo는 자주 바뀝니다 — 기억에 기대지 않기
+
+Expo는 SDK마다 큰 변경이 있어 기억하는 API가 이름이 바뀌었거나 옮겨졌거나 없어졌을 수 있습니다. Expo, EAS, React Native API를 건드리기 전에:
+
+1. `package.json`의 `expo` 주 버전을 확인합니다.
+2. 그 버전 문서를 봅니다: `https://docs.expo.dev/versions/v<주 버전>.0.0/`
+3. 그 밖의 것은 https://docs.expo.dev/llms.txt 목록에서 해당 문서를 따라가 확인합니다. 기억으로 답하지 않습니다.
+
+## 3. 설치·개발 명령
+
+- 패키지 매니저: pnpm(`packageManager`), Node.js 24(`.nvmrc`). iOS는 Xcode·CocoaPods, Android는 Android Studio·JDK
+- `bun.lock`이 있으면 `npx` 대신 `bunx`를 씁니다(지금은 pnpm).
 
 ```bash
-npx expo install <package>  # ALWAYS use instead of npm/yarn/pnpm/bun add — resolves SDK-compatible versions
-npx expo start              # start the dev server
-npx expo lint               # lint
-npx tsc --noEmit            # typecheck
-npx expo-doctor             # diagnose dependency and config issues
-npx expo install --fix      # fix incompatible package versions
+pnpm install
+pnpm start                     # 개발 서버 (expo start)
+pnpm run ios                   # 또는 pnpm run android (expo run:*)
+npx expo install <패키지>      # 패키지 추가는 늘 이것으로(SDK에 맞는 버전)
+npx expo install --fix         # 맞지 않는 버전 고치기
+npx expo install --check       # SDK 버전 확인
+npx expo-doctor                # 의존성·설정 진단
+pnpm run build:web             # 웹 데모 빌드(dist/, /NewWorld 경로, 늘 데모 모드)
 ```
 
-Run lint and typecheck before declaring any task done.
+- 환경 변수(`.env.example` → `.env`, 이름만): `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `GOOGLE_MAPS_ANDROID_API_KEY`, `EXPO_PUBLIC_SENTRY_DSN`. `.env`가 없으면 가상 데이터로 도는 데모 모드입니다.
+- `ios/`·`android/`는 생성되는 폴더입니다(Continuous Native Generation). 손으로 만들거나 고치지 말고 `app.config.ts`와 config plugin으로 설정합니다. `app.config.ts`를 바꾸면 `npx expo prebuild --no-clean`으로 반영합니다.
+- Expo Go에는 기본 네이티브 모듈만 있습니다. 네이티브 코드가 있는 라이브러리를 넣으면 개발 빌드(`npx expo run:ios|android` 또는 `eas build --profile development`)가 필요합니다.
+- 라이브러리를 더하기 전에 권장 Expo 모듈이 있는지 먼저 봅니다(https://docs.expo.dev/versions/latest/index.md).
 
-## Navigation & Routing
+## 4. 검사·테스트 명령
 
-- Use **Expo Router** for all navigation. Routes live in `src/app/` — every file there is a screen, `_layout.tsx` files define navigators. Keep non-route code (components, hooks, utils) outside `src/app/`.
-- Import `Link`, `router`, and `useLocalSearchParams` from `expo-router`.
-- Docs: https://docs.expo.dev/router/introduction.md
+CI(`.github/workflows/ci.yml`)는 이 순서로 돕니다. 작업을 끝냈다고 하기 전에 최소한 lint와 typecheck를 돌립니다.
 
-## Building with EAS
+```bash
+pnpm install --frozen-lockfile
+pnpm run typecheck             # tsc --noEmit
+pnpm run typecheck:functions   # Edge Function 타입 검사
+pnpm run lint                  # expo lint
+pnpm test                      # Jest + React Native Testing Library
+pnpm run test:db               # 마이그레이션을 PGlite에 적용해 RLS·제약 검사
+```
 
-Use EAS to build, sign, and submit the app in the cloud (`eas build`, `eas submit`) and to ship over-the-air updates (`eas update`) — no local Xcode or Android Studio required. Run EAS CLI as `bunx eas-cli <command>` in Bun projects, or `npx eas-cli@latest <command>` otherwise; substitute that for bare `eas` in docs examples.
-Docs: https://docs.expo.dev/eas/index.md
+- 서식: `pnpm run format`(Prettier, 커밋 때 lint-staged가 돌림). `prettier --check .`가 저장소 전체에서 통과해야 합니다.
+- **Testing Library 원칙:** 구현 세부가 아니라 사용자가 보는 동작을 검사하고, 요소는 역할·이름(`getByRole`)이나 레이블(`getByLabelText`)로 찾습니다. 도구는 단위·컴포넌트 Jest + React Native Testing Library, 화면 흐름 Maestro E2E입니다. 기존 테스트는 `getByTestId`·`getByText`가 많고 axe 자동 검사는 없습니다(표준과 다른 점, React Native라 axe 대신 접근성 속성을 테스트로 확인).
+- E2E(로컬, Maestro): `pnpm run test:e2e`(전용 시뮬레이터 `NewWorld E2E`, Release 빌드), `pnpm run test:e2e:server`(로컬 Supabase). E2E는 Release 빌드로 돌립니다.
+- 컴포넌트 카탈로그: `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` 뒤 앱의 `/storybook`
+- 그 밖: `pnpm run credits`(출처 문서 갱신), `pnpm run assets`(지도 핀 생성), `pnpm run screenshots`(README iOS 화면)
 
-## Rules
+## 5. 코드 스타일
 
-- If `ios/` and `android/` directories do not exist, they are generated (Continuous Native Generation). Never create or edit them by hand — configure native behavior in `app.json` and config plugins.
-- Expo Go only includes its bundled native modules. After adding a library with native code, the app needs a development build: `npx expo run:ios|android` locally, or `eas build --profile development`.
-- Prefer recommended Expo modules over third-party libraries, and check your available skills before adding dependencies. Docs: https://docs.expo.dev/versions/latest/index.md
+- **TypeScript strict**(`tsconfig.json`의 `"strict": true`, Edge Function도 같음)를 유지하고 `any`·`as` 단언·`@ts-ignore`는 피합니다. 외부 입력은 Zod로 검증합니다.
+- **Prettier**(`.prettierrc`: `singleQuote`, `printWidth: 100`, `trailingComma: all`) 설정을 그대로 따릅니다. Biome는 쓰지 않습니다.
+- 기존 FSD 구조와 파일 위치를 따릅니다. 아이콘(Lucide)은 `src/shared/ui/icons.ts`에서 하나씩 가져와 `@/shared/ui`로 씁니다(패키지 입구 가져오기는 ESLint가 막음). 글꼴 패키지도 굵기 경로(`/400Regular`)에서 가져옵니다.
+- 글꼴은 굵기가 하나라 `fontWeight`를 더하지 않습니다. 굵은 본문은 제목 글꼴로 구분합니다.
+- 색 토큰: 작은 글자에 `brand`(`#c2792b`)를 쓰지 말고 `brandText`, 환상 세계 글자는 `fantasyText`를 씁니다.
+- 입력 길이 상한은 앱(`src/shared/config`의 `LIMITS`)과 DB 제약(`20261116000000_input_limits.sql`)을 함께 고칩니다.
+- 기기 저장값은 `src/shared/lib/stored-json.ts`의 `parseStoredJson`·`isRecord`로 읽습니다.
+- 접근성(**WCAG 2.2·KWCAG 2.2**): 네이티브 요소와 `accessibilityRole`·레이블을 먼저 씁니다(웹에서는 `web-a11y.ts`가 `role`·`aria-*`로 바꿈). 글자 대비 4.5:1 이상, 키보드 조작과 `:focus-visible` 초점 표시 유지, 조작 크기 24px 이상(권장 44), 입력칸 레이블과 오류 연결, 화면 전환 없는 안내는 `role="status"`. 자동 검사 도구(eslint-plugin-jsx-a11y, axe)는 이 저장소에 없습니다(`eslint-config-expo`만 씀). 접근성 속성은 단위 테스트와 웹 데모에서 직접 확인합니다.
+- 버그를 고치면 고치기 전에 실패하는 테스트를 함께 넣습니다.
+
+## 6. Git·PR
+
+- **흐름: GitHub Flow.** `main`에 직접 커밋·푸시하지 않고, 최신 `main`에서 브랜치를 만들어 PR로만 병합합니다.
+- **브랜치 이름:** `feat/…`, `fix/…`, `refactor/…`, `docs/…`, `test/…`, `chore/…`, `release/…`(이 저장소에서 실제로 쓴 것은 `feat`·`fix`·`docs`·`chore`·`refactor`·`perf`).
+- **커밋 메시지: Conventional Commits.** `<타입>: <한국어 요약>`, 타입은 `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `style`, `chore`, `ci`, `build`(의존성은 `chore(deps):`). 버전을 올린 커밋·PR 제목은 끝에 `(x.y.z)`를 붙입니다. 예: `feat: 웹 데모(GitHub Pages)와 웹 화면·접근성 수정 (2.17.0)`, `fix: 고고학자 아서 에번스도 아더 에번스로 (2.17.1)`. 문서·잡일 PR은 버전 없이 씁니다(`docs: README에 웹 데모 화면 8장 추가`). 호환이 깨지면 본문에 `BREAKING CHANGE:`.
+- 본문은 바꾼 이유와 내용을 한국어로 적고, 끝에 `Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>`을 붙입니다.
+- **버전: Semantic Versioning.** `package.json`의 `version`과 README 버전 배지를 함께 맞춥니다. 스토어 빌드 버전은 `app.config.ts`의 `version`입니다.
+- **변경 기록: Keep a Changelog 기반.** `CHANGELOG.md`에 최신 버전을 위에 둡니다. 이 저장소는 스토어 출시 전이라 날짜 대신 `## x.y.z - 미출시`로 적고, `[Unreleased]` 절과 추가·변경·수정·제거 소제목은 쓰지 않고 `- 분류: 내용` 목록으로 적습니다(표준과 다른 점).
+- **병합:** squash(제목 끝에 `(#번호)`). CI가 통과하면 바로 병합하고 CodeRabbit 리뷰는 기다리지 않습니다.
+- Expo SDK가 정하는 패키지(`expo*`, `react`, `react-native*`, `@react-native-*`, `@shopify/flash-list`, `@sentry/react-native`, `jest-expo`, `eslint-config-expo`)는 Dependabot에서 뺐습니다. `npx expo install --fix`로만 올립니다.
+
+## 7. 배포·릴리스
+
+- 웹 데모: `main`에 앱 코드·에셋·설정이 바뀌면 `.github/workflows/deploy-web.yml`이 GitHub Pages에 배포합니다. `.env`를 읽지 않아 늘 데모 모드이고 비밀값이 필요 없습니다.
+- 앱: EAS(`eas.json`의 `development`·`preview`·`production`). `npx eas-cli@latest build --profile production --platform all`, `npx eas-cli@latest submit --platform all`. 비밀값은 EAS 환경 변수에 둡니다.
+- 릴리스: 병합 뒤 `v2.17.2` 형식 태그로 GitHub 릴리스(대상은 병합 커밋 전체 SHA, 본문은 CHANGELOG 해당 절)를 만들고 `bash ~/Documents/Archive/Backup/backup.sh`로 백업합니다.
+- 진행 기록: Obsidian 보관함 `NewWorld v1.0.0 고도화 계획.md`. 소개가 크게 바뀌면 프로필 저장소 `ryushin01/ryushin01` README 표를 고칩니다.
+
+## 8. 보안·주의사항
+
+- 비밀값과 `.env`는 커밋하지 않습니다. 웹 데모에 Supabase 값이나 유료 키를 넣지 않습니다(`scripts/build-web.mjs`가 지움).
+- Supabase 프로젝트 `newworld`는 일시 중지 상태입니다. 마이그레이션은 자동 적용되지 않고 `npx supabase db push --remote`로 손으로 올립니다(CLI 3부터 `--remote`가 없으면 로컬 DB에 적용). 적용 현황은 `docs/development.md`의 `서버 적용 현황`.
+- `20261108000000_ruins_travel.sql`은 되돌릴 수 없게 칸을 지웁니다. 데이터가 있는 서버는 백업한 뒤 올립니다.
+- `patches/`의 패치는 정확한 버전에만 걸립니다. 그 패키지를 올리면 패치를 다시 만들거나 지우고, iOS는 `expo.autolinking.ios.buildFromSource`도 확인합니다.
+- `docs/credits.md`와 `pnpm-lock.yaml`은 Prettier 대상이 아닙니다.
+- 공개된 지 하루가 안 된 패키지는 설치되지 않습니다(`minimumReleaseAge`). `expo install`이 멈추면 하루 뒤 다시 실행합니다.
+
+## 9. 공통 규칙
+
+공통 규칙은 `~/Documents/GitHub/CLAUDE.md`에 있습니다(이 저장소 문서가 우선). 핵심:
+
+- 답변·커밋·PR·문서·주석은 한국어로 씁니다.
+- 허락을 묻지 않고 끝까지 진행한 뒤 한 번에 보고합니다(비용·비밀값·디자인 결정·되돌릴 수 없는 공개 행동은 보고만).
+- 사용자의 진행 중 작업을 보호합니다. 커밋하지 않은 변경이 있으면 `git worktree add`로 따로 작업하고 끝나면 지웁니다.
+- 다른 세션 공지는 ryushin01 그룹 세션에만 보냅니다.
