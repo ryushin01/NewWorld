@@ -74,6 +74,10 @@ npx supabase functions deploy recover-account
 - 대기 변경과 마지막 서버 값은 계정별 키로 보관합니다. 로그아웃하면 서버 값 사본만 지웁니다.
 - 데모 모드는 MY 페이지의 `데모 모드 연결 끊기`로 끊긴 상태를 재현합니다.
 
+데모 모드(`.env` 없음, 웹 데모는 늘 데모 모드)는 서버 없이 기기 저장소의 가상 데이터로 돌아 인터넷이 끊겨도 모든 화면이 내용과 함께 뜹니다. 여행지 사진·글꼴·아이콘은 앱 번들에 들어 있고, 장소 검색·주소 찾기도 데모 백엔드가 기기 안에서 합니다. 네트워크가 필요한 것은 기록 화면의 날씨 채우기 버튼(Open-Meteo, 실패하면 "날씨를 불러오지 못했습니다" 안내 뒤 직접 입력), Sentry(DSN이 있을 때만, 실패해도 조용히 넘어감), 앱의 지도 타일(웹 데모는 지도 자리에 안내)뿐입니다.
+
+`pnpm run test:web`은 웹 데모를 `/` 경로로 빌드해 `expo serve`로 띄우고, localhost 밖 요청을 모두 막은 상태에서 둘러보기 → 실존·환상·지도·기록·MY 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반과 외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`, CI의 `web-offline` 작업). 처음 한 번은 `pnpm exec playwright install chromium`이 필요합니다. 알고 있지만 아직 고치지 않은 접근성 문제(expo-image의 웹 `<img>` alt, 바텀 시트의 `role="slider"`, 카드 레이블이 보이는 글자를 그대로 담지 않음)는 테스트 파일의 목록으로 빼 두었습니다.
+
 기기에 저장된 값(보낼함, 스냅숏, 마지막 세션, 도착 알림 기록)은 `src/shared/lib/stored-json.ts`의 `parseStoredJson`·`isRecord`로 읽습니다. 보낼함은 작업 종류마다 필요한 내용이 있는 작업만, 스냅숏은 원소 모양까지 맞는 칸만 쓰고 나머지는 서버에서 다시 받습니다. 저장값이 깨져도 로그인(오프라인으로 앱 열기)이 막히지 않게 하기 위해서입니다.
 
 ## 외부 데이터
@@ -84,14 +88,15 @@ npx supabase functions deploy recover-account
 
 ## 테스트
 
-| 명령                                            | 내용                                                                                              |
-| ----------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `pnpm test`                                     | 단위·컴포넌트 테스트 (Jest, React Native Testing Library)                                         |
-| `pnpm run test:db`                              | 마이그레이션을 PGlite에 적용해 RLS와 제약 조건 검사                                               |
-| `pnpm run typecheck:functions`                  | Edge Function을 Node의 supabase-js 타입으로 검사(Deno 없이, `supabase/functions/tsconfig.json`)   |
-| `pnpm run test:e2e`                             | Maestro E2E. 전용 시뮬레이터 `NewWorld E2E`에 데모 모드 Release 앱을 설치해 실행합니다. 아래 참고 |
-| `pnpm run test:e2e:server`                      | 로컬 Supabase에 연결한 Release 앱으로 가입부터 계정 삭제까지 검사합니다. 아래 참고                |
-| `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` | 앱에서 `/storybook` 경로로 컴포넌트 카탈로그 확인                                                 |
+| 명령                                            | 내용                                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `pnpm test`                                     | 단위·컴포넌트 테스트 (Jest, React Native Testing Library)                                            |
+| `pnpm run test:db`                              | 마이그레이션을 PGlite에 적용해 RLS와 제약 조건 검사                                                  |
+| `pnpm run typecheck:functions`                  | Edge Function을 Node의 supabase-js 타입으로 검사(Deno 없이, `supabase/functions/tsconfig.json`)      |
+| `pnpm run test:e2e`                             | Maestro E2E. 전용 시뮬레이터 `NewWorld E2E`에 데모 모드 Release 앱을 설치해 실행합니다. 아래 참고    |
+| `pnpm run test:e2e:server`                      | 로컬 Supabase에 연결한 Release 앱으로 가입부터 계정 삭제까지 검사합니다. 아래 참고                   |
+| `pnpm run test:web`                             | 웹 데모를 빌드해 외부 요청을 모두 막고 모든 탭과 axe를 검사합니다(Playwright). 위 오프라인 동작 참고 |
+| `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` | 앱에서 `/storybook` 경로로 컴포넌트 카탈로그 확인                                                    |
 
 ### E2E 전용 시뮬레이터
 
