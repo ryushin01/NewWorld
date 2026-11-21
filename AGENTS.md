@@ -82,7 +82,9 @@ pnpm run test:db               # 마이그레이션을 PGlite에 적용해 RLS·
 - **흐름: GitHub Flow.** `main`에 직접 커밋·푸시하지 않고, 최신 `main`에서 브랜치를 만들어 PR로만 병합합니다.
 - **브랜치 이름:** `feat/…`, `fix/…`, `refactor/…`, `docs/…`, `test/…`, `chore/…`, `release/…`(이 저장소에서 실제로 쓴 것은 `feat`·`fix`·`docs`·`chore`·`refactor`·`perf`).
 - **커밋 메시지: Conventional Commits.** `<타입>: <한국어 요약>`, 타입은 `feat`, `fix`, `refactor`, `perf`, `docs`, `test`, `style`, `chore`, `ci`, `build`(의존성은 `chore(deps):`). 버전을 올린 커밋·PR 제목은 끝에 `(x.y.z)`를 붙입니다. 예: `feat: 웹 데모(GitHub Pages)와 웹 화면·접근성 수정 (2.17.0)`, `fix: 고고학자 아서 에번스도 아더 에번스로 (2.17.1)`. 문서·잡일 PR은 버전 없이 씁니다(`docs: README에 웹 데모 화면 8장 추가`). 호환이 깨지면 본문에 `BREAKING CHANGE:`.
-- 본문은 바꾼 이유와 내용을 한국어로 적고, 끝에 `Co-authored-by: Claude Opus 5.5 <noreply@anthropic.com>`을 붙입니다.
+- 본문은 바꾼 이유와 내용을 한국어로 적습니다.
+- **작성자:** 커밋 작성자는 항상 ryushin01(`ryushin0 <141554987+ryushin01@users.noreply.github.com>`)입니다(기여자는 ryushin01만 남김). 백엔드 코드가 있는 저장소라 공동 작성자 줄은 `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` 하나만 넣습니다.
+- GitHub Actions가 커밋하는 워크플로는 작성자를 ryushin01로 설정합니다(`github-actions[bot]` 금지). Dependabot PR은 그대로 병합하지 말고 같은 변경을 ryushin01 커밋으로 다시 만들어 병합합니다.
 - **버전: Semantic Versioning.** `package.json`의 `version`과 README 버전 배지를 함께 맞춥니다. 스토어 빌드 버전은 `app.config.ts`의 `version`입니다.
 - **변경 기록: Keep a Changelog 기반.** `CHANGELOG.md`에 최신 버전을 위에 둡니다. 이 저장소는 스토어 출시 전이라 날짜 대신 `## x.y.z - 미출시`로 적고, `[Unreleased]` 절과 추가·변경·수정·제거 소제목은 쓰지 않고 `- 분류: 내용` 목록으로 적습니다(표준과 다른 점).
 - **병합:** squash(제목 끝에 `(#번호)`). CI가 통과하면 바로 병합하고 CodeRabbit 리뷰는 기다리지 않습니다.
