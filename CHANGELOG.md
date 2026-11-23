@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.18.0 - 미출시
+
+- 웹 데모 SEO 기초: 한국어 `<title>`·설명, `canonical`(`https://ryushin01.github.io/NewWorld/`), Open Graph·Twitter 카드, 홈 JSON-LD `SoftwareApplication`, JavaScript를 끈 경우의 `<noscript>` 안내를 웹 빌드 후처리(`scripts/build-web.mjs`)에서 `index.html`에 넣음. 모바일 앱과 화면은 그대로
+- 웹 데모 산출물: 빌드가 `sitemap.xml`(200으로 열리는 첫 화면만; 다른 경로는 404.html이 받아 404 상태라 뺌)과 공유용 `og-image.png`(1200×630, 앱 아이콘에서 sharp로 생성, 외부 요청 없음)를 `dist/`에 만들어 Pages에 함께 올림. 하위 경로 사이트라 루트 `robots.txt`는 두지 않음
+- 테스트: 홈 HTML의 meta·canonical·JSON-LD, `sitemap.xml` 절대 주소, `og-image.png` 크기를 보는 Playwright 검사(`e2e/web/seo.spec.ts`, `pnpm run test:web`에 포함)
+
 ## 2.17.3 - 미출시
 
 - 오프라인 검증: 웹 데모를 빌드해 localhost 밖 요청을 모두 막은 상태에서 둘러보기 → 실존·환상·지도·기록·MY 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반과 외부 요청이 없는지 보는 Playwright E2E(`pnpm run test:web`, `e2e/web/offline.spec.ts`)와 CI `web-offline` 작업. 조사해 보니 데모 모드는 이미 서버·CDN 없이 돌아 앱 동작은 바꾸지 않음
