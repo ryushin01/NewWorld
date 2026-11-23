@@ -146,6 +146,7 @@ npx serve -s dist                       # / 경로로 만든 dist를 열어 보�
 ```
 
 - `scripts/build-web.mjs`는 `.env`를 읽지 않고(`EXPO_NO_DOTENV`) Supabase 값을 지운 채 `expo export --platform web`을 돌려 늘 데모 모드로 만듭니다. `index.html`의 언어를 `ko`로 바꾸고, 넓은 화면에서 휴대폰 폭으로 가운데에 두는 스타일을 넣고, 같은 파일을 `404.html`로 복사해 새로고침이나 직접 연 하위 경로(`/NewWorld/destination/avalon`)도 열리게 합니다. Pages는 이때 상태 코드 404로 앱을 주므로 검색 엔진은 첫 화면만 색인합니다.
+- 검색·공유 정보도 같은 스크립트가 만듭니다: `index.html`에 한국어 제목·설명, `canonical`, Open Graph·Twitter 카드, JSON-LD `SoftwareApplication`, `<noscript>` 안내를 넣고, `dist/`에 `sitemap.xml`(첫 화면만)과 `og-image.png`(1200×630, `assets/icon.png`에서 sharp로 생성)를 만듭니다. 주소는 늘 운영 주소이고(`SITE_URL`로 바꿀 수 있음) 외부 요청은 없습니다. 하위 경로 사이트라 루트 `robots.txt`는 둘 수 없어 만들지 않습니다. `e2e/web/seo.spec.ts`가 산출물을 검사합니다.
 - `app.config.ts`는 `EXPO_WEB_BASE_URL`이 있을 때만 `experiments.baseUrl`을 붙입니다. iOS·Android 빌드에는 영향이 없습니다.
 - 웹에서만 바꿔 쓰는 것:
 
