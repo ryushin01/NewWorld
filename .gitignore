@@ -58,3 +58,7 @@ supabase/.temp/
 # Playwright(웹 데모 오프라인 E2E) 결과
 test-results/
 playwright-report/
+
+# 운영 어드민 빌드·Lighthouse CI 결과
+apps/admin/dist/
+.lighthouseci/

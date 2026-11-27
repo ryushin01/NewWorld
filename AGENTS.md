@@ -4,8 +4,9 @@
 
 역사 유적과 신화·전설 속 여행지를 탐험하고 기록하는 Expo(React Native) 모바일 앱입니다. 모바일 우선 패턴, 성능, iOS·Android·웹 호환을 먼저 생각합니다.
 
-- 화면 축: 모바일 앱(iOS·Android) 하나. 웹 데모는 같은 앱의 웹 빌드입니다.
+- 화면 축: 모바일 앱(iOS·Android)과 운영 어드민 웹(`apps/admin`). 웹 데모는 앱의 웹 빌드입니다.
 - 웹 데모: https://ryushin01.github.io/NewWorld/ (로그인 화면의 `둘러보기`, 아이디 `guest`)
+- 어드민 데모: https://ryushin01.github.io/NewWorld/admin/ (`관리자로 둘러보기`, 시드 데이터·브라우저 저장)
 - 스토어에는 출시하지 않았습니다. 출시 준비는 `docs/release-checklist.md`에 있습니다.
 
 ## 2. 기술 스택과 구조
@@ -15,6 +16,7 @@
 - `src/app/`은 Expo Router 경로입니다. 파일 하나가 화면이고 `_layout.tsx`가 내비게이터이며, `src/_pages`를 다시 내보내기만 합니다. 경로가 아닌 코드(컴포넌트, 훅, 유틸)는 `src/app/` 밖에 둡니다.
 - `Link`, `router`, `useLocalSearchParams`는 `expo-router`에서 가져옵니다.
 - 서버 원본: `supabase/`(마이그레이션, RLS, 버킷 정책, Edge Function `place-search`·`delete-account`·`recover-account`, 인증 설정)
+- 운영 어드민: `apps/admin`(Vite + React, 자체 FSD `app`→`pages`→`widgets`→`features`→`entities`→`shared`, 경로 별칭 `@admin/*`, 해시 주소 라우팅). 앱 카탈로그를 `@catalog/*`로 시드에 씁니다. `VITE_DEMO=1`이거나 Supabase 값이 없으면 데모 모드(브라우저 저장소). 루트 `tsconfig.json`·Jest에서는 빠지고 `apps/admin/tsconfig.json`·Vitest로 검사합니다.
 - 자세한 내용: `docs/development.md`, `docs/sequence-diagrams.md`
 
 ### Expo는 자주 바뀝니다 — 기억에 기대지 않기
@@ -38,6 +40,8 @@ npx expo install --fix         # 맞지 않는 버전 고치기
 npx expo install --check       # SDK 버전 확인
 npx expo-doctor                # 의존성·설정 진단
 pnpm run build:web             # 웹 데모 빌드(dist/, /NewWorld 경로, 늘 데모 모드)
+pnpm run admin                 # 운영 어드민 개발 서버(Vite)
+pnpm run build:admin           # 운영 어드민 데모 빌드(apps/admin/dist, 상대 경로)
 ```
 
 - 환경 변수(`.env.example` → `.env`, 이름만): `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `GOOGLE_MAPS_ANDROID_API_KEY`, `EXPO_PUBLIC_SENTRY_DSN`. `.env`가 없으면 가상 데이터로 도는 데모 모드입니다.
@@ -53,10 +57,15 @@ CI(`.github/workflows/ci.yml`, `main` 푸시·모든 PR)의 `verify` 작업은 �
 pnpm install --frozen-lockfile
 pnpm run typecheck             # tsc --noEmit
 pnpm run typecheck:functions   # Edge Function 타입 검사
-pnpm run lint                  # expo lint
+pnpm run lint                  # expo lint + 어드민 eslint(jsx-a11y)
 pnpm test                      # Jest + React Native Testing Library
 pnpm run test:db               # 마이그레이션을 PGlite에 적용해 RLS·제약 검사
 pnpm run test:web              # 웹 데모 오프라인 E2E(CI의 web-offline 작업, Playwright + axe)
+pnpm run typecheck:admin       # 어드민 타입 검사 (verify 작업)
+pnpm run test:admin            # 어드민 Vitest + Testing Library (verify 작업)
+pnpm run test:admin:e2e        # 어드민 빌드 + Playwright E2E(오프라인·axe) (CI의 admin-web 작업)
+pnpm run size:admin            # 어드민 번들 예산(size-limit, admin-web 작업)
+pnpm run lhci:admin            # 어드민 Lighthouse CI(결과는 .lighthouseci/admin, admin-web 작업)
 ```
 
 - `test:web`은 웹 데모를 `/` 경로로 빌드해 `expo serve`로 띄우고 localhost 밖 요청을 모두 막은 채 둘러보기 → 모든 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반·외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`). 처음 한 번은 `pnpm exec playwright install chromium`. 아직 못 고친 접근성 문제는 테스트 파일의 알려진 목록에 있습니다. 데모 모드는 서버·CDN 없이 돌아야 합니다(자세히: `docs/development.md`의 오프라인 동작).
@@ -75,7 +84,7 @@ pnpm run test:web              # 웹 데모 오프라인 E2E(CI의 web-offline �
 - 색 토큰: 작은 글자에 `brand`(`#c2792b`)를 쓰지 말고 `brandText`, 환상 세계 글자는 `fantasyText`를 씁니다.
 - 입력 길이 상한은 앱(`src/shared/config`의 `LIMITS`)과 DB 제약(`20261116000000_input_limits.sql`)을 함께 고칩니다.
 - 기기 저장값은 `src/shared/lib/stored-json.ts`의 `parseStoredJson`·`isRecord`로 읽습니다.
-- 접근성(WCAG 2.2·KWCAG 2.2, 세부는 공통 규칙): `accessibilityRole`·레이블을 먼저 씁니다(웹에서는 `src/shared/ui/web-a11y.ts`가 `role`·`aria-*`로 바꿈). eslint-plugin-jsx-a11y는 없고(`eslint-config-expo`만 씀), 자동 검사는 웹 데모의 axe(`pnpm run test:web`)와 단위 테스트로 합니다.
+- 접근성(WCAG 2.2·KWCAG 2.2, 세부는 공통 규칙): `accessibilityRole`·레이블을 먼저 씁니다(웹에서는 `src/shared/ui/web-a11y.ts`가 `role`·`aria-*`로 바꿈). 앱에는 eslint-plugin-jsx-a11y가 없고(`eslint-config-expo`만 씀) 웹 데모의 axe(`pnpm run test:web`)와 단위 테스트로 검사합니다. 어드민(`apps/admin`)은 jsx-a11y 권장 규칙과 axe(Vitest·Playwright)로 검사합니다.
 
 ## 6. Git·PR
 
@@ -92,7 +101,7 @@ pnpm run test:web              # 웹 데모 오프라인 E2E(CI의 web-offline �
 
 ## 7. 배포·릴리스
 
-- 웹 데모: `main`에 앱 코드·에셋·설정이 바뀌면 `.github/workflows/deploy-web.yml`이 GitHub Pages에 배포합니다. `.env`를 읽지 않아 늘 데모 모드이고 비밀값이 필요 없습니다.
+- 웹 데모: `main`에 앱 코드·에셋·설정이 바뀌면 `.github/workflows/deploy-web.yml`이 GitHub Pages에 배포합니다. `.env`를 읽지 않아 늘 데모 모드이고 비밀값이 필요 없습니다. 같은 작업이 어드민 데모(`build:admin`)를 `dist/admin/`에 넣어 `/NewWorld/admin/`으로 올립니다.
 - 앱: EAS(`eas.json`의 `development`·`preview`·`production`). `npx eas-cli@latest build --profile production --platform all`, `npx eas-cli@latest submit --platform all`. 비밀값은 EAS 환경 변수에 둡니다.
 - 릴리스: 병합 뒤 `v2.17.2` 형식 태그로 GitHub 릴리스(대상은 병합 커밋 전체 SHA, 본문은 CHANGELOG 해당 절)를 만들고 `bash ~/Documents/Archive/Backup/backup.sh`로 백업합니다.
 - 진행 기록: Obsidian 보관함 `NewWorld v1.0.0 고도화 계획.md`. 소개가 크게 바뀌면 프로필 저장소 `ryushin01/ryushin01` README 표를 고칩니다.

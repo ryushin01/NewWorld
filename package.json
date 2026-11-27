@@ -1,6 +1,6 @@
 {
   "name": "newworld",
-  "version": "2.18.1",
+  "version": "2.19.0",
   "main": "expo-router/entry",
   "expo": {
     "autolinking": {
@@ -85,33 +85,56 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
     "@electric-sql/pglite": "^0.5.16",
+    "@fontsource/jost": "^5.3.0",
+    "@fontsource/noto-sans-kr": "^5.3.1",
+    "@fontsource/open-sans": "^5.3.0",
+    "@lhci/cli": "^0.16.1",
     "@playwright/test": "^1.65.1",
+    "@size-limit/file": "^14.3.0",
     "@storybook/react-native": "^10.7.1",
     "@tamagui/cli": "^3.3.3",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/jest-dom": "^8.0.0",
+    "@testing-library/react": "^16.3.3",
     "@testing-library/react-native": "^14.1.0",
+    "@testing-library/user-event": "^14.6.13",
     "@types/react": "~19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "axe-core": "^4.14.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
     "husky": "^9.1.7",
+    "jsdom": "^31.0.1",
     "lint-staged": "^17.6.1",
     "sharp": "^0.35.5",
+    "size-limit": "^14.3.0",
     "storybook": "^10.6.7",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.2"
   },
   "scripts": {
     "start": "expo start",
     "ios": "expo run:ios",
     "android": "expo run:android",
     "build:web": "node scripts/build-web.mjs",
-    "lint": "expo lint",
+    "admin": "vite -c apps/admin/vite.config.mts",
+    "build:admin": "VITE_DEMO=1 vite build -c apps/admin/vite.config.mts",
+    "lint": "expo lint && eslint apps/admin --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "typecheck:functions": "tsc -p supabase/functions/tsconfig.json",
+    "typecheck:admin": "tsc -p apps/admin/tsconfig.json",
     "test": "jest",
     "credits": "UPDATE_CREDITS=1 jest src/entities/destination/model/credits.test.ts",
     "assets": "node scripts/generate-assets.mjs",
     "test:e2e": "zsh scripts/e2e-ios.sh",
     "test:e2e:server": "zsh e2e/server/run.sh",
     "test:web": "EXPO_WEB_BASE_URL= node scripts/build-web.mjs && playwright test -c e2e/web/playwright.config.ts",
+    "test:admin": "vitest run -c apps/admin/vite.config.mts",
+    "test:admin:e2e": "pnpm run build:admin && playwright test -c apps/admin/e2e/playwright.config.ts",
+    "size:admin": "size-limit",
+    "lhci:admin": "node apps/admin/scripts/lighthouse.mjs",
     "screenshots": "zsh scripts/screenshots.sh",
     "format": "prettier --write .",
     "prepare": "husky",
@@ -148,7 +171,8 @@
       "/ios/",
       "/android/",
       "supabase/tests/",
-      "/e2e/web/"
+      "/e2e/web/",
+      "/apps/"
     ]
   },
   "lint-staged": {
@@ -156,5 +180,23 @@
       "prettier --write"
     ]
   },
-  "packageManager": "pnpm@12.16.1"
+  "packageManager": "pnpm@12.16.1",
+  "size-limit": [
+    {
+      "name": "어드민 첫 화면 JS(데모, gzip)",
+      "path": [
+        "apps/admin/dist/assets/index-*.js",
+        "apps/admin/dist/assets/types-*.js",
+        "apps/admin/dist/assets/demo-backend-*.js"
+      ],
+      "limit": "175 kB",
+      "gzip": true
+    },
+    {
+      "name": "어드민 CSS(글꼴 선언 포함, gzip)",
+      "path": "apps/admin/dist/assets/*.css",
+      "limit": "70 kB",
+      "gzip": true
+    }
+  ]
 }

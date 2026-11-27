@@ -14,6 +14,7 @@
     "supabase/functions/**/index.ts",
     "ios",
     "android",
-    "supabase/functions/_types"
+    "supabase/functions/_types",
+    "apps/admin"
   ]
 }

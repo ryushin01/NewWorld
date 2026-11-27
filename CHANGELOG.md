@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.19.0 - 미출시
+
+- 운영 어드민: 앱의 운영 데이터를 관리하는 웹 어드민을 새로 만듦(`apps/admin`, Vite 8 + React 19, FSD, 해시 주소 라우팅). 여행지(신화·전설·역사·사실) 목록·검색·필터·추가·수정·숨김, 전설의 현장 코스(들르는 여행지 순서 편집), 현장 인증 스탬프 목록·취소, 기념 뱃지 이름·설명·숨김, 사용자 목록·상세, 닉네임·프로필 사진 신고 처리(닉네임 초기화·사진 내리기·기각), 대시보드(회원·최근 가입·스탬프·대기 신고 지표, 30일 가입·스탬프 막대 그래프와 표, 인기 여행지 10곳). 폼은 React Hook Form + Zod, 데이터는 TanStack Query
+- 공개 데모: https://ryushin01.github.io/NewWorld/admin/ (GitHub Pages, 웹 데모와 같은 배포에 `admin/` 하위 경로로 올림). `VITE_DEMO=1`로 빌드해 앱 카탈로그(여행지 55곳·코스 9개)와 회원 26명·스탬프·신고 시드 데이터를 브라우저 저장소에 두고 돎. '관리자로 둘러보기' 입장 버튼, 데모 안내 띠, '데모 데이터 초기화'. 서버·외부 글꼴 요청이 없어 인터넷이 끊겨도 내용과 함께 뜸. 데모 모드가 꺼지면(`VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`) 실제 Supabase로 동작
+- 디자인: lipps.co.jp를 레퍼런스로(사용 허락) 붉은 테두리, 왼쪽 세로 흐르는 글자 띠와 붉은 로고 칸, 칸으로 나뉜 머리, 흰 글자가 흐르는 큰 영문 제목 띠, 뉴스 목록 모양의 행(흰 막 밀림·썸네일 확대·붉은 제목), `[ VIEW → ]` 버튼, 전체 화면 메뉴, 로딩 숫자, 회전하는 SCROLL DOWN, easeOutQuint(`cubic-bezier(0.23, 1, 0.32, 1)`) 모션을 옮김. 글꼴은 Open Sans·Noto Sans KR·Jost(무료, 번들에 넣음), 사진 대신 직접 그린 타일·프로필 그림. 대비가 모자란 회색 머리글(#c2c2c2 → #6f6b6a)과 작은 붉은 글자(#e61517 → #cc1114), 입력칸 테두리(#8a8584)만 같은 계열에서 보정
+- 서버: 마이그레이션 `20261127000000_admin.sql`. 관리자 표 `private.admins`와 `public.is_admin()`, 수록 여행지·코스·뱃지 표(`catalog_destinations`·`catalog_courses`·`catalog_badges`, 회원은 숨기지 않은 항목만 읽고 쓰기는 관리자만), 프로필 `created_at`, 본명을 뺀 관리자용 회원 보기 `admin_users`, 스탬프 관리자 읽기·취소 정책, 신고된 프로필 사진 관리자 읽기, 신고 표 `profile_reports`(회원은 남을 신고하고 자기 신고만 봄)와 처리 함수 `admin_handle_report`. 운영 서버(일시 중지)에는 아직 적용하지 않음
+- 접근성: 본문 바로가기, 화면마다 고유한 `<title>`, 화면이 바뀌면 제목으로 초점 이동, 입력 오류를 `aria-invalid`·`aria-describedby`로 잇고 첫 오류 칸으로 초점 이동, 모달은 초점 가두기·Escape·연 버튼으로 초점 복귀, 결과 안내 `role="status"`, 장식 글자는 낭독에서 뺌, 움직임 줄이기 설정 존중. 어드민에만 eslint-plugin-jsx-a11y 권장 규칙
+- 테스트: Vitest + Testing Library 단위·컴포넌트 20개(데모 백엔드, 통계, 폼 검사, 입장 → 대시보드, 검색·필터, 여행지 추가 오류·저장, 신고 처리, 메뉴 모달; axe 포함), Playwright E2E(`pnpm run test:admin:e2e`, 데스크톱·모바일, 외부 요청 차단·오프라인 이동·모든 화면 axe, 데모 입장 → 여행지 추가·수정·숨김 → 신고 처리, 초기화), RLS 6개(`pnpm run test:db`), 번들 예산(size-limit, 첫 화면 JS 175kB·CSS 70kB gzip), Lighthouse CI(성능 0.9·접근성 1·권장 사항 0.95, 결과는 파일로만). CI에 `admin-web` 작업 추가
+- 의존성(개발용): vite, @vitejs/plugin-react, vitest, jsdom, @testing-library/react·dom·user-event·jest-dom, axe-core, size-limit, @size-limit/file, @lhci/cli, eslint-plugin-jsx-a11y, @fontsource/open-sans·noto-sans-kr·jost. 앱 번들과 모바일 앱은 그대로
+
 ## 2.18.1 - 미출시
 
 - 변경: 앱 코드의 HTTP 호출을 Fetch API 직접 호출에서 redaxios 0.5.1로 바꿈. Open-Meteo 날씨 조회(`src/shared/api/conditions.ts`), 웹 데모의 찍은 이미지 공유(`use-capture-share.ts`, `responseType: 'blob'`)와 사진 읽기(`photo.web.ts`, `'blob'`·`'arrayBuffer'`), Edge Function `place-search`의 Photon 호출(`npm:redaxios@0.5.1`)
