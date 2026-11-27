@@ -1,10 +1,5 @@
 import { demoBackend as api } from './demo-backend';
 
-// Jest에는 Metro 에셋 등록이 없어, 앱에 든 사진(마스터 프로필)의 주소를 대신 돌려줍니다.
-jest.mock('expo-asset', () => ({
-  Asset: { fromModule: () => ({ uri: 'asset:///ryushin0.webp' }) },
-}));
-
 jest.mock('../lib/photo', () => ({
   compressPhoto: jest.fn(async () => ({ bytes: new ArrayBuffer(1), width: 10, height: 10 })),
   photoStore: {
