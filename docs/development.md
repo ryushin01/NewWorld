@@ -76,7 +76,14 @@ npx supabase functions deploy recover-account
 
 데모 모드(`.env` 없음, 웹 데모는 늘 데모 모드)는 서버 없이 기기 저장소의 가상 데이터로 돌아 인터넷이 끊겨도 모든 화면이 내용과 함께 뜹니다. 여행지 사진·글꼴·아이콘은 앱 번들에 들어 있고, 장소 검색·주소 찾기도 데모 백엔드가 기기 안에서 합니다. 네트워크가 필요한 것은 기록 화면의 날씨 채우기 버튼(Open-Meteo, 실패하면 "날씨를 불러오지 못했습니다" 안내 뒤 직접 입력), Sentry(DSN이 있을 때만, 실패해도 조용히 넘어감), 앱의 지도 타일(웹 데모는 지도 자리에 안내)뿐입니다.
 
-`pnpm run test:web`은 웹 데모를 `/` 경로로 빌드해 `expo serve`로 띄우고, localhost 밖 요청을 모두 막은 상태에서 둘러보기 → 실존·환상·지도·기록·MY 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반과 외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`, CI의 `web-offline` 작업). 처음 한 번은 `pnpm exec playwright install chromium`이 필요합니다. 알고 있지만 아직 고치지 않은 접근성 문제(expo-image의 웹 `<img>` alt, 바텀 시트의 `role="slider"`, 카드 레이블이 보이는 글자를 그대로 담지 않음)는 테스트 파일의 목록으로 빼 두었습니다.
+`pnpm run test:web`은 웹 데모를 `/` 경로로 빌드해 `scripts/serve-web.mjs`로 띄우고(GitHub Pages처럼 없는 경로는 `404.html`이 같은 앱을 줌. `expo serve`는 하위 경로를 바로 열면 Not Found), localhost 밖 요청을 모두 막은 상태에서 봅니다(`e2e/web/offline.spec.ts`, CI의 `web-offline` 작업).
+
+- 둘러보기 → 실존·환상·지도·기록·MY 탭
+- 모든 경로를 주소로 바로 열기: 여행지 상세(실존·환상), 코스, 연대표, 여권(스탬프·뱃지), 내 여행지·장소 상세·수정·추가, 지도에서 설정, 기록 상세·수정·추가, 여정 목록·추가, 검색, 통계, 체크리스트, 동기화, 프로필 편집, 비밀번호·복구 코드
+- 주요 상태: 날씨 불러오기 실패 안내("날씨를 불러오지 못했습니다", 입력칸은 그대로), 기기 안 장소 검색 결과, 데모 현장 인증 → 여권 스탬프, 코스로 여정 만들기 → 저장 → 여정 상세, 엽서 미리보기
+- 화면마다 데모 데이터가 보이는지, axe(WCAG 2.2 AA) 위반, 페이지 오류, 외부 요청(사용자가 누른 날씨 요청 말고는 없어야 함)
+
+어드민도 같은 방식으로 모든 화면(대시보드·목록·상세·추가·수정·없는 화면)을 외부 요청 없이 주소로 바로 열어 axe를 봅니다(`apps/admin/e2e/admin.spec.ts`). 로컬에서 웹 데모를 보려면 `EXPO_WEB_BASE_URL= pnpm run build:web && pnpm run serve:web`. 처음 한 번은 `pnpm exec playwright install chromium`이 필요합니다. 알고 있지만 아직 고치지 않은 접근성 문제(expo-image의 웹 `<img>` alt, 바텀 시트의 `role="slider"`, 카드 레이블이 보이는 글자를 그대로 담지 않음)는 테스트 파일의 목록으로 빼 두었습니다.
 
 기기에 저장된 값(보낼함, 스냅숏, 마지막 세션, 도착 알림 기록)은 `src/shared/lib/stored-json.ts`의 `parseStoredJson`·`isRecord`로 읽습니다. 보낼함은 작업 종류마다 필요한 내용이 있는 작업만, 스냅숏은 원소 모양까지 맞는 칸만 쓰고 나머지는 서버에서 다시 받습니다. 저장값이 깨져도 로그인(오프라인으로 앱 열기)이 막히지 않게 하기 위해서입니다.
 

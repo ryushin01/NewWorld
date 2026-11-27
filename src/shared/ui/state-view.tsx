@@ -7,16 +7,14 @@ import { AppText } from './typography';
 export const LoadingView = ({ label = '불러오는 중입니다.' }: { label?: string }) => {
   const colors = useColors();
   return (
-    <YStack
-      flex={1}
-      alignItems="center"
-      justifyContent="center"
-      padding={24}
-      gap={12}
-      accessibilityLabel={label}
-      accessible
-    >
-      <ActivityIndicator color={colors.ink} />
+    <YStack flex={1} alignItems="center" justifyContent="center" padding={24} gap={12}>
+      {/* 웹에서 role="progressbar"가 되므로 이름을 돌림표 자체에 붙입니다(axe aria-progressbar-name). */}
+      <ActivityIndicator
+        color={colors.ink}
+        accessible
+        accessibilityRole="progressbar"
+        accessibilityLabel={label}
+      />
     </YStack>
   );
 };

@@ -81,6 +81,34 @@ test('외부 요청을 모두 막아도 데모로 들어가 모든 화면이 시
   expect(errors).toEqual([]);
 });
 
+test('외부 요청을 모두 막아도 상세·수정·추가·없는 화면까지 주소로 바로 열리고 axe 위반이 없다', async ({
+  page,
+}) => {
+  const external = await blockExternal(page);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await enterDemo(page);
+
+  const screens: [path: string, heading: string, title: string][] = [
+    ['/#/destinations/new', '여행지 추가', '여행지 추가'],
+    ['/#/destinations/giza', '기자 피라미드', '기자 피라미드 여행지'],
+    ['/#/destinations/giza/edit', '기자 피라미드 수정', '기자 피라미드 수정'],
+    ['/#/courses/new', '코스 추가', '코스 추가'],
+    ['/#/courses/arthur/edit', '아더왕의 길 수정', '아더왕의 길 코스 수정'],
+    ['/#/users/demo-user-01', '아틀란티스찾는중', '아틀란티스찾는중 사용자'],
+    ['/#/nowhere', '없는 화면입니다', '없는 화면'],
+  ];
+  for (const [path, heading, title] of screens) {
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+    await expect(page).toHaveTitle(`${title} | 신세계 운영 어드민`);
+    await expectNoA11yViolations(page);
+  }
+
+  expect(external).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
 test('데모 입장 → 여행지 추가·수정 → 신고 처리', async ({ page }) => {
   await blockExternal(page);
   await enterDemo(page);
