@@ -8,7 +8,7 @@
 - 서버: 마이그레이션 `20261127000000_admin.sql`. 관리자 표 `private.admins`와 `public.is_admin()`, 수록 여행지·코스·뱃지 표(`catalog_destinations`·`catalog_courses`·`catalog_badges`, 회원은 숨기지 않은 항목만 읽고 쓰기는 관리자만), 프로필 `created_at`, 본명을 뺀 관리자용 회원 보기 `admin_users`, 스탬프 관리자 읽기·취소 정책, 신고된 프로필 사진 관리자 읽기, 신고 표 `profile_reports`(회원은 남을 신고하고 자기 신고만 봄)와 처리 함수 `admin_handle_report`. 운영 서버(일시 중지)에는 아직 적용하지 않음
 - 접근성: 본문 바로가기, 화면마다 고유한 `<title>`, 화면이 바뀌면 제목으로 초점 이동, 입력 오류를 `aria-invalid`·`aria-describedby`로 잇고 첫 오류 칸으로 초점 이동, 모달은 초점 가두기·Escape·연 버튼으로 초점 복귀, 결과 안내 `role="status"`, 장식 글자는 낭독에서 뺌, 움직임 줄이기 설정 존중. 어드민에만 eslint-plugin-jsx-a11y 권장 규칙
 - 테스트: Vitest + Testing Library 단위·컴포넌트 20개(데모 백엔드, 통계, 폼 검사, 입장 → 대시보드, 검색·필터, 여행지 추가 오류·저장, 신고 처리, 메뉴 모달; axe 포함), Playwright E2E(`pnpm run test:admin:e2e`, 데스크톱·모바일, 외부 요청 차단·오프라인 이동·모든 화면 axe, 데모 입장 → 여행지 추가·수정·숨김 → 신고 처리, 초기화), RLS 6개(`pnpm run test:db`), 번들 예산(size-limit, 첫 화면 JS 175kB·CSS 70kB gzip), Lighthouse CI(성능 0.9·접근성 1·권장 사항 0.95, 결과는 파일로만). CI에 `admin-web` 작업 추가
-- 의존성(개발용): vite, @vitejs/plugin-react, vitest, jsdom, @testing-library/react·dom·user-event·jest-dom, axe-core, size-limit, @size-limit/file, @lhci/cli, eslint-plugin-jsx-a11y, @fontsource/open-sans·noto-sans-kr·jost. 앱 번들과 모바일 앱은 그대로
+- 의존성(개발용): vite, @vitejs/plugin-react, vitest, jsdom, @testing-library/react·dom·user-event·jest-dom, axe-core, size-limit, @size-limit/file, @lhci/cli, eslint-plugin-jsx-a11y, @fontsource/open-sans·noto-sans-kr·jost, @types/react-dom. 앱 번들과 모바일 앱은 그대로
 
 ## 2.18.1 - 미출시
 
