@@ -68,7 +68,7 @@ pnpm run size:admin            # 어드민 번들 예산(size-limit, admin-web �
 pnpm run lhci:admin            # 어드민 Lighthouse CI(결과는 .lighthouseci/admin, admin-web 작업)
 ```
 
-- `test:web`은 웹 데모를 `/` 경로로 빌드해 `expo serve`로 띄우고 localhost 밖 요청을 모두 막은 채 둘러보기 → 모든 탭이 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반·외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`). 처음 한 번은 `pnpm exec playwright install chromium`. 아직 못 고친 접근성 문제는 테스트 파일의 알려진 목록에 있습니다. 데모 모드는 서버·CDN 없이 돌아야 합니다(자세히: `docs/development.md`의 오프라인 동작).
+- `test:web`은 웹 데모를 `/` 경로로 빌드해 `scripts/serve-web.mjs`(Pages처럼 404.html로 대체, `pnpm run serve:web`)로 띄우고 localhost 밖 요청을 모두 막은 채 둘러보기 → 모든 탭과 모든 경로가 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반·외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`). 처음 한 번은 `pnpm exec playwright install chromium`. 아직 못 고친 접근성 문제는 테스트 파일의 알려진 목록에 있습니다. 데모 모드는 서버·CDN 없이 돌아야 합니다(자세히: `docs/development.md`의 오프라인 동작).
 
 - 서식: `pnpm run format`(Prettier, 커밋 때 lint-staged가 `*.{ts,tsx,js,mjs}`에 돌림). CI에는 없지만 `pnpm exec prettier --check .`가 저장소 전체에서 통과해야 합니다.
 - **Testing Library 원칙:** 구현 세부가 아니라 사용자가 보는 동작을 검사하고, 요소는 역할·이름(`getByRole`)이나 레이블(`getByLabelText`)로 찾습니다. 도구는 단위·컴포넌트 Jest + React Native Testing Library, 앱 화면 흐름 Maestro E2E, 웹 데모 Playwright + axe입니다. 기존 테스트는 `getByTestId`·`getByText`가 많습니다. 버그를 고치면 고치기 전에 실패하는 테스트를 함께 넣습니다.
