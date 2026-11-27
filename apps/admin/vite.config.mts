@@ -17,6 +17,9 @@ export default defineConfig({
       { find: /^@admin\//, replacement: `${here('./src')}/` },
       // 앱 카탈로그(여행지·코스)를 시드로 그대로 씁니다. 타입만 가져오는 경로는 빌드에서 지워집니다.
       { find: /^@catalog\//, replacement: `${here('../../src/entities/destination/model')}/` },
+      // ryushin0(마스터) 데모 계정: 앱 데모와 같은 방문 기록·프로필 사진을 씁니다.
+      { find: /^@demo-master$/, replacement: here('../../src/shared/api/demo-master.ts') },
+      { find: /^@demo-assets\//, replacement: `${here('../../assets/demo')}/` },
     ],
   },
   envDir: here('.'),

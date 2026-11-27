@@ -15,6 +15,8 @@
     "paths": {
       "@admin/*": ["./src/*"],
       "@catalog/*": ["../../src/entities/destination/model/*"],
+      "@demo-master": ["../../src/shared/api/demo-master.ts"],
+      "@demo-assets/*": ["../../assets/demo/*"],
       "@/shared/api": ["../../src/shared/api/types.ts"]
     }
   },

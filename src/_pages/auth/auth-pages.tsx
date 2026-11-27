@@ -12,7 +12,7 @@ import {
   SignInForm,
   SignUpForm,
 } from '@/features/auth';
-import { backend } from '@/shared/api';
+import { backend, type DemoBrowseAccount } from '@/shared/api';
 import { toErrorMessage, useSubmitLock } from '@/shared/lib';
 import { AppText, Button, Header, useColors } from '@/shared/ui';
 
@@ -35,14 +35,14 @@ export const SignInPage = () => {
   // isPending은 다음 렌더에야 바뀌므로 빠른 연속 탭은 ref로 막습니다.
   const browsing = useSubmitLock();
   const browse = useMutation({
-    mutationFn: () => backend.auth.browse(),
+    mutationFn: (account: DemoBrowseAccount) => backend.auth.browse(account),
     onError: (error) => {
       browsing.release();
       toast.error(toErrorMessage(error, '데모를 시작하지 못했습니다.'));
     },
   });
-  const startBrowsing = () => {
-    if (browsing.take()) browse.mutate();
+  const startBrowsing = (account: DemoBrowseAccount) => {
+    if (browsing.take()) browse.mutate(account);
   };
   return (
     <View flex={1} paddingTop={top} backgroundColor="surface">
@@ -67,8 +67,20 @@ export const SignInPage = () => {
             <Button
               testID="demo-browse"
               label="둘러보기"
-              loading={browse.isPending}
-              onPress={startBrowsing}
+              loading={browse.isPending && browse.variables === 'guest'}
+              disabled={browse.isPending}
+              onPress={() => startBrowsing('guest')}
+            />
+            <AppText size="caption" tone="ink">
+              여행지 55곳을 모두 다녀와 스탬프·뱃지·코스를 채운 계정으로도 볼 수 있습니다.
+            </AppText>
+            <Button
+              testID="demo-browse-master"
+              variant="outline"
+              label="ryushin0(마스터)로 둘러보기"
+              loading={browse.isPending && browse.variables === 'master'}
+              disabled={browse.isPending}
+              onPress={() => startBrowsing('master')}
             />
           </YStack>
         ) : null}

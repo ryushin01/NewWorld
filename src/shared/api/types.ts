@@ -132,6 +132,9 @@ export type CheckIn = {
 /** 로그인은 이메일 없이 아이디로 합니다. */
 export type Session = { userId: string; username: string };
 
+/** 데모 입장 계정: 둘러보기(guest)와 모든 여행지를 채운 ryushin0(마스터) */
+export type DemoBrowseAccount = 'guest' | 'master';
+
 export type SignUpInput = { username: string; password: string; nickname: string; name: string };
 
 export type RecoverInput = { username: string; code: string; password: string };
@@ -166,8 +169,8 @@ export type Backend = {
     recover(input: RecoverInput): Promise<RecoveryCodeResult>;
     /** 지금 비밀번호를 확인한 뒤 복구 코드를 새로 발급합니다. */
     resetRecoveryCode(currentPassword: string): Promise<RecoveryCodeResult>;
-    /** 가입 없이 둘러보는 데모 계정으로 들어갑니다(데모 모드 전용). */
-    browse(): Promise<void>;
+    /** 가입 없이 둘러보는 데모 계정으로 들어갑니다(데모 모드 전용). master는 ryushin0(마스터) 계정입니다. */
+    browse(account?: DemoBrowseAccount): Promise<void>;
     signOut(): Promise<void>;
     /** 메일이 없으므로 로그인한 상태에서 지금 비밀번호를 확인한 뒤 바꿉니다. */
     updatePassword(current: string, next: string): Promise<void>;

@@ -13,8 +13,14 @@ import {
 import { useDestinations } from '@admin/entities/destination';
 import { useReports } from '@admin/entities/report';
 import { useStamps } from '@admin/entities/stamp';
-import { useUsers } from '@admin/entities/user';
-import { BarChart, dailyCounts, overview, topDestinations } from '@admin/features/dashboard-stats';
+import { Avatar, useUsers } from '@admin/entities/user';
+import {
+  BarChart,
+  dailyCounts,
+  overview,
+  topCollectors,
+  topDestinations,
+} from '@admin/features/dashboard-stats';
 
 const DAYS = 30;
 
@@ -53,6 +59,7 @@ export function DashboardPage() {
         now,
       ),
       top: topDestinations(stamps.data, destinations.data, 10),
+      collectors: topCollectors(stamps.data, users.data, 5),
     };
   }, [users.data, stamps.data, reports.data, destinations.data, now]);
   const collage = stats?.top.slice(0, 4) ?? [];
@@ -216,6 +223,43 @@ export function DashboardPage() {
             </ArticleList>
             <div className="section__more">
               <ButtonLink to="/destinations">여행지 모두 보기</ButtonLink>
+            </div>
+          </section>
+
+          <Marquee text="TOP EXPLORERS " className="band" />
+
+          <section className="section" aria-labelledby="explorers-title">
+            <div className="section__label">
+              <p className="section__en" aria-hidden="true">
+                Explorers
+              </p>
+              <h2 className="section__ko" id="explorers-title">
+                스탬프를 많이 모은 회원
+              </h2>
+            </div>
+            <ArticleList label="스탬프가 많은 회원 5명">
+              {stats.collectors.map((item, index) => (
+                <ArticleRow
+                  key={item.user.id}
+                  thumb={<Avatar user={item.user} size={72} />}
+                  columns={[
+                    {
+                      label: 'Rank',
+                      value: <span className="rank">{String(index + 1).padStart(2, '0')}</span>,
+                    },
+                    { label: 'Joined', value: formatDate(item.user.createdAt) },
+                    { label: 'Stamps', value: `${formatNumber(item.count)}개` },
+                  ]}
+                  title={
+                    <Link to={`/users/${encodeURIComponent(item.user.id)}`} className="row__link">
+                      {item.user.nickname}
+                    </Link>
+                  }
+                />
+              ))}
+            </ArticleList>
+            <div className="section__more">
+              <ButtonLink to="/users">회원 모두 보기</ButtonLink>
             </div>
           </section>
         </>

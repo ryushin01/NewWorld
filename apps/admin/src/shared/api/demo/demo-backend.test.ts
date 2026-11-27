@@ -1,6 +1,7 @@
 import { COURSES } from '@catalog/courses';
 import { AdminError } from '../types';
 import { createDemoBackend, DEMO_STORAGE_KEY } from './demo-backend';
+import { demoReportId, demoUserId } from './seed';
 
 const fixed = () => new Date('2026-11-27T03:00:00.000Z');
 
@@ -54,22 +55,22 @@ describe('데모 백엔드', () => {
 
   it('닉네임 신고를 조치하면 닉네임을 초기화하고 같은 항목의 다른 신고도 닫는다', async () => {
     const backend = createDemoBackend({ storage: null, now: fixed });
-    await backend.handleReport('demo-report-1', 'reset_nickname', '광고 닉네임');
+    await backend.handleReport(demoReportId(1), 'reset_nickname', '광고 닉네임');
     const reports = await backend.listReports();
-    expect(reports.find((item) => item.id === 'demo-report-1')?.status).toBe('resolved');
-    expect(reports.find((item) => item.id === 'demo-report-2')?.status).toBe('resolved');
-    const user = (await backend.listUsers()).find((item) => item.id === 'demo-user-25');
-    expect(user?.nickname).toBe('여행자r-25');
-    await expect(backend.handleReport('demo-report-1', 'dismiss', '다시')).rejects.toMatchObject({
+    expect(reports.find((item) => item.id === demoReportId(1))?.status).toBe('resolved');
+    expect(reports.find((item) => item.id === demoReportId(2))?.status).toBe('resolved');
+    const user = (await backend.listUsers()).find((item) => item.id === demoUserId(25));
+    expect(user?.nickname).toBe('여행자0019');
+    await expect(backend.handleReport(demoReportId(1), 'dismiss', '다시')).rejects.toMatchObject({
       code: 'conflict',
     });
   });
 
   it('사진 신고를 조치하면 프로필 사진을 내린다', async () => {
     const backend = createDemoBackend({ storage: null, now: fixed });
-    await backend.handleReport('demo-report-3', 'remove_avatar', '불쾌한 사진');
+    await backend.handleReport(demoReportId(3), 'remove_avatar', '불쾌한 사진');
     expect(
-      (await backend.listUsers()).find((item) => item.id === 'demo-user-26')?.avatarUrl,
+      (await backend.listUsers()).find((item) => item.id === demoUserId(26))?.avatarUrl,
     ).toBeNull();
   });
 

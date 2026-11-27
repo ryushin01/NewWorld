@@ -59,7 +59,7 @@ pnpm run typecheck             # tsc --noEmit
 pnpm run typecheck:functions   # Edge Function 타입 검사
 pnpm run lint                  # expo lint + 어드민 eslint(jsx-a11y)
 pnpm test                      # Jest + React Native Testing Library
-pnpm run test:db               # 마이그레이션을 PGlite에 적용해 RLS·제약 검사
+pnpm run test:db               # 마이그레이션 + 시드를 PGlite에 적용해 RLS·제약·시드 검사
 pnpm run test:web              # 웹 데모 오프라인 E2E(CI의 web-offline 작업, Playwright + axe)
 pnpm run typecheck:admin       # 어드민 타입 검사 (verify 작업)
 pnpm run test:admin            # 어드민 Vitest + Testing Library (verify 작업)
@@ -84,6 +84,7 @@ pnpm run lhci:admin            # 어드민 Lighthouse CI(결과는 .lighthouseci
 - 색 토큰: 작은 글자에 `brand`(`#c2792b`)를 쓰지 말고 `brandText`, 환상 세계 글자는 `fantasyText`를 씁니다.
 - 입력 길이 상한은 앱(`src/shared/config`의 `LIMITS`)과 DB 제약(`20261116000000_input_limits.sql`)을 함께 고칩니다.
 - 기기 저장값은 `src/shared/lib/stored-json.ts`의 `parseStoredJson`·`isRecord`로 읽습니다.
+- 목데이터는 한 원천에서 나옵니다: 카탈로그·뱃지(`src/entities/destination/model`), ryushin0 마스터(`src/shared/api/demo-master.ts`, `pnpm run demo:master`), 어드민 목데이터(`apps/admin/src/shared/api/demo/seed.ts`, DB 표와 같은 모양). 바꾸면 `pnpm run db:seed:export`로 `supabase/seed/admin-demo.sql`을 다시 만듭니다(`test:db`가 어긋나면 실패). 켜는 순서는 `docs/supabase-restore.md`.
 - 접근성(WCAG 2.2·KWCAG 2.2, 세부는 공통 규칙): `accessibilityRole`·레이블을 먼저 씁니다(웹에서는 `src/shared/ui/web-a11y.ts`가 `role`·`aria-*`로 바꿈). 앱에는 eslint-plugin-jsx-a11y가 없고(`eslint-config-expo`만 씀) 웹 데모의 axe(`pnpm run test:web`)와 단위 테스트로 검사합니다. 어드민(`apps/admin`)은 jsx-a11y 권장 규칙과 axe(Vitest·Playwright)로 검사합니다.
 
 ## 6. Git·PR

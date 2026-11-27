@@ -18,6 +18,10 @@ jest.mock('@sentry/react-native', () => ({
 }));
 // 네이티브 Worklets가 없는 Jest에서는 애니메이션 드라이버를 쓰지 않습니다.
 jest.mock('@tamagui/animations-reanimated', () => ({ createAnimations: () => undefined }));
+// Jest에는 Metro 에셋 등록이 없어, 앱에 든 사진(데모 마스터 프로필 등)은 파일 이름으로 된 주소를 돌려줍니다.
+jest.mock('expo-asset', () => ({
+  Asset: { fromModule: (source) => ({ uri: `asset:///${String(source)}` }) },
+}));
 jest.mock('react-native-maps', () => ({
   __esModule: true,
   default: () => null,

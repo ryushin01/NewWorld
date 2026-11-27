@@ -1,5 +1,5 @@
 import type { AdminUser, Destination, Report, Stamp } from '@admin/shared/api';
-import { dailyCounts, overview, topDestinations } from './stats';
+import { dailyCounts, overview, topCollectors, topDestinations } from './stats';
 
 const now = new Date('2026-11-27T03:00:00.000Z'); // 서울 12:00
 const destination = (id: string, name: string): Destination => ({
@@ -17,14 +17,18 @@ const destination = (id: string, name: string): Destination => ({
   overview: '',
   hidden: id === 'b',
   updatedAt: now.toISOString(),
+  updatedBy: null,
 });
 const stamp = (id: string, destinationId: string, checkedAt: string): Stamp => ({
   id,
   userId: 'u1',
   destinationId,
   checkedAt,
+  latitude: 0,
+  longitude: 0,
   distanceKm: 0.1,
   method: 'gps',
+  createdAt: checkedAt,
 });
 
 describe('dailyCounts', () => {
@@ -76,6 +80,7 @@ describe('overview', () => {
         resolutionNote: '',
         createdAt: now.toISOString(),
         handledAt: null,
+        handledBy: null,
       },
     ];
     expect(
@@ -88,5 +93,25 @@ describe('overview', () => {
       openReports: 1,
       hiddenDestinations: 1,
     });
+  });
+});
+
+describe('topCollectors', () => {
+  it('스탬프가 많은 회원 순, 같으면 닉네임순이고 스탬프 없는 회원은 뺀다', () => {
+    const users: AdminUser[] = [
+      { id: 'u1', nickname: '나', avatarUrl: null, createdAt: now.toISOString() },
+      { id: 'u2', nickname: '가', avatarUrl: null, createdAt: now.toISOString() },
+      { id: 'u3', nickname: '다', avatarUrl: null, createdAt: now.toISOString() },
+    ];
+    const at = now.toISOString();
+    const stamps = [
+      { ...stamp('1', 'a', at), userId: 'u1' },
+      { ...stamp('2', 'b', at), userId: 'u2' },
+      { ...stamp('3', 'c', at), userId: 'u1' },
+    ];
+    expect(topCollectors(stamps, users, 5).map((item) => [item.user.id, item.count])).toEqual([
+      ['u1', 2],
+      ['u2', 1],
+    ]);
   });
 });

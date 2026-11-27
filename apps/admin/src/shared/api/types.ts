@@ -54,6 +54,8 @@ export const destinationSchema = z.object({
   overview: z.string(),
   hidden: z.boolean(),
   updatedAt: isoDate,
+  /** 마지막으로 고친 관리자(updated_by). 시드로 넣은 값은 비어 있습니다. */
+  updatedBy: z.string().nullable(),
 });
 export type Destination = z.infer<typeof destinationSchema>;
 
@@ -64,6 +66,7 @@ export const courseSchema = z.object({
   stops: z.array(z.string()),
   hidden: z.boolean(),
   updatedAt: isoDate,
+  updatedBy: z.string().nullable(),
 });
 export type Course = z.infer<typeof courseSchema>;
 
@@ -76,6 +79,7 @@ export const badgeSchema = z.object({
   rule: z.string(),
   hidden: z.boolean(),
   updatedAt: isoDate,
+  updatedBy: z.string().nullable(),
 });
 export type Badge = z.infer<typeof badgeSchema>;
 
@@ -84,8 +88,12 @@ export const stampSchema = z.object({
   userId: z.string().min(1),
   destinationId: z.string().min(1),
   checkedAt: isoDate,
+  /** 인증한 기기의 위치(checkins.latitude·longitude) */
+  latitude: z.number(),
+  longitude: z.number(),
   distanceKm: z.number(),
   method: z.enum(['gps', 'demo']),
+  createdAt: isoDate,
 });
 export type Stamp = z.infer<typeof stampSchema>;
 
@@ -96,6 +104,18 @@ export const userSchema = z.object({
   createdAt: isoDate,
 });
 export type AdminUser = z.infer<typeof userSchema>;
+
+/**
+ * 관리자 회원 보기(public.admin_users)의 한 줄. 본명은 없고, 사진은 저장소 경로입니다.
+ * 화면에는 서명 주소(데모는 저장소 대역의 그림)로 바꾼 AdminUser를 줍니다.
+ */
+export const adminUserRowSchema = z.object({
+  id: z.string().min(1),
+  nickname: z.string(),
+  avatarPath: z.string().nullable(),
+  createdAt: isoDate,
+});
+export type AdminUserRow = z.infer<typeof adminUserRowSchema>;
 
 export const reportTargetSchema = z.enum(['nickname', 'avatar']);
 export type ReportTarget = z.infer<typeof reportTargetSchema>;
@@ -122,6 +142,8 @@ export const reportSchema = z.object({
   resolutionNote: z.string(),
   createdAt: isoDate,
   handledAt: z.string().nullable(),
+  /** 처리한 관리자(handled_by) */
+  handledBy: z.string().nullable(),
 });
 export type Report = z.infer<typeof reportSchema>;
 
@@ -129,8 +151,8 @@ export type Report = z.infer<typeof reportSchema>;
 export const reportActionSchema = z.enum(['reset_nickname', 'remove_avatar', 'dismiss']);
 export type ReportAction = z.infer<typeof reportActionSchema>;
 
-export type DestinationInput = Omit<Destination, 'hidden' | 'updatedAt'>;
-export type CourseInput = Omit<Course, 'hidden' | 'updatedAt'>;
+export type DestinationInput = Omit<Destination, 'hidden' | 'updatedAt' | 'updatedBy'>;
+export type CourseInput = Omit<Course, 'hidden' | 'updatedAt' | 'updatedBy'>;
 export type BadgeInput = Pick<Badge, 'name' | 'description'>;
 
 export type AdminSession = { name: string; demo: boolean };
