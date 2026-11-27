@@ -1,3 +1,4 @@
+export { BADGE_CATALOG, type BadgeDefinition, type BadgeIcon } from './model/badge-catalog';
 export { COURSES, findCourse } from './model/courses';
 export { pickDaily } from './model/daily';
 export { linksOf } from './model/links';

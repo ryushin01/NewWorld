@@ -1,5 +1,10 @@
 import { demoBackend as api } from './demo-backend';
 
+// Jest에는 Metro 에셋 등록이 없어, 앱에 든 사진(마스터 프로필)의 주소를 대신 돌려줍니다.
+jest.mock('expo-asset', () => ({
+  Asset: { fromModule: () => ({ uri: 'asset:///ryushin0.webp' }) },
+}));
+
 jest.mock('../lib/photo', () => ({
   compressPhoto: jest.fn(async () => ({ bytes: new ArrayBuffer(1), width: 10, height: 10 })),
   photoStore: {
@@ -191,6 +196,25 @@ it('둘러보기는 비밀번호 없이 들어가고 닉네임을 정해 둡니�
   await api.auth.browse();
   expect(api.auth.getCachedSession()?.username).toBe('guest');
   expect((await api.profile.get()).nickname).toBe('둘러보는 여행자');
+});
+
+it('ryushin0(마스터)로 둘러보면 여행지 55곳을 모두 기록·인증한 상태로 시작하고, 탈퇴하면 처음으로 돌아갑니다', async () => {
+  await api.auth.browse('master');
+  expect(api.auth.getCachedSession()?.username).toBe('ryushin0');
+  const profile = await api.profile.get();
+  expect(profile.nickname).toBe('ryushin0');
+  expect(profile.avatarUrl).toBeTruthy();
+  const places = await api.places.list();
+  expect(places).toHaveLength(55);
+  expect(places.every((place) => place.catalogId && place.recordCount === 1)).toBe(true);
+  expect(await api.records.list()).toHaveLength(55);
+  expect(await api.checkins.list()).toHaveLength(55);
+
+  await api.places.remove(places[0].id);
+  await api.auth.deleteAccount();
+  await api.auth.browse('master');
+  expect(await api.places.list()).toHaveLength(55);
+  expect((await api.profile.get()).avatarUrl).toBeTruthy();
 });
 
 it('복구 코드로 비밀번호를 바꾸면 로그인하고, 쓴 코드는 버리고 새 코드를 줍니다', async () => {

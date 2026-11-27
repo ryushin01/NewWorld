@@ -1,4 +1,5 @@
-import type { Place, SearchResult, TripRecord } from './types';
+import { MASTER_JOINED_AT, MASTER_VISITS } from './demo-master';
+import type { CheckIn, Place, SearchResult, TripRecord } from './types';
 
 // 저장한 장소와 기록은 모두 가상 데이터입니다.
 const place = (
@@ -152,3 +153,45 @@ export const DEMO_SEARCH: SearchResult[] = [
   { id: 's3', name: '글래스턴베리', address: '영국 서머싯', latitude: 51.148, longitude: -2.714 },
   { id: 's4', name: '시엠립', address: '캄보디아 시엠립', latitude: 13.361, longitude: 103.86 },
 ];
+
+/** ryushin0(마스터) 계정의 장소·기록·인증. 여행지 55곳을 모두 다녀와 기록하고 현장 인증했습니다. */
+export const MASTER_PLACES: Place[] = MASTER_VISITS.map((visit) => ({
+  ...place(
+    `master-${visit.catalogId}`,
+    visit.name,
+    visit.realm,
+    visit.location,
+    visit.latitude,
+    visit.longitude,
+    '',
+    [visit.group],
+    visit.catalogId,
+    false,
+  ),
+  createdAt: MASTER_JOINED_AT,
+}));
+
+export const MASTER_RECORDS: TripRecord[] = MASTER_VISITS.map((visit) => ({
+  ...base,
+  id: `master-record-${visit.catalogId}`,
+  placeId: `master-${visit.catalogId}`,
+  placeName: visit.name,
+  placeKind: visit.realm,
+  visitedAt: visit.visitedAt,
+  title: `${visit.name}에서`,
+  partySize: 1,
+  rating: 5,
+  ...(visit.realm === 'real'
+    ? { highlights: '현장 인증 스탬프를 찍은 자리' }
+    : { gateway: `${visit.location}에서 전설을 따라 걸음` }),
+}));
+
+export const MASTER_CHECKINS: CheckIn[] = MASTER_VISITS.map((visit) => ({
+  id: `master-checkin-${visit.catalogId}`,
+  catalogId: visit.catalogId,
+  checkedAt: visit.visitedAt,
+  latitude: visit.latitude,
+  longitude: visit.longitude,
+  distanceKm: visit.distanceKm,
+  method: 'gps',
+}));

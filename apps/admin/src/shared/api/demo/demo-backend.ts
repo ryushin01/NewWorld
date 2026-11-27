@@ -1,28 +1,33 @@
 import { z } from 'zod';
 import {
   AdminError,
+  adminUserRowSchema,
   badgeSchema,
   courseSchema,
   destinationSchema,
   reportSchema,
   stampSchema,
-  userSchema,
   type AdminBackend,
   type AdminSession,
+  type AdminUser,
 } from '../types';
-import { createSeed, type DemoData } from './seed';
+import { createSeed, DEMO_ADMIN_ID, resetNickname, type DemoData } from './seed';
 
-export const DEMO_STORAGE_KEY = 'newworld-admin.demo.v1';
+/** 저장 모양(DemoData)이 바뀌면 키를 올려 예전 값을 새 시드로 바꿉니다. */
+export const DEMO_STORAGE_KEY = 'newworld-admin.demo.v2';
 export const DEMO_SESSION_KEY = 'newworld-admin.demo-session';
 const DEMO_SESSION: AdminSession = { name: '데모 관리자', demo: true };
 
 const demoDataSchema = z.object({
-  version: z.literal(1),
+  version: z.literal(2),
   seededAt: z.string(),
+  authUsers: z.array(z.object({ id: z.string(), email: z.string(), createdAt: z.string() })),
+  admins: z.array(z.object({ userId: z.string(), createdAt: z.string() })),
+  users: z.array(adminUserRowSchema),
+  avatarObjects: z.array(z.object({ name: z.string(), url: z.string() })),
   destinations: z.array(destinationSchema),
   courses: z.array(courseSchema),
   badges: z.array(badgeSchema),
-  users: z.array(userSchema),
   stamps: z.array(stampSchema),
   reports: z.array(reportSchema),
 });
@@ -97,6 +102,18 @@ export function createDemoBackend(
     return result;
   };
   const stamp = () => now().toISOString();
+  /** 수정 기록(updated_at·updated_by)은 DB 트리거·기본값처럼 시각과 데모 관리자로 채웁니다. */
+  const touched = () => ({ updatedAt: stamp(), updatedBy: DEMO_ADMIN_ID });
+  /** Supabase가 저장소 경로를 서명 주소로 바꾸듯, 데모는 저장소 대역의 그림으로 바꿉니다. */
+  const toUser = (data: DemoData) => {
+    const files = new Map(data.avatarObjects.map((file) => [file.name, file.url]));
+    return (row: DemoData['users'][number]): AdminUser => ({
+      id: row.id,
+      nickname: row.nickname,
+      avatarUrl: row.avatarPath ? (files.get(row.avatarPath) ?? null) : null,
+      createdAt: row.createdAt,
+    });
+  };
 
   return {
     mode: 'demo',
@@ -122,7 +139,7 @@ export function createDemoBackend(
         if (mode === 'update' && index < 0)
           throw new AdminError('여행지를 찾을 수 없습니다.', 'not_found');
         const previous = data.destinations[index];
-        const next = { ...input, hidden: previous?.hidden ?? false, updatedAt: stamp() };
+        const next = { ...input, hidden: previous?.hidden ?? false, ...touched() };
         if (index >= 0) data.destinations[index] = next;
         else data.destinations.unshift(next);
         return next;
@@ -132,8 +149,7 @@ export function createDemoBackend(
       update((data) => {
         const item = data.destinations.find((destination) => destination.id === id);
         if (!item) throw new AdminError('여행지를 찾을 수 없습니다.', 'not_found');
-        item.hidden = hidden;
-        item.updatedAt = stamp();
+        Object.assign(item, { hidden }, touched());
       });
     },
     async listCourses() {
@@ -146,7 +162,7 @@ export function createDemoBackend(
           throw new AdminError('같은 ID의 코스가 이미 있습니다.', 'conflict');
         if (mode === 'update' && index < 0)
           throw new AdminError('코스를 찾을 수 없습니다.', 'not_found');
-        const next = { ...input, hidden: data.courses[index]?.hidden ?? false, updatedAt: stamp() };
+        const next = { ...input, hidden: data.courses[index]?.hidden ?? false, ...touched() };
         if (index >= 0) data.courses[index] = next;
         else data.courses.unshift(next);
         return next;
@@ -156,8 +172,7 @@ export function createDemoBackend(
       update((data) => {
         const item = data.courses.find((course) => course.id === id);
         if (!item) throw new AdminError('코스를 찾을 수 없습니다.', 'not_found');
-        item.hidden = hidden;
-        item.updatedAt = stamp();
+        Object.assign(item, { hidden }, touched());
       });
     },
     async listBadges() {
@@ -167,7 +182,7 @@ export function createDemoBackend(
       return update((data) => {
         const item = data.badges.find((badge) => badge.id === id);
         if (!item) throw new AdminError('뱃지를 찾을 수 없습니다.', 'not_found');
-        Object.assign(item, input, { updatedAt: stamp() });
+        Object.assign(item, input, touched());
         return { ...item };
       });
     },
@@ -175,8 +190,7 @@ export function createDemoBackend(
       update((data) => {
         const item = data.badges.find((badge) => badge.id === id);
         if (!item) throw new AdminError('뱃지를 찾을 수 없습니다.', 'not_found');
-        item.hidden = hidden;
-        item.updatedAt = stamp();
+        Object.assign(item, { hidden }, touched());
       });
     },
     async listStamps() {
@@ -188,7 +202,11 @@ export function createDemoBackend(
       });
     },
     async listUsers() {
-      return load().users;
+      const data = load();
+      // admin_users 보기처럼 최근 가입 순입니다.
+      return [...data.users]
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+        .map(toUser(data));
     },
     async listReports() {
       return load().reports;
@@ -199,8 +217,9 @@ export function createDemoBackend(
         if (!report) throw new AdminError('신고를 찾을 수 없습니다.', 'not_found');
         if (report.status !== 'open') throw new AdminError('이미 처리한 신고입니다.', 'conflict');
         const user = data.users.find((item) => item.id === report.targetId);
-        if (user && action === 'reset_nickname') user.nickname = `여행자${user.id.slice(-4)}`;
-        if (user && action === 'remove_avatar') user.avatarUrl = null;
+        if (user && action === 'reset_nickname') user.nickname = resetNickname(user.id);
+        // DB 함수처럼 저장소 파일은 두고 연결(avatar_path)만 끊습니다.
+        if (user && action === 'remove_avatar') user.avatarPath = null;
         // 같은 회원·같은 항목에 쌓인 다른 신고도 함께 닫습니다.
         const handledAt = stamp();
         for (const item of data.reports) {
@@ -214,6 +233,7 @@ export function createDemoBackend(
           item.status = action === 'dismiss' ? 'dismissed' : 'resolved';
           item.resolutionNote = note;
           item.handledAt = handledAt;
+          item.handledBy = DEMO_ADMIN_ID;
         }
       });
     },

@@ -41,6 +41,7 @@ const destinationRow = z.object({
   overview: z.string(),
   hidden: z.boolean(),
   updated_at: z.string(),
+  updated_by: z.string().nullable(),
 });
 const courseRow = z.object({
   id: z.string(),
@@ -49,6 +50,7 @@ const courseRow = z.object({
   stops: z.array(z.string()),
   hidden: z.boolean(),
   updated_at: z.string(),
+  updated_by: z.string().nullable(),
 });
 const badgeRow = z.object({
   id: z.string(),
@@ -58,14 +60,18 @@ const badgeRow = z.object({
   rule: z.string(),
   hidden: z.boolean(),
   updated_at: z.string(),
+  updated_by: z.string().nullable(),
 });
 const stampRow = z.object({
   id: z.string(),
   user_id: z.string(),
   catalog_id: z.string(),
   checked_at: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
   distance_km: z.coerce.number(),
   method: z.enum(['gps', 'demo']),
+  created_at: z.string(),
 });
 const userRow = z.object({
   id: z.string(),
@@ -83,6 +89,7 @@ const reportRow = z.object({
   resolution_note: z.string(),
   created_at: z.string(),
   handled_at: z.string().nullable(),
+  handled_by: z.string().nullable(),
 });
 
 const toDestination = (row: z.infer<typeof destinationRow>): Destination => ({
@@ -100,6 +107,7 @@ const toDestination = (row: z.infer<typeof destinationRow>): Destination => ({
   overview: row.overview,
   hidden: row.hidden,
   updatedAt: row.updated_at,
+  updatedBy: row.updated_by,
 });
 const toCourse = (row: z.infer<typeof courseRow>): Course => ({
   id: row.id,
@@ -108,8 +116,18 @@ const toCourse = (row: z.infer<typeof courseRow>): Course => ({
   stops: row.stops,
   hidden: row.hidden,
   updatedAt: row.updated_at,
+  updatedBy: row.updated_by,
 });
-const toBadge = (row: z.infer<typeof badgeRow>): Badge => ({ ...row, updatedAt: row.updated_at });
+const toBadge = (row: z.infer<typeof badgeRow>): Badge => ({
+  id: row.id,
+  name: row.name,
+  description: row.description,
+  tone: row.tone,
+  rule: row.rule,
+  hidden: row.hidden,
+  updatedAt: row.updated_at,
+  updatedBy: row.updated_by,
+});
 
 /** Postgres 오류 코드를 화면용 한국어 오류로 바꿉니다. */
 function fail(error: PostgrestError | Error): never {
@@ -241,7 +259,9 @@ export const supabaseBackend: AdminBackend = {
     const list = await rows(
       client
         .from('checkins')
-        .select('id, user_id, catalog_id, checked_at, distance_km, method')
+        .select(
+          'id, user_id, catalog_id, checked_at, latitude, longitude, distance_km, method, created_at',
+        )
         .order('checked_at', { ascending: false })
         .limit(5000),
       stampRow,
@@ -251,8 +271,11 @@ export const supabaseBackend: AdminBackend = {
       userId: row.user_id,
       destinationId: row.catalog_id,
       checkedAt: row.checked_at,
+      latitude: row.latitude,
+      longitude: row.longitude,
       distanceKm: row.distance_km,
       method: row.method,
+      createdAt: row.created_at,
     }));
   },
   async revokeStamp(id) {
@@ -295,6 +318,7 @@ export const supabaseBackend: AdminBackend = {
       resolutionNote: row.resolution_note,
       createdAt: row.created_at,
       handledAt: row.handled_at,
+      handledBy: row.handled_by,
     }));
   },
   async handleReport(id, action, note) {

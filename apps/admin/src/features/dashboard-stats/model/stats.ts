@@ -38,6 +38,21 @@ export function topDestinations(
     .slice(0, limit);
 }
 
+export type RankedUser = { user: AdminUser; count: number };
+
+/** 스탬프를 많이 모은 회원 순. 같으면 닉네임순이고, 스탬프가 없는 회원은 뺍니다. */
+export function topCollectors(stamps: Stamp[], users: AdminUser[], limit: number): RankedUser[] {
+  const counts = new Map<string, number>();
+  for (const stamp of stamps) counts.set(stamp.userId, (counts.get(stamp.userId) ?? 0) + 1);
+  return users
+    .flatMap((user) => {
+      const count = counts.get(user.id) ?? 0;
+      return count ? [{ user, count }] : [];
+    })
+    .sort((a, b) => b.count - a.count || a.user.nickname.localeCompare(b.user.nickname, 'ko'))
+    .slice(0, limit);
+}
+
 export type Overview = {
   users: number;
   recentSignups: number;

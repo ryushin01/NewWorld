@@ -48,7 +48,7 @@ async function expectNoA11yViolations(page: Page) {
 
 async function enterDemo(page: Page) {
   await page.goto('/');
-  await page.getByRole('button', { name: '둘러보기' }).click();
+  await page.getByRole('button', { name: '둘러보기', exact: true }).click();
   await expect(page.getByText('기자 피라미드').first()).toBeVisible({ timeout: 20_000 });
 }
 
@@ -159,6 +159,33 @@ test('오프라인에서 날씨는 불러올 수 없다고 알리고, 장소 검
   const isWeather = (url: string) => new URL(url).hostname.endsWith('open-meteo.com');
   expect(external.filter(isWeather).length).toBeGreaterThan(0);
   expect(external.filter((url) => !isWeather(url))).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('ryushin0(마스터)로 둘러보면 여행지·스탬프·뱃지·코스가 모두 채워져 있다', async ({ page }) => {
+  const external = await blockExternal(page);
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'ryushin0(마스터)로 둘러보기' }).click();
+  await expect(page.getByText('25곳 중 25곳 다녀옴').first()).toBeVisible({ timeout: 20_000 });
+  await page.getByRole('tab', { name: '환상' }).click();
+  await expect(page.getByText('30곳 중 30곳 다녀옴').first()).toBeVisible();
+
+  await page.goto('/passport');
+  await expect(page.getByText('현장 인증 55').first()).toBeVisible();
+  await expect(page.getByText('기념 뱃지 21/21').first()).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  await page.goto('/my');
+  await expect(page.getByText('ryushin0').first()).toBeVisible();
+  // 프로필 사진은 앱 번들에 들어 있어 오프라인에서도 뜹니다.
+  const photo = page.locator('img[src*="ryushin0"]').first();
+  await expect(photo).toBeVisible();
+  expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await expectNoA11yViolations(page);
+
+  expect(external).toEqual([]);
   expect(errors).toEqual([]);
 });
 

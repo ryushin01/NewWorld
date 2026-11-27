@@ -36,6 +36,14 @@ jest.mock('@/entities/destination', () => {
     ],
     COURSES: [{ id: 'arthur', title: '아더왕의 길', stops: ['stonehenge', 'camelot', 'avalon'] }],
     MYTH_SPACES: spaces,
+    // 뱃지 이름·설명은 실제 카탈로그를 쓰고, 코스 뱃지는 위의 아더왕 코스 하나만 남깁니다.
+    BADGE_CATALOG: jest
+      .requireActual<typeof import('@/entities/destination/model/badge-catalog')>(
+        '@/entities/destination/model/badge-catalog',
+      )
+      .BADGE_CATALOG.filter(
+        (badge) => !badge.id.startsWith('course-') || badge.id === 'course-arthur',
+      ),
   };
 });
 

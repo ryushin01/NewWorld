@@ -95,7 +95,11 @@ test('외부 요청을 모두 막아도 상세·수정·추가·없는 화면까
     ['/#/destinations/giza/edit', '기자 피라미드 수정', '기자 피라미드 수정'],
     ['/#/courses/new', '코스 추가', '코스 추가'],
     ['/#/courses/arthur/edit', '아더왕의 길 수정', '아더왕의 길 코스 수정'],
-    ['/#/users/demo-user-01', '아틀란티스찾는중', '아틀란티스찾는중 사용자'],
+    [
+      '/#/users/5eed0001-0000-4000-8000-000000000001',
+      '아틀란티스찾는중',
+      '아틀란티스찾는중 사용자',
+    ],
     ['/#/nowhere', '없는 화면입니다', '없는 화면'],
   ];
   for (const [path, heading, title] of screens) {
@@ -107,6 +111,31 @@ test('외부 요청을 모두 막아도 상세·수정·추가·없는 화면까
 
   expect(external).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test('ryushin0(마스터)이 대시보드·회원 목록·상세에 사진과 스탬프 55개로 보인다', async ({
+  page,
+}) => {
+  const external = await blockExternal(page);
+  await enterDemo(page);
+  const explorers = page.getByRole('list', { name: '스탬프가 많은 회원 5명' });
+  await expect(explorers.getByRole('listitem').first()).toContainText('ryushin0');
+  await expect(explorers.getByRole('listitem').first()).toContainText('55개');
+
+  await explorers.getByRole('link', { name: 'ryushin0' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'ryushin0' })).toBeVisible();
+  await expect(page).toHaveTitle('ryushin0 사용자 | 신세계 운영 어드민');
+  await expect(page.getByText('55개').first()).toBeVisible();
+  // 프로필 사진은 번들에 들어 있어 오프라인에서도 뜹니다.
+  const photo = page.locator('img.avatar').first();
+  await expect(photo).toBeVisible();
+  expect(await photo.evaluate((img: HTMLImageElement) => img.naturalWidth)).toBeGreaterThan(0);
+  await expectNoA11yViolations(page);
+
+  await page.goto('/#/users');
+  await page.getByRole('searchbox', { name: /검색/ }).fill('ryushin0');
+  await expect(page.getByRole('link', { name: 'ryushin0' })).toBeVisible();
+  expect(external).toEqual([]);
 });
 
 test('데모 입장 → 여행지 추가·수정 → 신고 처리', async ({ page }) => {

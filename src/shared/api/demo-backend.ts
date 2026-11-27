@@ -1,8 +1,17 @@
+import { Asset } from 'expo-asset';
 import * as Crypto from 'expo-crypto';
 import { compressPhoto, photoStore } from '../lib/photo';
 import { createRecoveryCode, hashRecoveryCode } from '../lib/recovery-code';
 import { storageAdapter } from '../lib/storage';
-import { DEMO_PLACES, DEMO_RECORDS, DEMO_SEARCH } from './demo-data';
+import {
+  DEMO_PLACES,
+  DEMO_RECORDS,
+  DEMO_SEARCH,
+  MASTER_CHECKINS,
+  MASTER_PLACES,
+  MASTER_RECORDS,
+} from './demo-data';
+import { MASTER_NICKNAME, MASTER_USERNAME } from './demo-master';
 import type {
   Backend,
   ChecklistItem,
@@ -59,6 +68,24 @@ type StoredProfile = { nickname: string; name: string; avatar: string | null };
 /** 둘러보기 계정. 이전 버전에서 쌓인 데이터를 이어 쓰도록 회원 id를 그대로 둡니다. */
 const GUEST_USERNAME = 'guest';
 const GUEST_SESSION: Session = { userId: 'demo-guest@newworld.demo', username: GUEST_USERNAME };
+/** ryushin0(마스터) 계정. 여행지·스탬프·뱃지·코스를 모두 채운 상태로 둘러봅니다(비밀번호 없음). */
+const MASTER_SESSION: Session = {
+  userId: 'demo-master@newworld.demo',
+  username: MASTER_USERNAME,
+};
+const PRESET_SESSIONS = { guest: GUEST_SESSION, master: MASTER_SESSION } as const;
+const isPreset = (userId: string) =>
+  userId === GUEST_SESSION.userId || userId === MASTER_SESSION.userId;
+/** 앱에 들어 있는 사진은 사진 보관소 파일과 구분해 이 접두어로 저장합니다(지우지 않음). */
+const BUNDLED_PREFIX = 'bundled:';
+const BUNDLED_AVATARS: Record<string, number> = {
+  ryushin0: require('~/assets/demo/ryushin0.webp'),
+};
+const MASTER_PROFILE: StoredProfile = {
+  nickname: MASTER_NICKNAME,
+  name: '',
+  avatar: `${BUNDLED_PREFIX}ryushin0`,
+};
 const AVATAR_EDGE = 512;
 
 const hashPassword = (salt: string, password: string) =>
@@ -208,7 +235,9 @@ const setSession = (next: Session | null) => {
 const freshData = (userId: string): UserData =>
   userId === GUEST_SESSION.userId
     ? { places: [...DEMO_PLACES], records: [...DEMO_RECORDS] }
-    : { places: [], records: [] };
+    : userId === MASTER_SESSION.userId
+      ? { places: [...MASTER_PLACES], records: [...MASTER_RECORDS] }
+      : { places: [], records: [] };
 
 const userData = new Map<string, UserData>(saved.userData);
 // 이전 버전에는 아이디 가입이 없어 저장된 장소와 기록은 모두 둘러보기 데이터였습니다.
@@ -253,19 +282,31 @@ const checklists = new Map<string, ChecklistItem[]>(saved.checklists);
 const myChecklist = () => checklists.get(session?.userId ?? '') ?? [];
 const trips = new Map<string, Trip[]>(saved.trips);
 const checkins = new Map<string, CheckIn[]>(saved.checkins);
-const myCheckins = () => checkins.get(session?.userId ?? '') ?? [];
+const myCheckins = () =>
+  checkins.get(session?.userId ?? '') ??
+  (session?.userId === MASTER_SESSION.userId ? MASTER_CHECKINS : []);
 const myTrips = () => trips.get(session?.userId ?? '') ?? [];
 const accounts = new Map<string, DemoAccount>(saved.accounts);
 const profiles = new Map<string, StoredProfile>(saved.profiles);
 const userIdOf = (username: string) => `demo-${username}`;
 
-const toProfile = (stored: StoredProfile | undefined): Profile => ({
-  nickname:
-    stored?.nickname ??
-    (session?.username === GUEST_USERNAME ? '둘러보는 여행자' : (session?.username ?? '')),
-  name: stored?.name ?? '',
-  avatarUrl: stored?.avatar ? photoStore.uriOf(stored.avatar) : null,
-});
+const avatarUri = (avatar: string) => {
+  if (!avatar.startsWith(BUNDLED_PREFIX)) return photoStore.uriOf(avatar);
+  const source = BUNDLED_AVATARS[avatar.slice(BUNDLED_PREFIX.length)];
+  // 웹은 번들의 주소, iOS·Android는 앱에 든 파일 주소입니다(오프라인에서도 뜸).
+  return source === undefined ? null : Asset.fromModule(source).uri || null;
+};
+
+const toProfile = (saved: StoredProfile | undefined): Profile => {
+  const stored = saved ?? (session?.userId === MASTER_SESSION.userId ? MASTER_PROFILE : undefined);
+  return {
+    nickname:
+      stored?.nickname ??
+      (session?.username === GUEST_USERNAME ? '둘러보는 여행자' : (session?.username ?? '')),
+    name: stored?.name ?? '',
+    avatarUrl: stored?.avatar ? avatarUri(stored.avatar) : null,
+  };
+};
 const setMyTrips = (items: Trip[]) => {
   trips.set(session?.userId ?? '', items);
   persist();
@@ -291,6 +332,7 @@ const withStats = (place: Place): Place => {
 
 /** 사진 파일을 지우지 못해도 계정 삭제나 프로필 저장은 끝까지 진행합니다. */
 const removeAvatar = (name: string) => {
+  if (name.startsWith(BUNDLED_PREFIX)) return;
   try {
     photoStore.remove(name);
   } catch {
@@ -427,9 +469,9 @@ export const demoBackend: Backend = {
       persist();
       return { recoveryCode };
     },
-    async browse() {
+    async browse(account = 'guest') {
       await wait();
-      setSession(GUEST_SESSION);
+      setSession(PRESET_SESSIONS[account]);
     },
     async signOut() {
       setSession(null);
@@ -448,8 +490,7 @@ export const demoBackend: Backend = {
     async deleteAccount() {
       // 이 계정의 장소와 기록만 지웁니다. 둘러보기 계정은 처음 예시 데이터로 되돌립니다.
       const photos = records.flatMap((record) => record.photos);
-      if (activeUserId === GUEST_SESSION.userId)
-        userData.set(activeUserId, freshData(activeUserId));
+      if (isPreset(activeUserId)) userData.set(activeUserId, freshData(activeUserId));
       else userData.delete(activeUserId);
       activeUserId = '';
       places = [];
@@ -460,7 +501,7 @@ export const demoBackend: Backend = {
       const avatar = profiles.get(session?.userId ?? '')?.avatar;
       if (avatar) removeAvatar(avatar);
       profiles.delete(session?.userId ?? '');
-      if (session && session.username !== GUEST_USERNAME) accounts.delete(session.username);
+      if (session && !isPreset(session.userId)) accounts.delete(session.username);
       setSession(null);
       removePhotos(photos);
     },
@@ -473,7 +514,8 @@ export const demoBackend: Backend = {
     async update({ nickname, name, avatar }) {
       await wait();
       const userId = session?.userId ?? '';
-      const previous = profiles.get(userId);
+      const previous =
+        profiles.get(userId) ?? (userId === MASTER_SESSION.userId ? MASTER_PROFILE : undefined);
       let file = previous?.avatar ?? null;
       if (avatar !== undefined) {
         // 상태를 저장한 뒤에 이전 사진을 지워, 저장 전에 앱이 꺼져도 사진이 사라지지 않게 합니다.
