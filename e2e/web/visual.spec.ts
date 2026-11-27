@@ -11,7 +11,15 @@ const NOW = new Date('2026-11-27T03:00:00.000Z');
 
 async function settle(page: Page) {
   await page.evaluate(() => document.fonts.ready);
-  await page.waitForFunction(() => [...document.images].every((image) => image.complete));
+  // 화면에 보이는 사진만 기다립니다(화면 밖의 lazy 사진은 불러오지 않음).
+  await page.waitForFunction(() =>
+    [...document.images]
+      .filter((image) => {
+        const box = image.getBoundingClientRect();
+        return box.bottom > 0 && box.top < innerHeight && box.width > 0;
+      })
+      .every((image) => image.complete),
+  );
 }
 
 async function enter(page: Page, account: '둘러보기' | 'ryushin0(마스터)로 둘러보기') {
