@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
+import redaxios from 'redaxios';
 import type { LocalPhoto } from '../api/types';
 
 /**
@@ -9,7 +10,11 @@ import type { LocalPhoto } from '../api/types';
 const MAX_EDGE = 1920;
 const KEY_PREFIX = 'newworld.photo.';
 
-const toBytes = async (uri: string) => (await fetch(uri)).arrayBuffer();
+/** 브라우저의 data·blob URL을 바이너리로 읽습니다. */
+const toBytes = async (uri: string) =>
+  (await redaxios.get<ArrayBuffer>(uri, { responseType: 'arrayBuffer' })).data;
+const toBlob = async (uri: string) =>
+  (await redaxios.get<Blob>(uri, { responseType: 'blob' })).data;
 
 /** 긴 변을 줄이고 JPEG로 압축합니다. 브라우저 캔버스로 다시 그리므로 위치 정보(EXIF)도 빠집니다. */
 export const compressPhoto = async (photo: LocalPhoto, maxEdge = MAX_EDGE) => {
@@ -53,7 +58,7 @@ const keep = async (blob: Blob) => {
 
 export const photoStore = {
   async save(uri: string) {
-    return keep(await (await fetch(uri)).blob());
+    return keep(await toBlob(uri));
   },
   async write(bytes: ArrayBuffer) {
     return keep(new Blob([bytes], { type: 'image/jpeg' }));

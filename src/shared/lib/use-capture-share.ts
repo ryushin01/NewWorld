@@ -2,6 +2,7 @@ import * as Sharing from 'expo-sharing';
 import { useRef, useState, type RefObject } from 'react';
 import { Platform } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
+import redaxios from 'redaxios';
 import { downloadOnWeb } from './web-download';
 
 type CaptureOptions = { dialogTitle: string; format?: 'jpg' | 'png' };
@@ -11,7 +12,8 @@ type CaptureOptions = { dialogTitle: string; format?: 'jpg' | 'png' };
  * expo-sharing은 웹에서 주소만 넘겨 찍은 이미지(data URL)를 공유하지 못합니다.
  */
 const shareImageOnWeb = async (uri: string, format: 'jpg' | 'png', title: string) => {
-  const blob = await (await fetch(uri)).blob();
+  // 찍은 이미지는 data URL이라 바이너리(blob)로 읽습니다.
+  const { data: blob } = await redaxios.get<Blob>(uri, { responseType: 'blob' });
   const file = new File([blob], `newworld.${format}`, {
     type: format === 'jpg' ? 'image/jpeg' : 'image/png',
   });
