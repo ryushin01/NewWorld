@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.18.1 - 미출시
+
+- 변경: 앱 코드의 HTTP 호출을 Fetch API 직접 호출에서 redaxios 0.5.1로 바꿈. Open-Meteo 날씨 조회(`src/shared/api/conditions.ts`), 웹 데모의 찍은 이미지 공유(`use-capture-share.ts`, `responseType: 'blob'`)와 사진 읽기(`photo.web.ts`, `'blob'`·`'arrayBuffer'`), Edge Function `place-search`의 Photon 호출(`npm:redaxios@0.5.1`)
+- 동작 유지: redaxios 0.5는 `signal`을 fetch에 넘기지 않아 `fetch` 옵션으로 감싸 날씨 10초·Photon 8초 시간 제한을 그대로 둠. 실패 상태는 예전처럼 날씨는 `null`, Photon은 상태 코드가 담긴 오류(502)로 처리하고, JSON이 아닌 응답은 예전 `response.json()`처럼 실패로 처리함. TanStack Query·데모 모드는 그대로
+- 테스트: 날씨 조회의 주소(예보·기록 보관), 실패 상태, JSON이 아닌 응답, 시간 제한과 웹 데모의 이미지 공유·사진 읽기 테스트를 더함
+
 ## 2.18.0 - 미출시
 
 - 웹 데모 SEO 기초: 한국어 `<title>`·설명, `canonical`(`https://ryushin01.github.io/NewWorld/`), Open Graph·Twitter 카드, 홈 JSON-LD `SoftwareApplication`, JavaScript를 끈 경우의 `<noscript>` 안내를 웹 빌드 후처리(`scripts/build-web.mjs`)에서 `index.html`에 넣음. 모바일 앱과 화면은 그대로

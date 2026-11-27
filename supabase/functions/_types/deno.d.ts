@@ -8,3 +8,8 @@ declare const Deno: {
 declare module 'npm:@supabase/supabase-js@2' {
   export * from '@supabase/supabase-js';
 }
+
+declare module 'npm:redaxios@0.5.1' {
+  export * from 'redaxios';
+  export { default } from 'redaxios';
+}

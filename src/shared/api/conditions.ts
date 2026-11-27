@@ -1,3 +1,5 @@
+import redaxios from 'redaxios';
+
 export type Conditions = { weather: string; temperature: number | null };
 
 const WMO: [number[], string][] = [
@@ -35,6 +37,8 @@ export const parseConditions = (data: WeatherResponse | null, iso: string): Cond
 };
 
 const ARCHIVE_AFTER_DAYS = 80;
+const isOk = (status: number) => status >= 200 && status < 300;
+
 /** 연결이 느리면 버튼이 오래 돌기만 하므로 이 시간이 지나면 멈추고 다시 시도하게 합니다. */
 const TIMEOUT_MS = 10000;
 
@@ -49,11 +53,19 @@ export const fetchConditions = async (latitude: number, longitude: number, iso: 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const response = await fetch(
+    // redaxios 0.5는 signal을 fetch에 넘기지 않으므로 fetch를 감싸 시간 제한을 겁니다.
+    // 상태 코드가 실패여도 예외 대신 null(날씨 없음)로 돌려주던 동작을 지키려고 모든 상태를 받습니다.
+    const response = await redaxios.get<WeatherResponse>(
       `https://${host}?latitude=${latitude}&longitude=${longitude}&start_date=${date}&end_date=${date}&timezone=GMT&hourly=weather_code,temperature_2m`,
-      { signal: controller.signal },
+      {
+        validateStatus: () => true,
+        fetch: (input, init) => fetch(input, { ...init, signal: controller.signal }),
+      },
     );
-    return parseConditions(response.ok ? ((await response.json()) as WeatherResponse) : null, iso);
+    if (!isOk(response.status)) return parseConditions(null, iso);
+    // redaxios는 JSON을 읽지 못하면 글자 그대로 두므로, 예전 response.json()처럼 실패로 처리합니다.
+    if (typeof response.data !== 'object') throw new SyntaxError('날씨 응답이 JSON이 아닙니다.');
+    return parseConditions(response.data, iso);
   } finally {
     clearTimeout(timer);
   }
