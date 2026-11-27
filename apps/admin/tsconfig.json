@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"],
+    "paths": {
+      "@admin/*": ["./src/*"],
+      "@catalog/*": ["../../src/entities/destination/model/*"],
+      "@/shared/api": ["../../src/shared/api/types.ts"]
+    }
+  },
+  "include": ["src", "e2e", "*.ts", "*.mts"]
+}

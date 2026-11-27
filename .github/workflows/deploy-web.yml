@@ -1,7 +1,8 @@
 name: 웹 데모 배포
 
-# 가상 데이터로 동작하는 웹 데모를 GitHub Pages(https://ryushin01.github.io/NewWorld/)에 올립니다.
-# Supabase 값을 넘기지 않아 늘 데모 모드로 빌드되고, 비밀 값이 필요 없습니다.
+# 가상 데이터로 동작하는 웹 데모를 GitHub Pages(https://ryushin01.github.io/NewWorld/)에 올리고,
+# 운영 어드민 데모(apps/admin)를 같은 사이트의 하위 경로(https://ryushin01.github.io/NewWorld/admin/)에 함께 올립니다.
+# Supabase 값을 넘기지 않아 둘 다 늘 데모 모드로 빌드되고, 비밀 값이 필요 없습니다.
 on:
   push:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - package.json
       - pnpm-lock.yaml
       - scripts/build-web.mjs
+      - apps/admin/**
       - .github/workflows/deploy-web.yml
   workflow_dispatch:
 
@@ -40,6 +42,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: 웹 데모 빌드 (/NewWorld 경로, 데모 모드)
         run: pnpm run build:web
+      - name: 운영 어드민 데모 빌드 (/NewWorld/admin/ 경로, VITE_DEMO=1)
+        run: |
+          pnpm run build:admin
+          cp -R apps/admin/dist dist/admin
       - uses: actions/upload-pages-artifact@v5
         with:
           path: dist

@@ -18,8 +18,10 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run typecheck
       - run: pnpm run typecheck:functions
+      - run: pnpm run typecheck:admin
       - run: pnpm run lint
       - run: pnpm test
+      - run: pnpm run test:admin
       - run: pnpm run test:db
 
   # 웹 데모를 외부 요청을 모두 막은 상태로 띄워 모든 탭과 axe를 검사합니다(e2e/web/offline.spec.ts).
@@ -43,3 +45,28 @@ jobs:
           path: |
             playwright-report/
             test-results/
+
+  # 운영 어드민(apps/admin): 데모 빌드를 외부 요청 없이 띄워 화면 흐름·axe를 보고, 번들 예산과 Lighthouse 기준을 검사합니다.
+  admin-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm run test:admin:e2e
+      - run: pnpm run size:admin
+      - run: pnpm run lhci:admin
+      - name: 어드민 E2E 실패 기록 보관
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: admin-web-report
+          path: |
+            playwright-report/admin/
+            test-results/admin/
+            .lighthouseci/admin/

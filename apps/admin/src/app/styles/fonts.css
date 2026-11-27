@@ -1,0 +1,12 @@
+/*
+ * 무료 글꼴을 번들에 함께 넣어 외부 요청 없이(오프라인) 씁니다. 출처는 README.
+ * 레퍼런스의 Open Sans(영문 제목·메뉴)는 같은 글꼴, Noto Sans JP 자리는 Noto Sans KR,
+ * 로고·큰 영문 글자는 기하학적 산세리프 Jost로 대신합니다.
+ */
+@import '@fontsource/open-sans/latin-600.css';
+@import '@fontsource/open-sans/latin-700.css';
+@import '@fontsource/open-sans/latin-800.css';
+@import '@fontsource/noto-sans-kr/400.css';
+@import '@fontsource/noto-sans-kr/700.css';
+@import '@fontsource/jost/latin-300.css';
+@import '@fontsource/jost/latin-500.css';

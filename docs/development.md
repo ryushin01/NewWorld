@@ -268,7 +268,7 @@ Expo SDK 58은 iOS에서 Expo 모듈을 미리 컴파일한 XCFramework로 링�
 
 ## 서버 적용 현황
 
-Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push --remote`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다.
+Supabase 프로젝트 `newworld`에는 `20261108000000`까지 적용되어 있습니다. 무료 플랜의 활성 프로젝트 한도 때문에 일시 중지한 상태이며, 앱은 `.env` 없이 데모 모드로 동작합니다. 다시 켜면 `npx supabase db push --remote`로 `20261109000000_trips_currency.sql`(통화, 여정)·`20261110000000_checkins.sql`(현장 인증)·`20261111000000_profiles.sql`(프로필)·`20261112000000_recovery_codes.sql`(복구 코드)·`20261116000000_input_limits.sql`(입력 길이 상한)·`20261127000000_admin.sql`(운영 어드민: 관리자·수록 표·신고)을 적용하고 `npx supabase config push`(메일 인증 끄기, 비밀번호 8자 이상), `npx supabase functions deploy delete-account recover-account`를 실행합니다. 이미 이메일로 가입한 계정은 이메일 앞부분이 아이디가 됩니다. 어드민 관리자는 SQL 편집기에서 `insert into private.admins (user_id) values ('<auth.users의 id>');`로 넣습니다.
 
 ## 백업과 복원
 

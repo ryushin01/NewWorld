@@ -334,3 +334,174 @@ test('입력 길이 상한(앱 검증과 같은 값)을 넘는 값은 거부하�
     /checklist_items_category_length/,
   );
 });
+
+// 운영 어드민(20261127000000_admin.sql): 관리자는 private.admins에 있는 계정뿐입니다.
+const ADMIN = '00000000-0000-0000-0000-0000000000ad';
+await db.exec(`
+  insert into auth.users values ('${ADMIN}');
+  insert into private.admins (user_id) values ('${ADMIN}');
+`);
+const destinationRow = (id, extra = '') =>
+  `insert into public.catalog_destinations (id, realm, lore, name, tagline, group_name, latitude, longitude${extra ? ', hidden' : ''})
+   values ('${id}', 'real', 'history', '유적', '한 줄', '유럽', 51, -1${extra ? `, ${extra}` : ''})`;
+
+test('관리자 여부는 private.admins로만 정해지고 회원이 스스로 관리자가 될 수 없습니다', async () => {
+  assert.equal((await as(ADMIN, 'select public.is_admin() as ok')).rows[0].ok, true);
+  assert.equal((await as(A, 'select public.is_admin() as ok')).rows[0].ok, false);
+  await assert.rejects(
+    as(A, `insert into private.admins (user_id) values ($1)`, [A]),
+    /permission denied/,
+  );
+});
+
+test('수록 여행지·코스·뱃지는 관리자만 쓰고, 회원에게는 숨기지 않은 항목만 보입니다', async () => {
+  await as(ADMIN, destinationRow('stonehenge'));
+  await as(ADMIN, destinationRow('secret-ruin', 'true'));
+  await assert.rejects(as(A, destinationRow('member-ruin')), /row-level security/);
+  await as(A, `update public.catalog_destinations set name = '탈취' where id = 'stonehenge'`);
+  await as(A, `delete from public.catalog_destinations where id = 'stonehenge'`);
+
+  const member = await as(A, 'select id, name from public.catalog_destinations order by id');
+  assert.deepEqual(member.rows, [{ id: 'stonehenge', name: '유적' }]);
+  const admin = await as(ADMIN, 'select id from public.catalog_destinations order by id');
+  assert.deepEqual(
+    admin.rows.map((row) => row.id),
+    ['secret-ruin', 'stonehenge'],
+  );
+
+  await as(
+    ADMIN,
+    `insert into public.catalog_courses (id, title, summary, stops) values ('arthur', '아더왕의 길', '요약', '{stonehenge,avalon}')`,
+  );
+  await as(ADMIN, `update public.catalog_courses set hidden = true where id = 'arthur'`);
+  assert.equal((await as(A, 'select * from public.catalog_courses')).rows.length, 0);
+  await as(
+    ADMIN,
+    `insert into public.catalog_badges (id, name, description, tone) values ('first-step', '첫 발자국', '설명', 'real')`,
+  );
+  await assert.rejects(
+    as(
+      A,
+      `insert into public.catalog_badges (id, name, description, tone) values ('x', 'x', 'x', 'real')`,
+    ),
+    /row-level security/,
+  );
+});
+
+test('수록 여행지는 세계와 분류가 맞아야 하고 ID 형식과 길이 상한을 지킵니다', async () => {
+  await assert.rejects(
+    as(
+      ADMIN,
+      `insert into public.catalog_destinations (id, realm, lore, name, tagline, group_name, latitude, longitude)
+       values ('bad-lore', 'real', 'myth', '유적', '한 줄', '유럽', 1, 1)`,
+    ),
+    /catalog_destinations_lore_check/,
+  );
+  await assert.rejects(as(ADMIN, destinationRow('Bad ID')), /check/);
+  await assert.rejects(
+    as(ADMIN, `update public.catalog_destinations set overview = $1 where id = 'stonehenge'`, [
+      'ㄱ'.repeat(2001),
+    ]),
+    /check/,
+  );
+  await assert.rejects(
+    as(
+      ADMIN,
+      `insert into public.catalog_courses (id, title, summary, stops) values ('one', '하나', '요약', '{stonehenge}')`,
+    ),
+    /check/,
+  );
+});
+
+test('관리자 회원 목록은 본명 없이 관리자에게만 보입니다', async () => {
+  await as(A, `update public.profiles set name = '홍길동' where id = $1`, [A]);
+  const admin = await as(ADMIN, 'select * from public.admin_users order by created_at');
+  const total = (await db.query('select count(*)::int as n from public.profiles')).rows[0].n;
+  assert.equal(admin.rows.length, total);
+  assert.ok(admin.rows.some((row) => row.id === A));
+  assert.ok(!('name' in admin.rows[0]));
+  assert.equal((await as(A, 'select * from public.admin_users')).rows.length, 0);
+  // 회원끼리는 여전히 다른 사람의 프로필을 보지 못합니다.
+  assert.equal((await as(B, 'select * from public.profiles where id = $1', [A])).rows.length, 0);
+});
+
+test('관리자는 모든 스탬프를 보고 취소할 수 있고, 회원은 남의 스탬프를 지우지 못합니다', async () => {
+  const insert = (uid, catalogId) =>
+    as(
+      uid,
+      `insert into public.checkins (catalog_id, latitude, longitude, distance_km, method)
+       values ($1, 51, -1, 0.2, 'gps') returning id`,
+      [catalogId],
+    );
+  const stamp = (await insert(B, 'admin-test-stonehenge')).rows[0].id;
+  await as(A, 'delete from public.checkins where id = $1', [stamp]);
+  assert.equal(
+    (await as(B, 'select * from public.checkins where id = $1', [stamp])).rows.length,
+    1,
+  );
+  const all = await as(ADMIN, 'select user_id from public.checkins where id = $1', [stamp]);
+  assert.equal(all.rows[0].user_id, B);
+  await as(ADMIN, 'delete from public.checkins where id = $1', [stamp]);
+  assert.equal(
+    (await as(B, 'select * from public.checkins where id = $1', [stamp])).rows.length,
+    0,
+  );
+});
+
+test('회원은 남을 신고하고 자기 신고만 보며, 처리는 관리자 함수로만 합니다', async () => {
+  const report = (uid, target, kind, reason) =>
+    as(
+      uid,
+      `insert into public.profile_reports (target_id, target, reason) values ($1, $2, $3) returning id`,
+      [target, kind, reason],
+    );
+  const first = (await report(A, B, 'nickname', '광고 닉네임')).rows[0].id;
+  const second = (await report(ADMIN, B, 'nickname', '같은 신고')).rows[0].id;
+  await assert.rejects(report(A, A, 'nickname', '나를 신고'), /profile_reports_not_self/);
+  await assert.rejects(
+    as(
+      A,
+      `insert into public.profile_reports (target_id, target, reason, status) values ($1, 'avatar', '처리된 척', 'resolved')`,
+      [B],
+    ),
+    /row-level security/,
+  );
+  assert.equal((await as(B, 'select * from public.profile_reports')).rows.length, 0);
+  assert.equal((await as(A, 'select * from public.profile_reports')).rows.length, 1);
+
+  // 회원이 직접 상태를 바꾸거나 처리 함수를 부를 수 없습니다.
+  await as(A, `update public.profile_reports set status = 'dismissed' where id = $1`, [first]);
+  await assert.rejects(
+    as(A, `select public.admin_handle_report($1, 'dismiss', '메모')`, [first]),
+    /관리자 권한이 없습니다/,
+  );
+  await assert.rejects(
+    as(ADMIN, `select public.admin_handle_report($1, 'remove_avatar', '메모')`, [first]),
+    /맞지 않습니다/,
+  );
+  await assert.rejects(
+    as(ADMIN, `select public.admin_handle_report($1, 'reset_nickname', '')`, [first]),
+    /처리 메모/,
+  );
+
+  await as(ADMIN, `select public.admin_handle_report($1, 'reset_nickname', '광고')`, [first]);
+  const nickname = (await as(B, 'select nickname from public.profiles where id = $1', [B])).rows[0]
+    .nickname;
+  assert.match(nickname, /^여행자[0-9a-f]{4}$/);
+  const handled = await as(
+    ADMIN,
+    'select id, status, handled_by from public.profile_reports where id = any($1) order by created_at',
+    [[first, second]],
+  );
+  assert.deepEqual(
+    handled.rows.map((row) => [row.status, row.handled_by]),
+    [
+      ['resolved', ADMIN],
+      ['resolved', ADMIN],
+    ],
+  );
+  await assert.rejects(
+    as(ADMIN, `select public.admin_handle_report($1, 'dismiss', '다시')`, [first]),
+    /이미 처리한 신고/,
+  );
+});

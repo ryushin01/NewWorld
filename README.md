@@ -1,11 +1,13 @@
 # NewWorld - 신세계
 
 [![CI](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml/badge.svg)](https://github.com/ryushin01/NewWorld/actions/workflows/ci.yml)
-![version](https://img.shields.io/badge/version-2.18.1-c2792b)
+![version](https://img.shields.io/badge/version-2.19.0-c2792b)
 
 피라미드와 잉카 유적부터 아발론과 에덴 동산까지, 역사와 신화·전설 속 여행지를 탐험하고 기록하는 모바일 앱입니다.
 
 **웹 데모:** [ryushin01.github.io/NewWorld](https://ryushin01.github.io/NewWorld/) · 로그인 화면의 **둘러보기**를 누르면 가입 없이 바로 들어갑니다.
+
+**운영 어드민 데모:** [ryushin01.github.io/NewWorld/admin](https://ryushin01.github.io/NewWorld/admin/) · **관리자로 둘러보기**를 누르면 시드 데이터로 바로 들어갑니다. [자세히](#운영-어드민)
 
 > **프로젝트 상태:** 포트폴리오용 앱이며 스토어에는 출시하지 않았습니다. 서버 없이 가상 데이터로 동작하는 데모 모드로 실행되고, 변경 내용은 기기(웹 데모는 브라우저)에 저장됩니다. Supabase 설정 값을 넣으면 서버 동기화로 전환됩니다.
 
@@ -92,6 +94,39 @@
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | <img src="docs/images/web-record.jpg" alt="스톤헨지 기록 작성 화면에서 제목을 적고 보관함에서 사진 한 장을 첨부해 사진 1/10으로 표시된 모습" width="280"> | <img src="docs/images/web-trip.jpg" alt="아더왕의 길 코스로 만든 여정 상세, 4곳 중 2곳 다녀옴 표시와 지도 자리에 웹 데모에서는 지도를 표시하지 않는다는 안내, 여행지 순서 목록" width="280"> |
 
+## 운영 어드민
+
+여행지·코스·스탬프·뱃지·회원·신고를 관리하는 웹 어드민입니다(`apps/admin`, Vite + React). 공개 데모는 [ryushin01.github.io/NewWorld/admin](https://ryushin01.github.io/NewWorld/admin/)에 있고, 웹 데모와 같은 GitHub Pages 배포에 하위 경로로 올라갑니다.
+
+**들어가는 방법:** 첫 화면의 **관리자로 둘러보기**를 누릅니다. 아이디·비밀번호가 필요 없고 관리자 권한으로 들어갑니다. 위쪽 안내 띠의 **데모 데이터 초기화**로 언제든 처음 상태로 되돌립니다.
+
+| 구분       | 공개 데모에서                                                                                                                                                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 되는 것    | 대시보드(회원·가입·스탬프·대기 신고 지표, 30일 추이 그래프와 표, 인기 여행지), 여행지 검색·필터·추가·수정·숨김, 코스 추가·수정(들르는 순서)·숨김, 스탬프 취소, 뱃지 이름·설명 수정·숨김, 사용자 목록·상세, 닉네임·프로필 사진 신고 처리 |
+| 데이터     | 앱 카탈로그(여행지 55곳·코스 9개)와 가상 회원 26명·스탬프·신고 시드. 바꾼 내용은 이 브라우저 저장소에만 남고 서버에는 반영되지 않습니다                                                                                                 |
+| 안 되는 것 | 실제 관리자 로그인과 서버 반영(Supabase 프로젝트가 일시 중지 상태), 뱃지 획득 조건 바꾸기(조건은 앱 코드가 계산), 프로필 사진 파일 삭제(연결만 끊음)                                                                                    |
+| 오프라인   | 글꼴·그림·데이터가 모두 빌드에 들어 있어 인터넷이 끊겨도 내용과 함께 뜹니다. `pnpm run test:admin:e2e`가 외부 요청을 모두 막고 확인합니다                                                                                               |
+
+데모 모드가 꺼지면(`apps/admin/.env`에 `VITE_SUPABASE_URL`·`VITE_SUPABASE_ANON_KEY`, `VITE_DEMO` 없음) 관리자 로그인 폼이 나오고 실제 Supabase로 동작합니다. 관리자는 `private.admins`에 넣은 계정뿐이고 쓰기는 RLS로 관리자만 됩니다(`supabase/migrations/20261127000000_admin.sql`). 수록 표(`catalog_*`)는 비어 있는 채로 시작하며, 모바일 앱은 아직 앱에 든 카탈로그를 읽습니다.
+
+디자인은 [LIPPS](https://lipps.co.jp/)를 레퍼런스로(사용 허락) 레이아웃·타이포·색·모션을 옮겼습니다. 유료 글꼴과 사진은 쓰지 않고 무료 글꼴(아래 [글꼴](#글꼴))과 직접 그린 타일·프로필 그림으로 바꿨으며, 대비가 모자란 회색 글자(#c2c2c2 → #6f6b6a)와 작은 붉은 글자(#e61517 → #cc1114)만 같은 계열에서 보정했습니다.
+
+| 첫 화면(데모 입장)                                                                                                                                      | 대시보드                                                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/images/admin-login.jpg" alt="붉은 New, World 큰 글자 옆에 신세계 운영 어드민 제목, 관리자로 둘러보기 버튼과 데모 안내 목록" width="420"> | <img src="docs/images/admin-dashboard.jpg" alt="붉은 New, World Admin 글자와 겹친 아발론·마추픽추 등 인기 여행지 타일, 데모 안내 띠" width="420"> |
+
+| 여행지 목록                                                                                                                                              | 여행지 추가(오류 표시)                                                                                                                                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/images/admin-destinations.jpg" alt="검색·세계·분류·공개 필터 아래 붉은 타일 썸네일과 분류·지역·수정일·이름이 적힌 여행지 행" width="420"> | <img src="docs/images/admin-destination-form.jpg" alt="빈 칸으로 저장해 ID·이름·한 줄 소개·묶음 칸에 붉은 테두리와 오류 문구가 붙은 여행지 추가 폼" width="420"> |
+
+| 신고 처리                                                                                                                                               | 운영 지표                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/images/admin-report-dialog.jpg" alt="그림자여행자의 프로필 사진 신고를 처리하는 모달, 사진 내리기·기각 선택과 처리 메모 칸" width="420"> | <img src="docs/images/admin-overview.jpg" alt="전체 회원 26명, 최근 30일 가입, 스탬프, 붉은 처리 대기 신고 5건 지표" width="420"> |
+
+| 전체 메뉴                                                                                                                           | 모바일                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="docs/images/admin-menu.jpg" alt="DASHBOARD부터 REPORTS까지 큰 영문 메뉴와 한국어 이름이 놓인 전체 화면 메뉴" width="420"> | <img src="docs/images/admin-mobile-destinations.jpg" alt="휴대폰 폭에서 DESTINATIONS 제목, 검색과 두 줄로 놓인 필터, 여행지 타일" width="200"> |
+
 ## 기술 스택
 
 ![React, TypeScript, Supabase, PostgreSQL, Jest, pnpm, GitHub Actions](https://skillicons.dev/icons?i=react,ts,supabase,postgres,jest,pnpm,githubactions)
@@ -105,6 +140,7 @@
 | 서버        | Supabase(Postgres, RLS, Auth, Storage, Edge Functions), OpenStreetMap Photon, Open-Meteo                                                                                                               |
 | 품질        | ESLint, Prettier, husky, lint-staged, Jest, React Native Testing Library, PGlite, Maestro, Storybook                                                                                                   |
 | 배포·운영   | EAS Build, GitHub Actions, GitHub Pages(웹 데모, react-native-web), Sentry(오류 모니터링, DSN을 넣으면 켜짐)                                                                                           |
+| 운영 어드민 | Vite 8, React 19, TanStack Query, React Hook Form, Zod, Supabase JS, Vitest, Testing Library, Playwright, axe, size-limit, Lighthouse CI, 글꼴 Open Sans·Noto Sans KR·Jost(Fontsource)                 |
 
 ## 시작하기
 
@@ -128,12 +164,17 @@ pnpm run ios       # 또는 pnpm run android
 | `pnpm run assets`             | 앱 아이콘과 지도 핀 생성                         |
 | `pnpm run screenshots`        | README 화면 다시 찍기(iOS 시뮬레이터, 데모 모드) |
 | `pnpm run build:web`          | 웹 데모 빌드(`dist/`, GitHub Pages용)            |
+| `pnpm run admin`              | 운영 어드민 개발 서버                            |
+| `pnpm run build:admin`        | 운영 어드민 데모 빌드(`apps/admin/dist/`)        |
+| `pnpm run test:admin`         | 운영 어드민 단위·컴포넌트 테스트(Vitest)         |
+| `pnpm run test:admin:e2e`     | 운영 어드민 E2E(Playwright, 오프라인·axe)        |
 
 서버 연결과 배포 방법은 [개발 가이드](docs/development.md)를 참고하세요.
 
 ## 프로젝트 구조
 
 ```
+apps/admin/    운영 어드민(Vite + React, FSD: app·pages·widgets·features·entities·shared)
 assets/        앱 아이콘, 지도 핀, 여행지 사진
 docs/          문서, 스크린샷
 e2e/           Maestro E2E 시나리오
@@ -160,25 +201,33 @@ src/
 
 ## 글꼴
 
-| 글꼴              | 쓰는 곳                                    | 굵기 |
-| ----------------- | ------------------------------------------ | ---- |
-| 한글재민체 3.0    | 한글 제목·굵은 글자                        | 400  |
-| 유앤피플 고딕 UNI | 한글 본문, 제목에서 한글재민체에 없는 한글 | 400  |
-| Sorts Mill Goudy  | 여행지 영문 원어명                         | 400  |
+| 글꼴              | 쓰는 곳                                    | 굵기        |
+| ----------------- | ------------------------------------------ | ----------- |
+| 한글재민체 3.0    | 한글 제목·굵은 글자                        | 400         |
+| 유앤피플 고딕 UNI | 한글 본문, 제목에서 한글재민체에 없는 한글 | 400         |
+| Sorts Mill Goudy  | 여행지 영문 원어명                         | 400         |
+| Open Sans         | 운영 어드민 영문 제목·메뉴·숫자            | 600·700·800 |
+| Noto Sans KR      | 운영 어드민 한글                           | 400·700     |
+| Jost              | 운영 어드민 로고·큰 영문 글자              | 300·500     |
 
 저작자·라이선스·원본은 아래 출처 표에 있습니다. 한글재민체는 한글 2,350자만 그리고 나머지는 빈칸이라, 그린 글자만 남기고 빠진 한글은 유앤피플 고딕으로 채워 한 파일로 합쳤습니다(`assets/fonts/newworld-title`). 사용자가 쓴 닉네임·여행기 제목에 드문 글자가 있어도 빈칸 없이 본문 글꼴로 보입니다. 유앤피플 고딕 UNI는 한글 11,172자를 모두 그린 공식 배포 파일에서 화면에 쓰지 않는 힌팅만 빼 2.5MB를 1.2MB로 줄였습니다(`assets/fonts/unpeople-gothic`, 글자 모양·간격은 그대로).
 
 ## 출처
 
-| 자료                                                         | 저작자                           | 사용 허락                             | 원본                                                                                                                           |
-| ------------------------------------------------------------ | -------------------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| 여행지 사진                                                  | Wikimedia Commons의 각 저작자    | 사진마다 CC BY·CC BY-SA·퍼블릭 도메인 | [여행지별 목록](docs/credits.md)                                                                                               |
-| 소개 글 참고 자료                                            | 위키백과·나무위키                | 각 사이트의 사용 허락                 | [여행지별 목록](docs/credits.md)                                                                                               |
-| 장소 검색                                                    | OpenStreetMap 기여자 (Photon)    | ODbL                                  | [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)                                                         |
-| 날씨                                                         | Open-Meteo                       | CC BY 4.0                             | [open-meteo.com](https://open-meteo.com)                                                                                       |
-| 보물 지도 아이콘 (앱 아이콘·스플래시·파비콘, #b8862b로 칠함) | Lorc (game-icons.net)            | CC BY 3.0                             | [game-icons.net](https://game-icons.net/1x1/lorc/treasure-map.html) · [라이선스](https://creativecommons.org/licenses/by/3.0/) |
-| 한글재민체 3.0 글꼴 (한글 제목)                              | 박재갑·김민 (기여 박윤정·이규선) | SIL OFL 1.1                           | [공유마당](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?wrtSn=13304319&menuNo=200023)                                   |
-| 유앤피플 고딕 UNI 글꼴 (한글 본문)                           | ㈜유앤피플                       | SIL OFL 1.1                           | [공유마당](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?wrtSn=13210384&menuNo=200023)                                   |
-| Sorts Mill Goudy 글꼴 (영문 원어명)                          | Barry Schwartz                   | SIL OFL 1.1                           | [Google Fonts](https://fonts.google.com/specimen/Sorts+Mill+Goudy)                                                             |
+| 자료                                                         | 저작자                           | 사용 허락                               | 원본                                                                                                                           |
+| ------------------------------------------------------------ | -------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| 여행지 사진                                                  | Wikimedia Commons의 각 저작자    | 사진마다 CC BY·CC BY-SA·퍼블릭 도메인   | [여행지별 목록](docs/credits.md)                                                                                               |
+| 소개 글 참고 자료                                            | 위키백과·나무위키                | 각 사이트의 사용 허락                   | [여행지별 목록](docs/credits.md)                                                                                               |
+| 장소 검색                                                    | OpenStreetMap 기여자 (Photon)    | ODbL                                    | [openstreetmap.org/copyright](https://www.openstreetmap.org/copyright)                                                         |
+| 날씨                                                         | Open-Meteo                       | CC BY 4.0                               | [open-meteo.com](https://open-meteo.com)                                                                                       |
+| 보물 지도 아이콘 (앱 아이콘·스플래시·파비콘, #b8862b로 칠함) | Lorc (game-icons.net)            | CC BY 3.0                               | [game-icons.net](https://game-icons.net/1x1/lorc/treasure-map.html) · [라이선스](https://creativecommons.org/licenses/by/3.0/) |
+| 한글재민체 3.0 글꼴 (한글 제목)                              | 박재갑·김민 (기여 박윤정·이규선) | SIL OFL 1.1                             | [공유마당](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?wrtSn=13304319&menuNo=200023)                                   |
+| 유앤피플 고딕 UNI 글꼴 (한글 본문)                           | ㈜유앤피플                       | SIL OFL 1.1                             | [공유마당](https://gongu.copyright.or.kr/gongu/wrt/wrt/view.do?wrtSn=13210384&menuNo=200023)                                   |
+| Sorts Mill Goudy 글꼴 (영문 원어명)                          | Barry Schwartz                   | SIL OFL 1.1                             | [Google Fonts](https://fonts.google.com/specimen/Sorts+Mill+Goudy)                                                             |
+| Open Sans 글꼴 (어드민 영문)                                 | Steve Matteson                   | SIL OFL 1.1                             | [Google Fonts](https://fonts.google.com/specimen/Open+Sans) · Fontsource                                                       |
+| Noto Sans KR 글꼴 (어드민 한글)                              | Google                           | SIL OFL 1.1                             | [Google Fonts](https://fonts.google.com/noto/specimen/Noto+Sans+KR) · Fontsource                                               |
+| Jost 글꼴 (어드민 로고·큰 영문)                              | Owen Earl (indestructible type*) | SIL OFL 1.1                             | [Google Fonts](https://fonts.google.com/specimen/Jost) · Fontsource                                                            |
+| 어드민 디자인 레퍼런스                                       | 株式会社リップス (LIPPS)         | 레이아웃·모션 참고 허락(자료 복사 없음) | [lipps.co.jp](https://lipps.co.jp/)                                                                                            |
+| 어드민 로고·타일·프로필 그림                                 | 이 저장소에서 직접 그림          | 저장소와 같음                           | `apps/admin/src`                                                                                                               |
 
 여행지 상세의 '자료·사진 출처' 링크가 이 표로 옵니다. 약관상 화면에 있어야 하는 장소 검색의 OpenStreetMap 표기와, 좌표가 Open-Meteo로 간다는 기록 화면의 안내는 화면에 그대로 둡니다. 여행지별 목록은 `pnpm credits`로 데이터에서 다시 만듭니다.
