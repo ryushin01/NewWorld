@@ -62,3 +62,8 @@ playwright-report/
 # 운영 어드민 빌드·Lighthouse CI 결과
 apps/admin/dist/
 .lighthouseci/
+
+# 테스트 커버리지 결과
+coverage/
+storybook-static/
+.metro-cache/

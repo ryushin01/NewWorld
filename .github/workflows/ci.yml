@@ -5,68 +5,141 @@ on:
     branches: [main]
   pull_request:
 
-jobs:
-  verify:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm run typecheck
-      - run: pnpm run typecheck:functions
-      - run: pnpm run typecheck:admin
-      - run: pnpm run lint
-      - run: pnpm test
-      - run: pnpm run test:admin
-      - run: pnpm run test:db
+# 같은 PR에 새 커밋이 오면 이전 실행을 취소합니다(main은 모든 커밋을 끝까지 검사).
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
-  # 웹 데모를 외부 요청을 모두 막은 상태로 띄워 모든 탭과 axe를 검사합니다(e2e/web/offline.spec.ts).
-  web-offline:
+permissions:
+  contents: read
+
+# 각 작업은 로컬과 같은 `pnpm run check <묶음>`(scripts/check.mjs)을 부릅니다.
+jobs:
+  # 문서·그림만 바뀌면 무거운 검사를 건너뜁니다(verify는 서식만 봄).
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: filter
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$BASE" HEAD | grep -qvE '^(docs/|[^/]*\.md$|LICENSE$)'; then
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  verify:
+    needs: changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
+      - name: Jest 변환 캐시
+        if: needs.changes.outputs.code == 'true'
+        uses: actions/cache@v6
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run test:web
-      - name: E2E 실패 기록 보관
+          path: node_modules/.cache/jest
+          key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}-${{ github.sha }}
+          restore-keys: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'package.json') }}-
+      - name: 서식만 검사(문서만 바뀜)
+        if: needs.changes.outputs.code != 'true'
+        run: pnpm exec prettier --check .
+      - name: 타입·린트·테스트·커버리지·DB(pnpm run check verify)
+        if: needs.changes.outputs.code == 'true'
+        run: pnpm run check verify
+
+  # 웹 데모를 외부 요청을 모두 막은 상태로 띄워 모든 경로·axe·시각 회귀를 보고 번들 예산을 검사합니다.
+  web-offline:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    env:
+      EXPO_METRO_CACHE_OUTPUT_DIR: ${{ github.workspace }}/.metro-cache
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          playwright: 'true'
+      - name: Expo·Metro 캐시
+        uses: actions/cache@v6
+        with:
+          path: .metro-cache
+          key: metro-web-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'metro.config.js', 'metro.transformer.js', 'app.config.ts', 'tamagui.config.ts') }}-${{ github.sha }}
+          restore-keys: metro-web-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'metro.config.js', 'metro.transformer.js', 'app.config.ts', 'tamagui.config.ts') }}-
+      - run: pnpm run check web
+      - name: 실패 기록 보관(리포트·차이 이미지)
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: web-offline-report
+          retention-days: 7
           path: |
-            playwright-report/
-            test-results/
+            playwright-report/web/
+            test-results/web/
+            e2e/web/__screenshots__/
 
-  # 운영 어드민(apps/admin): 데모 빌드를 외부 요청 없이 띄워 화면 흐름·axe를 보고, 번들 예산과 Lighthouse 기준을 검사합니다.
+  # 운영 어드민: 데모 빌드 하나로 화면 흐름·axe·시각 회귀를 보고, 번들 예산과 Lighthouse 기준을 검사합니다.
   admin-web:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v7
+      - uses: ./.github/actions/setup
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm run test:admin:e2e
-      - run: pnpm run size:admin
-      - run: pnpm run lhci:admin
-      - name: 어드민 E2E 실패 기록 보관
+          playwright: 'true'
+      - name: Vite 캐시
+        uses: actions/cache@v6
+        with:
+          path: node_modules/.vite
+          key: vite-admin-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/admin/vite.config.mts') }}
+      - run: pnpm run check admin
+      - name: 실패 기록 보관(리포트·차이 이미지)
         if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: admin-web-report
+          retention-days: 7
           path: |
             playwright-report/admin/
             test-results/admin/
             .lighthouseci/admin/
+            apps/admin/e2e/__screenshots__/
+
+  # Storybook(웹): 모든 스토리의 axe(위반이면 실패)와 시각 회귀
+  storybook:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup
+        with:
+          playwright: 'true'
+      - name: Vite·Storybook 캐시
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules/.vite
+            node_modules/.cache/storybook
+          key: storybook-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', '.storybook/**') }}
+      - run: pnpm run check storybook
+      - name: 실패 기록 보관(리포트·차이 이미지)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: storybook-report
+          retention-days: 7
+          path: |
+            playwright-report/storybook/
+            test-results/storybook/
+            e2e/storybook/__screenshots__/

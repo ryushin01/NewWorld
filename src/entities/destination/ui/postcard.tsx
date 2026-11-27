@@ -27,6 +27,7 @@ export const Postcard = forwardRef<NativeView, PostcardProps>(function Postcard(
         source={destination.image}
         style={{ width: 360, height: 240 }}
         contentFit="cover"
+        accessibilityLabel=""
         accessibilityIgnoresInvertColors
       />
       <YStack padding={20} gap={6}>

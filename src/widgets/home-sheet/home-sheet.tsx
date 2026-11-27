@@ -206,6 +206,7 @@ export const PlaceSummary = ({ place, onClose }: { place: Place; onClose: () => 
               source={destination.image}
               style={{ width: 72, height: 72, borderRadius: 8 }}
               contentFit="cover"
+              accessibilityLabel=""
               accessibilityIgnoresInvertColors
             />
             <AppText flex={1} numberOfLines={3}>

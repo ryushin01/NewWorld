@@ -26,6 +26,7 @@ export const TodayCard = ({
         source={destination.image}
         style={{ width: 64, height: 64, borderRadius: 8 }}
         contentFit="cover"
+        accessibilityLabel=""
         accessibilityIgnoresInvertColors
       />
       <YStack flex={1} gap={2}>

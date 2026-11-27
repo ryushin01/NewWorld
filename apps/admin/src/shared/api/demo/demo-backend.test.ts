@@ -82,4 +82,69 @@ describe('데모 백엔드', () => {
     await backend.signOut();
     expect(await backend.getSession()).toBeNull();
   });
+  it('코스를 추가·수정·숨기고, 없는 코스나 같은 ID는 오류를 낸다', async () => {
+    const backend = createDemoBackend({ storage: null, now: fixed });
+    const [first] = await backend.listCourses();
+    if (!first) throw new Error('시드가 비었습니다.');
+    const { hidden: _hidden, updatedAt: _updatedAt, ...input } = first;
+    await expect(backend.saveCourse(input, 'create')).rejects.toMatchObject({ code: 'conflict' });
+    await expect(backend.saveCourse({ ...input, id: 'nowhere' }, 'update')).rejects.toMatchObject({
+      code: 'not_found',
+    });
+    await expect(backend.setCourseHidden('nowhere', true)).rejects.toMatchObject({
+      code: 'not_found',
+    });
+
+    await backend.saveCourse({ ...input, id: 'silk-road', title: '비단길' }, 'create');
+    await backend.saveCourse({ ...input, title: '아더왕의 길(개정)' }, 'update');
+    await backend.setCourseHidden(first.id, true);
+    const courses = await backend.listCourses();
+    expect(courses[0]).toMatchObject({ id: 'silk-road', title: '비단길', hidden: false });
+    expect(courses.find((item) => item.id === first.id)).toMatchObject({
+      title: '아더왕의 길(개정)',
+      hidden: true,
+      updatedAt: fixed().toISOString(),
+    });
+  });
+
+  it('뱃지 이름을 고치고 숨기며, 없는 뱃지는 오류를 낸다', async () => {
+    const backend = createDemoBackend({ storage: null, now: fixed });
+    const saved = await backend.saveBadge('first-step', { name: '첫걸음', description: '처음' });
+    expect(saved).toMatchObject({ id: 'first-step', name: '첫걸음', description: '처음' });
+    await backend.setBadgeHidden('first-step', true);
+    expect((await backend.listBadges()).find((item) => item.id === 'first-step')?.hidden).toBe(
+      true,
+    );
+    await expect(
+      backend.saveBadge('nowhere', { name: '없음', description: '' }),
+    ).rejects.toMatchObject({ code: 'not_found' });
+    await expect(backend.setBadgeHidden('nowhere', true)).rejects.toMatchObject({
+      code: 'not_found',
+    });
+  });
+
+  it('스탬프를 취소하면 목록에서 빠진다', async () => {
+    const backend = createDemoBackend({ storage: null, now: fixed });
+    const [first] = await backend.listStamps();
+    if (!first) throw new Error('시드가 비었습니다.');
+    await backend.revokeStamp(first.id);
+    expect((await backend.listStamps()).some((item) => item.id === first.id)).toBe(false);
+  });
+
+  it('신고를 기각하면 그 신고만 닫고, 없는 신고나 여행지는 오류를 낸다', async () => {
+    const backend = createDemoBackend({ storage: null, now: fixed });
+    await backend.handleReport(demoReportId(1), 'dismiss', '문제없음');
+    const reports = await backend.listReports();
+    expect(reports.find((item) => item.id === demoReportId(1))).toMatchObject({
+      status: 'dismissed',
+      resolutionNote: '문제없음',
+    });
+    expect(reports.find((item) => item.id === demoReportId(2))?.status).toBe('open');
+    await expect(backend.handleReport('nowhere', 'dismiss', '')).rejects.toMatchObject({
+      code: 'not_found',
+    });
+    await expect(backend.setDestinationHidden('nowhere', true)).rejects.toMatchObject({
+      code: 'not_found',
+    });
+  });
 });

@@ -51,7 +51,7 @@ pnpm run build:admin           # 운영 어드민 데모 빌드(apps/admin/dist,
 
 ## 4. 검사·테스트 명령
 
-CI(`.github/workflows/ci.yml`, `main` 푸시·모든 PR)의 `verify` 작업은 이 순서로 돕니다. 작업을 끝냈다고 하기 전에 최소한 lint와 typecheck를 돌립니다.
+CI(`.github/workflows/ci.yml`, `main` 푸시·모든 PR)의 작업 `verify`·`web-offline`·`admin-web`·`storybook`은 모두 `pnpm run check <묶음>`(`scripts/check.mjs`)을 부릅니다. 로컬에서 `pnpm run check`(모든 묶음) 또는 `pnpm run check verify`처럼 같은 검사를 돌립니다. 작업을 끝냈다고 하기 전에 최소한 lint와 typecheck를 돌립니다. 묶음 안의 개별 명령:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -66,11 +66,15 @@ pnpm run test:admin            # 어드민 Vitest + Testing Library (verify 작�
 pnpm run test:admin:e2e        # 어드민 빌드 + Playwright E2E(오프라인·axe) (CI의 admin-web 작업)
 pnpm run size:admin            # 어드민 번들 예산(size-limit, admin-web 작업)
 pnpm run lhci:admin            # 어드민 Lighthouse CI(결과는 .lighthouseci/admin, admin-web 작업)
+pnpm run test:coverage         # Jest 커버리지(coverage/app) → pnpm run coverage:check(로직 계층 80%·전체 기준선)
+pnpm run size:web              # 웹 데모 번들 예산(scripts/size-limit-web, web-offline 작업)
+pnpm run build:storybook && pnpm run test:storybook   # 웹 Storybook 스토리 axe(위반이면 실패)·시각 회귀
 ```
 
 - `test:web`은 웹 데모를 `/` 경로로 빌드해 `scripts/serve-web.mjs`(Pages처럼 404.html로 대체, `pnpm run serve:web`)로 띄우고 localhost 밖 요청을 모두 막은 채 둘러보기 → 모든 탭과 모든 경로가 데모 데이터와 함께 뜨는지, axe(WCAG 2.2 AA) 위반·외부 요청이 없는지 봅니다(`e2e/web/offline.spec.ts`). 처음 한 번은 `pnpm exec playwright install chromium`. 아직 못 고친 접근성 문제는 테스트 파일의 알려진 목록에 있습니다. 데모 모드는 서버·CDN 없이 돌아야 합니다(자세히: `docs/development.md`의 오프라인 동작).
 
-- 서식: `pnpm run format`(Prettier, 커밋 때 lint-staged가 `*.{ts,tsx,js,mjs}`에 돌림). CI에는 없지만 `pnpm exec prettier --check .`가 저장소 전체에서 통과해야 합니다.
+- 서식: `pnpm run format`(Prettier, 커밋 때 lint-staged가 `*.{ts,tsx,js,mjs}`에 돌림). `pnpm exec prettier --check .`는 `check verify`에 들어 있습니다.
+- 시각 회귀(`toHaveScreenshot`, 웹 데모·어드민·Storybook)는 Linux에서만 비교합니다. 기준 이미지(`**/__screenshots__/`)는 CI 실패 기록의 이미지나 Playwright Docker(`docs/development.md`의 시각 회귀)로 다시 만듭니다. 번들 예산 숫자와 Lighthouse 기준은 바꾸지 않습니다.
 - **Testing Library 원칙:** 구현 세부가 아니라 사용자가 보는 동작을 검사하고, 요소는 역할·이름(`getByRole`)이나 레이블(`getByLabelText`)로 찾습니다. 도구는 단위·컴포넌트 Jest + React Native Testing Library, 앱 화면 흐름 Maestro E2E, 웹 데모 Playwright + axe입니다. 기존 테스트는 `getByTestId`·`getByText`가 많습니다. 버그를 고치면 고치기 전에 실패하는 테스트를 함께 넣습니다.
 - E2E(로컬, Maestro): `pnpm run test:e2e`(전용 시뮬레이터 `NewWorld E2E`, Release 빌드), `pnpm run test:e2e:server`(로컬 Supabase). E2E는 Release 빌드로 돌립니다.
 - 컴포넌트 카탈로그: `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` 뒤 앱의 `/storybook`

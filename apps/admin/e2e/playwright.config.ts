@@ -18,6 +18,9 @@ export default defineConfig({
     ? [['github'], ['html', { open: 'never', outputFolder: '../../../playwright-report/admin' }]]
     : 'list',
   outputDir: '../../../test-results/admin',
+  // 시각 회귀 기준 이미지는 플랫폼 이름 없이 둡니다(Linux에서만 비교, visual.spec.ts).
+  snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled' } },
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: 'ko-KR',

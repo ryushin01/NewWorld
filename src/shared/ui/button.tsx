@@ -40,7 +40,8 @@ export const Button = ({
       borderColor={variant === 'danger' ? 'danger' : 'ink'}
     >
       {loading ? (
-        <ActivityIndicator color={primary ? colors.surface : colors.ink} />
+        // 버튼 이름과 busy 상태가 알리므로 돌림표는 낭독에서 뺍니다(웹 progressbar 이름 없음 방지).
+        <ActivityIndicator color={primary ? colors.surface : colors.ink} aria-hidden />
       ) : (
         <AppText
           bold
@@ -76,7 +77,7 @@ export const BottomCta = ({
     >
       <XStack minHeight={60} alignItems="center" justifyContent="center">
         {loading ? (
-          <ActivityIndicator color={colors.surface} />
+          <ActivityIndicator color={colors.surface} aria-hidden />
         ) : (
           <AppText bold tone="inverse" size="row">
             {label}

@@ -125,6 +125,7 @@ export const PassportPage = () => {
                     source={item.image}
                     style={{ width: 48, height: 48, borderRadius: 24 }}
                     contentFit="cover"
+                    accessibilityLabel=""
                     accessibilityIgnoresInvertColors
                   />
                 ))}

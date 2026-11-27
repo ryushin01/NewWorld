@@ -95,15 +95,44 @@ npx supabase functions deploy recover-account
 
 ## 테스트
 
-| 명령                                            | 내용                                                                                                 |
-| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `pnpm test`                                     | 단위·컴포넌트 테스트 (Jest, React Native Testing Library)                                            |
-| `pnpm run test:db`                              | 마이그레이션을 PGlite에 적용해 RLS와 제약 조건 검사                                                  |
-| `pnpm run typecheck:functions`                  | Edge Function을 Node의 supabase-js 타입으로 검사(Deno 없이, `supabase/functions/tsconfig.json`)      |
-| `pnpm run test:e2e`                             | Maestro E2E. 전용 시뮬레이터 `NewWorld E2E`에 데모 모드 Release 앱을 설치해 실행합니다. 아래 참고    |
-| `pnpm run test:e2e:server`                      | 로컬 Supabase에 연결한 Release 앱으로 가입부터 계정 삭제까지 검사합니다. 아래 참고                   |
-| `pnpm run test:web`                             | 웹 데모를 빌드해 외부 요청을 모두 막고 모든 탭과 axe를 검사합니다(Playwright). 위 오프라인 동작 참고 |
-| `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` | 앱에서 `/storybook` 경로로 컴포넌트 카탈로그 확인                                                    |
+| 명령                                            | 내용                                                                                                           |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `pnpm test`                                     | 단위·컴포넌트 테스트 (Jest, React Native Testing Library)                                                      |
+| `pnpm run test:db`                              | 마이그레이션과 시드를 PGlite에 적용해 RLS·제약 조건·시드 검사                                                  |
+| `pnpm run typecheck:functions`                  | Edge Function을 Node의 supabase-js 타입으로 검사(Deno 없이, `supabase/functions/tsconfig.json`)                |
+| `pnpm run test:e2e`                             | Maestro E2E. 전용 시뮬레이터 `NewWorld E2E`에 데모 모드 Release 앱을 설치해 실행합니다. 아래 참고              |
+| `pnpm run test:e2e:server`                      | 로컬 Supabase에 연결한 Release 앱으로 가입부터 계정 삭제까지 검사합니다. 아래 참고                             |
+| `pnpm run test:web`                             | 웹 데모를 빌드해 외부 요청을 모두 막고 모든 경로·axe·시각 회귀를 검사합니다(Playwright). 위 오프라인 동작 참고 |
+| `EXPO_PUBLIC_STORYBOOK_ENABLED=true pnpm start` | 앱에서 `/storybook` 경로로 컴포넌트 카탈로그 확인                                                              |
+| `pnpm run check [묶음]`                         | CI와 같은 검사(verify·web·admin·storybook). CI 작업도 이 명령을 부릅니다. 아래 품질 검사 참고                  |
+| `pnpm run storybook`                            | 웹 Storybook(react-native-web + Vite, `.storybook/`) 개발 서버                                                 |
+| `pnpm run bench:place-search`                   | Edge Function `place-search`의 로컬 부하 측정(외부 요청 없음, CI에서는 돌리지 않음)                            |
+
+### 품질 검사
+
+`scripts/check.mjs`가 묶음별로 순서대로 돌리고 단계마다 걸린 시간을 표로 보여 줍니다(CI는 같은 표를 작업 요약에 씀).
+
+| 묶음        | 내용                                                                                                               |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ |
+| `verify`    | Prettier, 타입 검사 셋, 린트, Jest·Vitest 커버리지와 기준(`scripts/coverage-check.mjs`), DB(PGlite: RLS·제약·시드) |
+| `web`       | 웹 데모 빌드 하나로 번들 예산(`scripts/size-limit-web`), 오프라인·axe·SEO·시각 회귀 E2E                            |
+| `admin`     | 어드민 빌드 하나로 E2E(오프라인·axe·시각 회귀), 번들 예산(JS 175·CSS 70 kB), Lighthouse                            |
+| `storybook` | 웹 Storybook 빌드, 모든 스토리 axe(위반이면 실패)·시각 회귀(`e2e/storybook`)                                       |
+
+- **커버리지:** 로직 계층(`src/shared/lib`, `*/model`, `*/api`, Edge Function 순수 로직, 어드민도 같음)은 줄·문장·함수·분기 모두 80% 이상이어야 합니다. 서버 어댑터(`supabase-backend.ts`)는 실제 서버가 있어야 뜻이 있어 단위 커버리지에서 빼고 로컬 Supabase E2E와 RLS 테스트로 봅니다. 전체 커버리지는 2.20.1에서 잰 값을 기준선으로 두어 내려가면 실패합니다(`COVERAGE_BASELINE`, 테스트를 늘리면 올림).
+- **번들 예산:** 어드민 JS 175·CSS 70 kB, 웹 데모 첫 화면 JS 1790·전체 JS 1940 kB(gzip, 2.20.1 측정값). 예산 숫자는 마음대로 바꾸지 않습니다.
+- **시각 회귀:** 웹 데모(휴대폰·데스크톱), 어드민(데스크톱·모바일) 주요 화면과 모든 Storybook 스토리를 `toHaveScreenshot`으로 비교합니다(시각 고정, 애니메이션 끔, 차이 1%까지 허용). 글꼴 렌더링이 달라 Linux에서만 비교하고 macOS에서는 건너뜁니다. 화면을 일부러 바꿨다면 CI 실패 기록(`*-report`, 7일 보관)의 `__screenshots__`·`-actual.png`를 받아 바꾸거나, Docker로 만듭니다.
+
+```bash
+# Playwright 공식 이미지에서 기준 이미지 다시 만들기(예: 어드민)
+docker run --rm -v "$PWD":/work -w /work --tmpfs /work/node_modules:exec,size=4g \
+  mcr.microsoft.com/playwright:v1.65.1-noble \
+  bash -lc 'corepack enable && pnpm install --frozen-lockfile && pnpm run build:admin && \
+    pnpm exec playwright test -c apps/admin/e2e/playwright.config.ts visual --update-snapshots'
+```
+
+- **Storybook 접근성:** `.storybook/preview.tsx`의 `a11y.test`가 `error`라 addon-a11y 패널에서 위반이 오류로 보이고, `e2e/storybook`이 모든 스토리를 axe로 검사해 위반이면 실패합니다. 알려진 `label-content-name-mismatch`만 웹 데모 E2E와 같이 끕니다.
+- **CI 시간 줄이기:** pnpm 저장소(setup-node), Playwright 브라우저(`~/.cache/ms-playwright`), Expo·Metro(`EXPO_METRO_CACHE_OUTPUT_DIR`, 이때 `build-web.mjs`는 캐시를 비우지 않음), Vite·Storybook, Jest 변환 캐시를 씁니다. 같은 PR의 이전 실행은 취소하고(`concurrency`), 문서만 바뀐 커밋은 서식 검사만 합니다. 토큰이 필요한 원격 캐시(EAS 등)는 쓰지 않습니다.
 
 ### E2E 전용 시뮬레이터
 
