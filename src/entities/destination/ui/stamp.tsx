@@ -53,6 +53,7 @@ export const Stamp = ({ destination, year, verifiedAt = null, size, onPress }: S
                 source={destination.image}
                 style={{ width: '100%', height: '100%' }}
                 contentFit="cover"
+                accessibilityLabel=""
                 accessibilityIgnoresInvertColors
               />
             ) : (

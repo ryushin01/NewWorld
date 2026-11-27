@@ -38,5 +38,13 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
     css: false,
+    // pnpm run test:admin -- --coverage(또는 scripts/check.mjs)가 쓰는 커버리지 설정. 기준은 scripts/coverage-check.mjs
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/**/*.d.ts'],
+      reportsDirectory: here('../../coverage/admin'),
+      reporter: ['text-summary', 'json-summary'],
+    },
   },
 });

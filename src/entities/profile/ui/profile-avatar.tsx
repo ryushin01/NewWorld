@@ -37,6 +37,7 @@ export const ProfileAvatar = ({ nickname, uri, size = 64, onReady }: ProfileAvat
           source={{ uri, cacheKey: uri.split('?')[0] }}
           style={{ width: size, height: size }}
           contentFit="cover"
+          accessibilityLabel=""
           accessibilityIgnoresInvertColors
           onLoad={onReady}
           onError={onReady}

@@ -1,0 +1,29 @@
+name: 준비
+description: pnpm·Node 설치와 의존성 설치(pnpm 저장소 캐시), 필요하면 Playwright Chromium(브라우저 캐시)
+inputs:
+  playwright:
+    description: Playwright Chromium을 설치할지
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v6
+    - uses: actions/setup-node@v7
+      with:
+        node-version-file: .nvmrc
+        cache: pnpm
+    - run: pnpm install --frozen-lockfile
+      shell: bash
+    # 브라우저는 Playwright 버전(잠금 파일)이 같으면 캐시에서 꺼내고, 시스템 라이브러리만 설치합니다.
+    - if: inputs.playwright == 'true'
+      id: playwright-cache
+      uses: actions/cache@v6
+      with:
+        path: ~/.cache/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+    - if: inputs.playwright == 'true' && steps.playwright-cache.outputs.cache-hit != 'true'
+      run: pnpm exec playwright install --with-deps chromium
+      shell: bash
+    - if: inputs.playwright == 'true' && steps.playwright-cache.outputs.cache-hit == 'true'
+      run: pnpm exec playwright install-deps chromium
+      shell: bash

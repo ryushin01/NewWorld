@@ -12,16 +12,30 @@ const PORT = Number(process.env.WEB_E2E_PORT ?? 4320);
 export default defineConfig({
   testDir: '.',
   timeout: 60_000,
+  outputDir: '../../test-results/web',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never', outputFolder: '../../playwright-report/web' }]]
+    : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,
     locale: 'ko-KR',
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'mobile', use: { ...devices['Pixel 7'] } }],
+  // 시각 회귀 기준 이미지는 플랫폼 이름 없이 둡니다(Linux에서만 비교, visual.spec.ts).
+  snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{arg}{ext}',
+  expect: { toHaveScreenshot: { maxDiffPixelRatio: 0.01, animations: 'disabled' } },
+  projects: [
+    { name: 'mobile', use: { ...devices['Pixel 7'] } },
+    // 넓은 화면(휴대폰 폭으로 가운데에 놓인 모습)은 시각 회귀만 봅니다.
+    {
+      name: 'desktop',
+      testMatch: 'visual.spec.ts',
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 800 } },
+    },
+  ],
   webServer: {
     command: `node scripts/serve-web.mjs ${PORT}`,
     // 작업 폴더(저장소 루트)의 dist/를 띄웁니다.

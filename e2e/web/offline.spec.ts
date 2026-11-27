@@ -23,15 +23,10 @@ async function blockExternal(page: Page): Promise<string[]> {
 /**
  * 알고 있지만 이 테스트에서 고치지 않은 접근성 문제입니다. 고치면 여기서 지웁니다.
  * 새로 생긴 위반은 이 목록에 넣어 넘기지 말고 먼저 고칩니다.
- * - expo-image의 웹 <img>에 alt가 없음(여행지 사진, 전환 중 겹친 사진)
  * - @gorhom/bottom-sheet가 지도 화면의 시트·손잡이에 role="slider"를 aria-valuenow 없이 붙임
  * - 카드·행 버튼의 accessibilityLabel이 보이는 글자를 그대로 담지 않음(label-content-name-mismatch)
  */
-const KNOWN_A11Y_EXCLUDE = [
-  '[data-expoimage="true"]',
-  '[aria-label="Bottom Sheet"]',
-  '[aria-label="Bottom sheet handle"]',
-];
+const KNOWN_A11Y_EXCLUDE = ['[aria-label="Bottom Sheet"]', '[aria-label="Bottom sheet handle"]'];
 const KNOWN_A11Y_RULES = ['label-content-name-mismatch'];
 
 async function expectNoA11yViolations(page: Page) {

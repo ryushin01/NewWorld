@@ -14,9 +14,12 @@ const baseUrl = process.env.EXPO_WEB_BASE_URL ?? '/NewWorld';
 const env = { ...process.env, EXPO_WEB_BASE_URL: baseUrl, EXPO_NO_DOTENV: '1' };
 for (const key of Object.keys(env)) if (key.startsWith('EXPO_PUBLIC_SUPABASE_')) delete env[key];
 
+// CI는 EXPO_METRO_CACHE_OUTPUT_DIR(Expo가 Metro 캐시를 두는 폴더)를 캐시로 이어 쓰므로 비우지 않습니다.
+// 그 밖에는 예전처럼 캐시를 비우고 새로 만듭니다.
+const clear = process.env.EXPO_METRO_CACHE_OUTPUT_DIR ? [] : ['--clear'];
 const result = spawnSync(
   'pnpm',
-  ['exec', 'expo', 'export', '--platform', 'web', '--output-dir', outDir, '--clear'],
+  ['exec', 'expo', 'export', '--platform', 'web', '--output-dir', outDir, ...clear],
   { stdio: 'inherit', env },
 );
 if (result.status !== 0) process.exit(result.status ?? 1);

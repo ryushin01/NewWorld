@@ -36,6 +36,8 @@ export const DestinationCard = ({
             style={{ width: '100%', height: '100%' }}
             contentFit="cover"
             transition={120}
+            // 카드 이름이 여행지를 알리므로 사진은 장식입니다. expo-image 웹은 alt가 아니라 이 값을 <img alt>로 씁니다.
+            accessibilityLabel=""
             accessibilityIgnoresInvertColors
           />
         </View>

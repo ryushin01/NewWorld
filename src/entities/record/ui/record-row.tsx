@@ -37,6 +37,7 @@ export const RecordRow = ({ record, onPress }: { record: TripRecord; onPress: ()
               source={{ uri: cover.url, cacheKey: cover.path }}
               style={{ width: 56, height: 56 }}
               contentFit="cover"
+              accessibilityLabel=""
               accessibilityIgnoresInvertColors
             />
           ) : record.placeKind === 'real' ? (

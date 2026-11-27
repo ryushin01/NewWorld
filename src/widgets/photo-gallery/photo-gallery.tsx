@@ -145,6 +145,8 @@ const GalleryImage = ({
       style={{ width, height }}
       contentFit="cover"
       transition={150}
+      // 감싼 버튼의 이름("… 사진 n, 크게 보기")이 사진을 알리므로 장식으로 둡니다.
+      accessibilityLabel=""
       onError={() => setFailed(true)}
     />
   );

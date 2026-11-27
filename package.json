@@ -1,6 +1,6 @@
 {
   "name": "newworld",
-  "version": "2.20.0",
+  "version": "2.20.1",
   "main": "expo-router/entry",
   "expo": {
     "autolinking": {
@@ -92,7 +92,9 @@
     "@lhci/cli": "^0.16.1",
     "@playwright/test": "^1.65.1",
     "@size-limit/file": "^14.3.0",
+    "@storybook/addon-a11y": "10.6.7",
     "@storybook/react-native": "^10.7.1",
+    "@storybook/react-native-web-vite": "10.6.7",
     "@tamagui/cli": "^3.3.3",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^8.0.0",
@@ -102,6 +104,7 @@
     "@types/react": "~19.3.0",
     "@types/react-dom": "~19.3.0",
     "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "5.1.2",
     "axe-core": "^4.14.1",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
@@ -143,7 +146,16 @@
     "prepare": "husky",
     "test:db": "node --test supabase/tests/rls.test.mjs supabase/tests/seed.test.mjs",
     "db:seed:export": "node scripts/export-supabase-seed.mjs",
-    "demo:master": "node scripts/generate-demo-master.mjs"
+    "demo:master": "node scripts/generate-demo-master.mjs",
+    "storybook": "storybook dev -c .storybook -p 6006",
+    "build:storybook": "storybook build -c .storybook -o storybook-static --quiet",
+    "test:storybook": "playwright test -c e2e/storybook/playwright.config.ts",
+    "size:web": "cd scripts/size-limit-web && size-limit",
+    "test:coverage": "jest --coverage",
+    "test:admin:coverage": "vitest run -c apps/admin/vite.config.mts --coverage",
+    "coverage:check": "node scripts/coverage-check.mjs",
+    "check": "node scripts/check.mjs",
+    "bench:place-search": "node scripts/bench-place-search.mjs"
   },
   "private": true,
   "jest": {
@@ -177,8 +189,25 @@
       "/android/",
       "supabase/tests/",
       "/e2e/web/",
+      "/e2e/storybook/",
       "/apps/"
-    ]
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "supabase/functions/**/*.ts",
+      "!**/*.test.{ts,tsx}",
+      "!**/*.stories.tsx",
+      "!**/*.d.ts",
+      "!src/shared/lib/query-test-utils.tsx",
+      "!supabase/functions/*/index.ts",
+      "!supabase/functions/_types/**"
+    ],
+    "coverageDirectory": "coverage/app",
+    "coverageReporters": [
+      "text-summary",
+      "json-summary"
+    ],
+    "cacheDirectory": "<rootDir>/node_modules/.cache/jest"
   },
   "lint-staged": {
     "*.{ts,tsx,js,mjs}": [

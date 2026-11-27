@@ -1,5 +1,16 @@
 # Changelog
 
+## 2.20.1 - 미출시
+
+- 검사 한 번에: `pnpm run check [verify|web|admin|storybook]`(`scripts/check.mjs`)이 CI와 같은 검사를 돌리고 단계별 시간을 표로 보여 줌. CI의 네 작업(verify·web-offline·admin-web·새 storybook)이 이 명령을 부름
+- 커버리지: Jest(앱)·Vitest(어드민) 커버리지와 기준 검사(`scripts/coverage-check.mjs`). 로직 계층(shared/lib, */model, */api, Edge Function 순수 로직)은 80% 이상(앱 줄 92.4·분기 80.5%, 어드민 줄 95.4·분기 82.3%), 전체는 지금 값(앱 줄 58.4%, 어드민 66.0%)을 기준선으로. 표를 CI 작업 요약에 씀. 쿼리 훅(장소·기록·여정·인증·체크리스트·세션·장소 검색)·내보내기·위치·어드민 데모 백엔드 테스트 추가
+- 시각 회귀: Playwright `toHaveScreenshot`으로 웹 데모(휴대폰·데스크톱)·어드민(데스크톱·모바일) 주요 화면과 Storybook 모든 스토리를 비교(Linux CI 기준 이미지, 시각 고정)
+- Storybook(웹): react-native-web + Vite 웹 Storybook(`.storybook/`, `pnpm run storybook`)과 addon-a11y(`test: 'error'`). 모든 스토리를 axe로 검사해 위반이면 실패. 조회 훅을 쓰는 스토리(뱃지 카드·축하 화면·동기화 띠)에 QueryClient를 줌(휴대폰 Storybook도)
+- 접근성: 장식 사진(카드·스탬프·여권·엽서·기록 행·프로필·갤러리)이 웹에서 `alt` 없이 나오던 것을 고침(expo-image 웹은 `alt`가 아니라 `accessibilityLabel`을 `<img alt>`로 씀). 웹 데모 E2E의 사진 제외 목록을 지움. 로딩 버튼의 돌림표를 낭독에서 뺌(버튼 이름과 busy 상태가 알림)
+- 성능: 웹 데모 번들 예산 추가(첫 화면 JS 1790·전체 JS 1940 kB gzip, 지금 측정값). 어드민 예산(JS 175·CSS 70 kB)과 Lighthouse 기준은 그대로. Edge Function `place-search` 로컬 부하 측정(`pnpm run bench:place-search`, 외부 요청 없음)
+- CI 시간 줄이기: Playwright 브라우저·Expo Metro(`EXPO_METRO_CACHE_OUTPUT_DIR`)·Vite·Storybook·Jest 변환 캐시, 같은 PR의 이전 실행 취소(`concurrency`), 문서만 바뀌면 서식만 검사, 빌드 하나를 E2E·시각 회귀·번들 예산·Lighthouse가 함께 씀. 실패할 때만 리포트·차이 이미지를 7일 보관
+- 의존성(개발용): @storybook/react-native-web-vite, @storybook/addon-a11y, @vitest/coverage-v8
+
 ## 2.20.0 - 미출시
 
 - 운영 어드민 목데이터를 DB 스키마와 같은 모양으로: 회원(`admin_users`: 닉네임·사진 경로·가입일, 본명 없음), 로그인 계정(`auth.users` 아이디 주소), 관리자(`private.admins`의 데모 관리자), 프로필 사진 파일(`avatars` 버킷 대역), 스탬프의 인증 위치(위도·경도)와 기록 시각, 신고의 처리 관리자(`handled_by`), 수록 표의 수정 관리자(`updated_by`)를 채움. 회원·스탬프·신고 ID를 실제처럼 UUID로 바꾸고(5eed로 시작), 닉네임 초기화 규칙도 DB 함수와 같게 맞춤. 저장 키를 `newworld-admin.demo.v2`로 올려 예전 데모 데이터는 새 시드로 바뀜
